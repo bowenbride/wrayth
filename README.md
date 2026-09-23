@@ -1,5 +1,27 @@
 # Wrayth
 
+A cyberpunk desktop shell for Hyprland, with a bar, a full-screen deck and a
+PAM lockscreen.
+
+![kitty and Thunar tiled under the bar](screenshots/wrayth-03.png)
+*The desktop: kitty and Thunar under the bar, in the Circuit profile.*
+
+## Install
+
+On Arch Linux with Hyprland, run as yourself (not as root):
+
+    bash <(curl -fsSL https://raw.githubusercontent.com/bowenbride/wrayth/main/install.sh)
+
+It installs everything Wrayth needs, backs up any existing Hyprland config
+before changing it, and asks for sudo only to install packages. Then log out
+and back in.
+
+See [what the installer does](#install-details) and how to
+[read it before running it](#read-it-first). Check the
+[requirements](#requirements) first.
+
+## Features
+
 A desktop shell for [Hyprland](https://hyprland.org), built with
 [Quickshell](https://quickshell.org). It has a top bar and a full-screen
 **deck**: a terminal, system diagnostics, a daily planner and a vulnerability
@@ -11,10 +33,77 @@ Wrayth was designed by [bowenbride](https://github.com/bowenbride) and built
 with help from AI. It is a personal project, released in case it is useful to
 someone else. See [Issues](#issues).
 
-## Screenshots
+**The bar**
 
-![kitty and Thunar tiled under the bar](screenshots/wrayth-03.png)
-*The desktop: kitty and Thunar under the bar, in the Circuit profile.*
+- Workspaces, and a scrolling ticker of firewall, profile, failed-service and
+  vulnerability status.
+- CPU, memory, network traffic, Bluetooth and power readouts.
+- A keep-awake toggle that pauses idle locking.
+- An unread-messages marker, which shows only that something is waiting and
+  never reads the message.
+- A clock with seconds and the date.
+
+**The deck** (`Super + E`)
+
+- A kitty terminal with a fastfetch banner in the profile's colours.
+- SYS.DIAG: host, uplink, per-thread CPU bars, load, temperature, frequency,
+  memory and a network graph.
+- Daemons: small probes you choose from a library of 20. They cover network
+  (ping, DNS, VPN, open ports), security (firewall, failed logins, SSH,
+  USB, microphone and camera) and system (battery wear, disk, clock sync,
+  pending reboot).
+- The planner: a daily list of tagged tasks, edited in place.
+- VULN WATCH: `arch-audit` results by severity, linked to the Arch security
+  tracker.
+- SIGNAL: a live audio spectrum from `cava`.
+
+**Profiles**
+
+- Six preset colour profiles, applied to the shell, kitty, Hyprland's borders
+  and the terminal logo.
+- A live-preview picker, and custom profiles made from nine colours.
+- A matching wallpaper for every profile, generated locally for custom ones.
+- Wallpaper pools: a set of your own wallpapers for each profile.
+
+**The lockscreen** (`Super + L`)
+
+- PAM authentication with a visible lockout countdown.
+- No unauthenticated unlock, and it recovers by itself if its process dies.
+
+**Effects**
+
+- Six scanline treatments, on panels only or on everything.
+- Occasional glitch effects on a schedule you set, or off.
+
+**Everything else**
+
+- Wi-Fi, Bluetooth, power-profile and identity dropdowns from the bar.
+- A launcher (tap `Super`) for apps and profiles, listing your most-used
+  first.
+- Notifications, and an on-screen display for volume and brightness.
+- A power menu: lock, sleep, log out, reboot and power off.
+
+## Keybinds
+
+Wrayth's own keys, from `external/hypr-wrayth.lua`:
+
+| Key | Action |
+| --- | --- |
+| `Super` (tap) | launcher |
+| `Super + E` | open or close the deck |
+| `Super + Shift + E` | refresh the deck terminal |
+| `Super + P` | power menu |
+| `Super + L` | lock the screen |
+| `Super + 1` … `0` | go to workspace 1–10 (closes the deck first) |
+| brightness keys | brightness ±5% |
+| volume keys, mute | volume |
+
+Wrayth's keys replace any earlier bind on the same key, so no key does two
+things. `external/hypridle.conf` locks the screen on idle and before sleep.
+The everyday [window keys](#window-keys) come with Wrayth's complete Hyprland
+config.
+
+## More screenshots
 
 ![The deck](screenshots/wrayth-02.png)
 *The deck (`Super + E`): the terminal, SYS.DIAG, the planner, VULN WATCH and
@@ -45,11 +134,13 @@ the SIGNAL spectrum.*
     at least 1920×1080 logical pixels: on a 4K screen, scale 2 gives exactly
     that.
 
-## Install
+## Install details
 
 One command, run as yourself (not as root):
 
     bash <(curl -fsSL https://raw.githubusercontent.com/bowenbride/wrayth/main/install.sh)
+
+### Read it first
 
 **Prefer to read it first?** Clone the repository, read the installer, then
 run it from the clone:
@@ -58,7 +149,9 @@ run it from the clone:
     less ~/wrayth-src/install.sh
     bash ~/wrayth-src/install.sh --source ~/wrayth-src
 
-Then log out and back in to Hyprland. On a text console, log in and type
+### After installing
+
+Log out and back in to Hyprland. On a text console, log in and type
 `start-hyprland`. The installer asks nothing it does not have to, and there is
 nothing to edit afterwards.
 
@@ -133,20 +226,7 @@ model. Custom profiles are saved in `~/.config/wrayth/custom-profiles.json`.
 (`DYNAMIC`). Switch it to `STATIC` in the picker's wallpaper column to keep one
 wallpaper throughout. The folder defaults to `~/Pictures/wallpapers`.
 
-## Keybinds
-
-Wrayth's own keys, from `external/hypr-wrayth.lua`:
-
-| Key | Action |
-| --- | --- |
-| `Super` (tap) | launcher |
-| `Super + E` | open or close the deck |
-| `Super + Shift + E` | refresh the deck terminal |
-| `Super + P` | power menu |
-| `Super + L` | lock the screen |
-| `Super + 1` … `0` | go to workspace 1–10 (closes the deck first) |
-| brightness keys | brightness ±5% |
-| volume keys, mute | volume |
+## Window keys
 
 Window keys, from Wrayth's complete Hyprland config (`external/hyprland.lua`,
 installed only when you had no config of your own):
@@ -163,9 +243,6 @@ installed only when you had no config of your own):
 | `Super` + left drag / right drag | move / resize a window |
 | `Super` + scroll | next / previous workspace |
 | `Super + Shift + M` | exit Hyprland |
-
-Wrayth's keys replace any earlier bind on the same key, so no key does two
-things. `external/hypridle.conf` locks the screen on idle and before sleep.
 
 ## Effects
 
