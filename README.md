@@ -61,7 +61,8 @@ someone else. See [Issues](#issues).
 
 - Six preset colour profiles, applied to the shell, kitty, Hyprland's borders
   and the terminal logo.
-- A live-preview picker, and custom profiles made from nine colours.
+- A live-preview picker, and custom profiles made from nine colours. Open the
+  picker from the deck: see [Finding your way around](#finding-your-way-around).
 - A matching wallpaper for every profile, generated locally for custom ones.
 - Wallpaper pools: a set of your own wallpapers for each profile.
 
@@ -101,7 +102,81 @@ Wrayth's own keys, from `external/hypr-wrayth.lua`:
 Wrayth's keys replace any earlier bind on the same key, so no key does two
 things. `external/hypridle.conf` locks the screen on idle and before sleep.
 The everyday [window keys](#window-keys) come with Wrayth's complete Hyprland
-config.
+config. Some things, like the profile picker, have no key; see
+[Finding your way around](#finding-your-way-around).
+
+## Finding your way around
+
+Much of Wrayth opens by clicking a label rather than a button. These are the
+ones that are easy to miss.
+
+**The profile picker** has no keybind. There are two ways in:
+
+- Press `Super + E` to open the deck, then click `PROFILE // <NAME>` in the
+  SYS.DIAG panel (top right). This opens the picker.
+- Or tap `Super` for the launcher and type a profile's name. This applies the
+  profile directly, without the picker.
+
+**Inside the picker:**
+
+- Click a card, or use the arrow keys, to preview a profile live.
+- Click the same card again, press `Enter` or press `APPLY` to keep it.
+- `Escape` or `REVERT AND CLOSE` closes the picker and undoes the preview.
+- `+ NEW CUSTOM` (the last card) makes a custom profile.
+- Custom profiles have edit and delete buttons on their card; presets don't.
+  `Delete` also removes the selected custom profile after asking.
+- **EFFECTS** (scanlines and glitches) is a button in the picker.
+- **Wallpapers** are in the picker's wallpaper column: `DYNAMIC` or `STATIC`,
+  the folder, and `MANAGE WALLPAPER POOLS`.
+- In a sub-screen (the editor, effects or pools), `Escape` goes back one step.
+
+**The bar.** Most readouts open something when clicked:
+
+| Click | Opens |
+| --- | --- |
+| the ID block at the far left (e.g. `AB//01`) | the identity editor: set both halves (two letters or digits each) |
+| a workspace number | that workspace |
+| the network readout | the Wi-Fi dropdown (networks, then `WI-FI SETTINGS`) |
+| the Bluetooth readout | the Bluetooth dropdown (devices, `DISCOVERY`) |
+| `PWR` | the power-profile dropdown |
+| `IDLE // AUTO` / `IDLE // HOLD` | toggles keep-awake: `HOLD` stops idle locking |
+| the message icon | the `communication` special workspace (see below) |
+| empty bar space, or `Escape` | closes an open dropdown |
+
+The message icon only appears while Discord, Vesktop, WebCord or Equibop is
+running, and shows only that something is unread. Clicking it toggles a
+Hyprland special workspace named `communication`. Wrayth doesn't move your
+chat client there, so add a window rule if you want this to work.
+
+**The deck** (`Super + E`):
+
+- **Daemons:** click the `DAEMONS // LOADED` heading in SYS.DIAG to open the
+  library, and tick up to five to show. Click a daemon's row to expand its
+  details. The PING daemon's details let you choose which city it measures.
+- **Planner:**
+  - `+ ADD GIG` at the bottom adds a task;
+  - the tickbox marks a task done;
+  - click a task's name to rename or retag it;
+  - drag the grip on the left to reorder;
+  - the minus on the right removes a task.
+
+  The planner is also a plain text file, `~/.config/wrayth/planner.txt`,
+  which you can edit by hand.
+- **VULN WATCH:** click a package to expand it.
+  - `OPEN ADVISORY` opens the Arch security tracker's page.
+  - `FIX` runs a full system update (`sudo pacman -Syu`) in a terminal, when a
+    fixed version exists.
+  - `REMOVE` uninstalls the package in a terminal, with pacman's own prompt.
+    It's only offered when nothing depends on the package.
+  - `SWEEP` re-runs the audit.
+
+**The power menu** (`Super + P`): use the arrow keys and `Enter`, or press the
+letter shown on a tile. Reboot and power off need a second press to confirm.
+`Escape` cancels that confirmation first, and a second `Escape` closes the
+menu.
+
+**The lockscreen:** type your password and press `Enter`. `Escape` clears
+what you've typed.
 
 ## More screenshots
 
