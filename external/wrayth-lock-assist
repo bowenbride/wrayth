@@ -1,0 +1,132 @@
+#!/usr/bin/env bash
+#
+# wrayth-lock-assist -- the compositor-side chores of wrayth's lockscreen.
+# Run by modules/lock/LockScreen.qml, not by hand. None of it can unlock
+# anything: it only ever moves Hyprland's keyboard focus between lock surfaces,
+# changes when Hyprland draws its own lock-missing screen, or counts.
+#
+#   refocus       give the lock surface the keyboard back
+#   cleanup       remove any temporary output a refocus left behind
+#   cover         while a new lock client takes over a held lock, make Hyprland
+#                 cover the output at once instead of drawing the desktop
+#   uncover       put that setting back as it was
+#   count         print the consecutive keyboard-loss handovers (0 if none)
+#   count-set N   record N (0 clears it)
+#
+# refocus: after a switch to a text console and back, Hyprland re-creates its
+# keyboards but its seat still names our lock surface as focused, so every one
+# of its refocus paths returns early and the surface never gets a keyboard
+# `enter` again (CFocusState::rawSurfaceFocus). A second lock surface breaks
+# that: a temporary headless output makes Quickshell put a lock surface on it,
+# the pointer is moved onto that output and back, and the focus moves there and
+# back -- which is a real change, so Hyprland sends the enter. The output is
+# removed and the pointer is left where it was. Measured: a lock that had lost
+# the keyboard took typing again, with no client restart and no Hyprland error
+# screen.
+#
+# **The output never outlives the refocus.** It is named `WRAYTH-REFOCUS-<pid>`
+# and removed on the way out of this script however it ends -- normally, on an
+# error, or on SIGTERM/SIGINT/SIGHUP. Only SIGKILL can skip that, so `cleanup`
+# (run by the shell at every start, and before each refocus) removes every
+# output with that prefix. Nothing but the session lock draws on it: the shell
+# builds its surfaces from ShellState.screens, which leaves it out.
+#
+# cover: Hyprland treats every new lock as a fresh one for
+# `misc:lockdead_screen_delay` (1000 ms by default) and draws the *desktop*
+# until the new client's first frame. That is right for locking an open
+# desktop, but a client taking over an already-held lock would show the desktop
+# for those frames (measured: three frames, ~50 ms). With the delay at 0 the
+# lock is "missing" at once and Hyprland draws its own opaque cover until the
+# new surface arrives. The previous value is kept and `uncover` restores it.
+
+set -u
+
+runtime="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+saved="$runtime/wrayth-lockdead-delay"
+counter="$runtime/wrayth-lock-handovers"
+
+prefix="WRAYTH-REFOCUS-"
+
+cleanup() {
+    local name
+    for name in $(hyprctl monitors all -j 2> /dev/null | python3 -c '
+import json, sys
+for m in json.load(sys.stdin):
+    if m["name"].startswith(sys.argv[1]):
+        print(m["name"])
+' "$prefix"); do
+        hyprctl output remove "$name" > /dev/null 2>&1
+    done
+}
+
+monitor_geometry() {
+    hyprctl monitors -j | python3 -c '
+import json, sys
+for m in json.load(sys.stdin):
+    if m["name"] == sys.argv[1]:
+        print(m["x"] + m["width"] // 2, m["y"] + m["height"] // 2)
+' "$1"
+}
+
+refocus() {
+    local name="$prefix$$" cx cy hx hy
+    cleanup
+    read -r cx cy < <(hyprctl cursorpos | tr -d ',')
+    # Removal is armed before the output exists, for every way out a script
+    # can see. (A caught signal exits, which runs the EXIT trap once.)
+    trap 'hyprctl output remove "'"$name"'" > /dev/null 2>&1' EXIT
+    trap 'exit 1' INT TERM HUP
+    hyprctl output create headless "$name" > /dev/null 2>&1 || return 1
+    for _ in $(seq 1 20); do
+        read -r hx hy < <(monitor_geometry "$name")
+        [ -n "${hx:-}" ] && break
+        sleep 0.05
+    done
+    [ -n "${hx:-}" ] || return 1
+    # Quickshell maps a lock surface on the new output; Hyprland only focuses
+    # a mapped one.
+    sleep 0.4
+    hyprctl dispatch "hl.dsp.cursor.move({ x = $hx, y = $hy })" > /dev/null
+    sleep 0.25
+    hyprctl dispatch "hl.dsp.cursor.move({ x = ${cx:-0}, y = ${cy:-0} })" > /dev/null
+    sleep 0.25
+    return 0
+}
+
+cover() {
+    if [ ! -f "$saved" ]; then
+        hyprctl getoption misc:lockdead_screen_delay -j 2> /dev/null |
+            python3 -c 'import json, sys; print(int(json.load(sys.stdin)["int"]))' > "$saved.tmp" 2> /dev/null &&
+            mv "$saved.tmp" "$saved"
+    fi
+    hyprctl eval 'hl.config({ misc = { lockdead_screen_delay = 0 } })' > /dev/null
+}
+
+uncover() {
+    [ -f "$saved" ] || return 0
+    local value
+    value="$(cat "$saved")"
+    # Digits only: this goes into a Lua expression.
+    [[ "$value" =~ ^[0-9]{1,6}$ ]] || value=1000
+    hyprctl eval "hl.config({ misc = { lockdead_screen_delay = $value } })" > /dev/null &&
+        rm -f "$saved"
+}
+
+case "${1:-}" in
+    refocus) refocus ;;
+    cleanup) cleanup ;;
+    cover) cover ;;
+    uncover) uncover ;;
+    count)
+        value="$(cat "$counter" 2> /dev/null)"
+        [[ "$value" =~ ^[0-9]+$ ]] && echo "$value" || echo 0
+        ;;
+    count-set)
+        [[ "${2:-}" =~ ^[0-9]+$ ]] || exit 2
+        if [ "$2" = 0 ]; then rm -f "$counter"; else printf '%s\n' "$2" > "$counter"; fi
+        ;;
+    *)
+        echo "usage: wrayth-lock-assist refocus|cleanup|cover|uncover|count|count-set N" >&2
+        exit 2
+        ;;
+esac

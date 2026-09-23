@@ -1,0 +1,34 @@
+# Runtime files -- written by wrayth or the installer, never source.
+# wrayth keeps its settings, state and caches in ~/.config/wrayth,
+# ~/.local/state/wrayth and ~/.cache/wrayth; these cover anything that could
+# ever land inside the checkout instead.
+
+# Generated per profile by wrayth-profile.
+external/wrayth-colors.conf
+*.raw
+
+# Python byte-code from the helpers.
+__pycache__/
+*.pyc
+
+# The installer's and helpers' backups and temporary files.
+*.wrayth-backup-*
+*.wrayth-removed-*
+*.tmp
+*.orig
+*.rej
+
+# Local notes and QA output that belong to a working copy, not the project.
+SPEC.md
+scratchpad/
+*.log
+*.ppm
+*.mkv
+
+# Editor and OS noise.
+*.swp
+*~
+.DS_Store
+.qmlls.ini
+.vscode/
+.idea/

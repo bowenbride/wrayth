@@ -1,0 +1,338 @@
+#!/usr/bin/env bash
+# One daemon's reading for the SYS.DIAG HUD.
+#
+#   wrayth-daemon <id> [argument]
+#
+# Prints three fields on one line, separated by "|":
+#
+#   VALUE|TONE|DETAIL
+#
+# VALUE  the short readout on the HUD row
+# TONE   signal | accent | alert | dim -- how the shell colours it
+# DETAIL the expanded row's live half, "//" separating lines
+#
+# Nothing here asks for a password or changes a setting. Where a reading needs
+# a permission this user does not have, it says so rather than working around
+# it.
+set -u
+
+id="${1:-}"
+arg="${2:-}"
+
+out() { printf '%s|%s|%s\n' "$1" "$2" "${3:-}"; }
+
+# Latency to a host: ICMP where it answers, TCP connect time where it does not.
+# Most cloud endpoints drop ICMP, so the TCP path is the normal one rather than
+# the exception.
+measure() {
+    local host=$1 port=${2:-443} icmp t0 t1
+    icmp=$(ping -c1 -W2 "$host" 2>/dev/null | sed -n 's/.*time=\([0-9.]*\).*/\1/p')
+    if [ -n "$icmp" ]; then printf '%.0f icmp' "$icmp"; return 0; fi
+    t0=$(date +%s%N)
+    # host/port are passed as positional args, never interpolated into the
+    # bash -c string: the ping target comes from a hand-editable config file,
+    # and interpolating it would let a value like `x$(cmd)` run cmd.
+    if timeout 3 bash -c 'exec 3<>/dev/tcp/"$0"/"$1"' "$host" "$port" 2> /dev/null; then
+        t1=$(date +%s%N); printf '%s tcp' "$(( (t1 - t0) / 1000000 ))"; return 0
+    fi
+    return 1
+}
+
+case "$id" in
+
+    ping)
+        host=${arg:-ec2.us-east-1.amazonaws.com}
+        loss=0 sum=0 n=0 min=99999 max=0
+        for _ in 1 2 3; do
+            if r=$(measure "$host"); then
+                ms=${r% *}
+                n=$((n + 1)); sum=$((sum + ms))
+                [ "$ms" -lt "$min" ] && min=$ms
+                [ "$ms" -gt "$max" ] && max=$ms
+            else
+                loss=$((loss + 1))
+            fi
+        done
+        if [ "$n" -eq 0 ]; then
+            out "DOWN" accent "TARGET // $host//UNREACHABLE ON BOTH ICMP AND TCP"
+            exit 0
+        fi
+        avg=$((sum / n))
+        jitter=$((max - min))
+        tone=signal
+        [ "$avg" -gt 150 ] && tone=accent
+        out "$avg MS" "$tone" "TARGET // $host//PACKET LOSS // $((loss * 100 / 3))%//JITTER // $jitter MS"
+        ;;
+
+    shield)
+        # Which firewall is actually running. Detection only -- the shell never
+        # changes firewall settings. `systemctl is-active` needs no root; a
+        # check that cannot answer must read UNKNOWN, never NOT CONFIGURED, so a
+        # detection error can't be mistaken for an unprotected machine.
+        if ! command -v systemctl >/dev/null 2>&1; then
+            out "UNKNOWN" dim "Firewall state could not be read: systemctl is not available.//An error reading the firewall is shown as unknown, not as down."
+            exit 0
+        fi
+        answered=0
+        for unit in nftables iptables ufw firewalld; do
+            state=$(systemctl is-active "$unit" 2>/dev/null)
+            if [ "$state" = active ]; then
+                out "$(printf '%s' "$unit" | tr '[:lower:]' '[:upper:]')" signal "ARMED // $unit is running//A firewall decides which incoming connections reach this machine.//Without one, every listening service is reachable from the network you are on."
+                exit 0
+            fi
+            [ -n "$state" ] && answered=1
+        done
+        if [ "$answered" = 0 ]; then
+            out "UNKNOWN" dim "Firewall state could not be read.//An error reading the firewall is shown as unknown, not as down."
+            exit 0
+        fi
+        out "NOT CONFIGURED" accent "No firewall is running. Incoming connections are unfiltered.//A firewall decides which incoming connections reach this machine.//To set up ufw, run these yourself://sudo pacman -S ufw//sudo ufw default deny incoming//sudo ufw default allow outgoing//sudo ufw enable//sudo systemctl enable --now ufw"
+        ;;
+
+    trace)
+        # A proxy listening locally. ss -ltnp names the process for this user's
+        # own sockets, which is all that is wanted here.
+        line=$(ss -ltnpH 2>/dev/null | awk '$4 ~ /:(8080|8081|8000|8888|9090|3128|9050)$/ {print; exit}')
+        if [ -z "$line" ]; then
+            out "NO PROXY" dim "Nothing is listening on the usual proxy ports.//Checked 8080, 8081, 8000, 8888, 9090, 3128 and 9050."
+            exit 0
+        fi
+        port=${line##*:}; port=${port%% *}
+        proc=$(printf '%s' "$line" | sed -n 's/.*users:((\"\([^\"]*\)\".*/\1/p')
+        name=$(printf '%s' "$proc" | tr '[:lower:]' '[:upper:]')
+        case "$name" in
+            *BURP*|*JAVA*) name=BURP ;;
+            *ZAP*) name=ZAP ;;
+            *MITM*) name=MITMPROXY ;;
+            *TOR*) name=TOR ;;
+            '') name=LISTENING ;;
+        esac
+        out "$name" accent "Listening on port ${port%% *}//Process // ${proc:-unknown}//Traffic sent through this port is being intercepted."
+        ;;
+
+    ice)
+        units=$(systemctl --failed --no-legend --plain 2>/dev/null | awk '{print $1}')
+        n=$(printf '%s' "$units" | grep -c . || true)
+        if [ "${n:-0}" -eq 0 ]; then
+            out "NOMINAL" signal "No systemd units have failed since boot."
+        else
+            out "BREACH // $n" accent "$n failed unit(s) since boot://$(printf '%s' "$units" | paste -sd'/' - | sed 's|/|//|g')"
+        fi
+        ;;
+
+    dns)
+        server=$(resolvectl status 2>/dev/null | sed -n 's/.*Current DNS Server: *//p' | head -n1)
+        [ -z "$server" ] && server=$(awk '/^nameserver/{print $2; exit}' /etc/resolv.conf 2>/dev/null)
+        t0=$(date +%s%N)
+        getent hosts archlinux.org > /dev/null 2>&1 && ok=1 || ok=0
+        t1=$(date +%s%N)
+        ms=$(( (t1 - t0) / 1000000 ))
+        if [ "$ok" -eq 1 ]; then
+            out "$ms MS" signal "RESOLVER // ${server:-unknown}//Lookup of archlinux.org took $ms ms."
+        else
+            out "FAILING" accent "RESOLVER // ${server:-unknown}//Lookup failed. Names are not resolving."
+        fi
+        ;;
+
+    vpn)
+        # Tunnel up or down only. An exit location means asking an external
+        # service where this machine appears to be, which is opt-in.
+        dev=$(ip -o link show type wireguard 2>/dev/null | awk -F': ' 'NR==1{print $2}')
+        [ -z "$dev" ] && dev=$(ip -o link show type tun 2>/dev/null | awk -F': ' 'NR==1{print $2}')
+        if [ -n "$dev" ]; then
+            out "UP // $dev" signal "A tunnel is up on $dev.//Exit location is not checked: finding it means asking an external service where you are, which is opt-in."
+        else
+            out "DOWN" dim "No wireguard or tun interface is up.//Traffic is going out over the ordinary connection."
+        fi
+        ;;
+
+    wifi)
+        iface=$(ip -o link show 2>/dev/null | awk -F': ' '/wl/{print $2; exit}')
+        if [ -z "$iface" ]; then out "NO ADAPTER" dim "No wireless interface found."; exit 0; fi
+        sig=$(awk -v i="$iface:" '$1 == i {printf "%.0f", ($3 / 70) * 100}' /proc/net/wireless 2>/dev/null)
+        read -r ssid sec < <(nmcli -t -f IN-USE,SSID,SECURITY device wifi 2>/dev/null | awk -F: '$1=="*"{print $2, $3; exit}')
+        tone=signal
+        [ -n "$sig" ] && [ "$sig" -lt 40 ] && tone=alert
+        case "${sec:-}" in ''|'--') sec="OPEN"; tone=accent ;; esac
+        out "${sig:-?}%" "$tone" "NETWORK // ${ssid:-unknown}//SECURITY // ${sec}//INTERFACE // $iface//Signal is a percentage of this adapter's best case, not a distance."
+        ;;
+
+    ports)
+        listeners=$(ss -ltnH 2>/dev/null | awk '{print $4}' | sed 's/.*://' | sort -un)
+        n=$(printf '%s' "$listeners" | grep -c . || true)
+        out "$n OPEN" "$([ "${n:-0}" -gt 8 ] && echo alert || echo signal)" "Services listening on this machine://PORTS // $(printf '%s' "$listeners" | paste -sd' ' -)//Each one is a way in if the firewall allows it."
+        ;;
+
+    connections)
+        n=$(ss -tnH state established 2>/dev/null | grep -c . || true)
+        busiest=$(ss -tnpH state established 2>/dev/null | sed -n 's/.*users:((\"\([^\"]*\)\".*/\1/p' | sort | uniq -c | sort -rn | head -n1 | awk '{print $2 " (" $1 ")"}')
+        out "$n OUT" signal "Established outbound connections // ${n:-0}//Busiest program // ${busiest:-unknown}"
+        ;;
+
+    auth)
+        if ! journalctl -b -q -n1 > /dev/null 2>&1; then
+            out "NO ACCESS" dim "Reading the journal needs membership of the systemd-journal group.//Run this yourself, then log out and back in://sudo usermod -aG systemd-journal $USER"
+            exit 0
+        fi
+        fails=$(journalctl -b -q --no-pager 2>/dev/null | grep -ciE "authentication failure|FAILED su|incorrect password" || true)
+        tone=signal
+        [ "${fails:-0}" -gt 0 ] && tone=alert
+        out "${fails:-0} FAILED" "$tone" "Failed login and sudo attempts since boot // ${fails:-0}//Counted from this boot's journal."
+        ;;
+
+    ssh)
+        if systemctl is-active --quiet sshd 2>/dev/null; then
+            who=$(who 2>/dev/null | awk '$NF ~ /^\(/ {print $1}' | sort -u | paste -sd' ' -)
+            out "RUNNING" alert "An SSH server is accepting connections on this machine.//Connected // ${who:-nobody}"
+        else
+            out "OFF" signal "No SSH server is running. Nothing can log in remotely this way."
+        fi
+        ;;
+
+    usb)
+        # Read from sysfs rather than lsusb, which is in usbutils and is not
+        # installed here -- it reported zero devices on a machine with several.
+        names=""
+        n=0
+        for d in /sys/bus/usb/devices/*; do
+            [ -r "$d/product" ] || continue
+            n=$((n + 1))
+            names="$names//$(cat "$d/product" 2>/dev/null)"
+        done
+        # Newly attached since the last look, which is the interesting half.
+        state="${XDG_STATE_HOME:-$HOME/.local/state}/wrayth"
+        mkdir -p "$state" 2>/dev/null
+        now=$(printf '%s' "$names" | md5sum | awk '{print $1}')
+        prev=$(cat "$state/usb" 2>/dev/null)
+        printf '%s' "$now" > "$state/usb" 2>/dev/null
+        if [ -n "$prev" ] && [ "$prev" != "$now" ]; then
+            out "$n DEVICES // NEW" alert "The set of attached USB devices changed since the last check.//Attached // ${n}${names}"
+        else
+            out "$n DEVICES" signal "Attached // ${n}${names}"
+        fi
+        ;;
+
+    miccam)
+        # Metadata only: whether something has the device open. No audio or
+        # video is ever read.
+        mic=$(pactl list source-outputs 2>/dev/null | grep -c "Source Output #" || true)
+        cam=0
+        for dev in /dev/video*; do
+            [ -e "$dev" ] || continue
+            fuser "$dev" > /dev/null 2>&1 && cam=$((cam + 1))
+        done
+        if [ "${mic:-0}" -gt 0 ] || [ "$cam" -gt 0 ]; then
+            out "IN USE" accent "MIC // $([ "${mic:-0}" -gt 0 ] && echo "in use by ${mic} stream(s)" || echo idle)//CAM // $([ "$cam" -gt 0 ] && echo "in use" || echo idle)//Only whether the device is open is read. No audio or video is ever sampled."
+        else
+            out "IDLE" signal "MIC // idle//CAM // idle//Only whether the device is open is read. No audio or video is ever sampled."
+        fi
+        ;;
+
+    battery)
+        b=$(ls -d /sys/class/power_supply/BAT* 2>/dev/null | head -n1)
+        if [ -z "$b" ]; then out "NO BATTERY" dim "This machine reports no battery."; exit 0; fi
+        full=$(cat "$b/energy_full" 2>/dev/null || cat "$b/charge_full" 2>/dev/null)
+        design=$(cat "$b/energy_full_design" 2>/dev/null || cat "$b/charge_full_design" 2>/dev/null)
+        if [ -n "$full" ] && [ -n "$design" ] && [ "$design" -gt 0 ]; then
+            health=$((full * 100 / design))
+            tone=signal; [ "$health" -lt 80 ] && tone=alert; [ "$health" -lt 60 ] && tone=accent
+            out "$health% HEALTH" "$tone" "Capacity now // $health% of its original//Wear // $((100 - health))%//Health is what the battery can still hold, not how full it is."
+        else
+            out "UNKNOWN" dim "This battery does not report its design capacity."
+        fi
+        ;;
+
+    thermal)
+        # **Is it throttling now**, which is the question -- not how often it
+        # ever has. The kernel's counter only goes up, so reading it alone had
+        # this permanently stuck on THROTTLED at 190508 events. The answer is
+        # whether it moved since the last look.
+        t=$(awk '{printf "%.0f", $1 / 1000}' /sys/class/thermal/thermal_zone0/temp 2>/dev/null)
+        thr=0
+        for f in /sys/devices/system/cpu/cpu*/thermal_throttle/core_throttle_count; do
+            [ -r "$f" ] || continue
+            c=$(cat "$f" 2>/dev/null || echo 0)
+            thr=$((thr + c))
+        done
+        state="${XDG_STATE_HOME:-$HOME/.local/state}/wrayth"
+        mkdir -p "$state" 2>/dev/null
+        prev=$(cat "$state/throttle" 2>/dev/null)
+        case $prev in '' | *[!0-9]*) prev=$thr ;; esac
+        printf '%s' "$thr" > "$state/throttle" 2>/dev/null
+        if [ "$thr" -gt "$prev" ]; then
+            out "THROTTLING" accent "The CPU is slowing itself to shed heat right now.//Events since the last check // $((thr - prev))//Total since boot // $thr//Temperature // ${t:-?} C"
+        else
+            out "NOMINAL" signal "The CPU is not slowing itself for heat.//Total throttle events since boot // $thr//Temperature // ${t:-?} C"
+        fi
+        ;;
+
+    disk)
+        read -r used avail pct <<< "$(df -h --output=used,avail,pcent / 2>/dev/null | tail -n1)"
+        n=${pct%\%}
+        tone=signal; [ "${n:-0}" -gt 80 ] && tone=alert; [ "${n:-0}" -gt 92 ] && tone=accent
+        out "$avail FREE" "$tone" "Root filesystem//Used // $used  ($pct)//Free // $avail"
+        ;;
+
+    time)
+        sync=$(timedatectl show -p NTPSynchronized --value 2>/dev/null)
+        if [ "$sync" = yes ]; then
+            out "SYNCED" signal "The clock is synchronised with a time server.//$(timedatectl show -p Timezone --value 2>/dev/null)"
+        else
+            out "NOT SYNCED" alert "The clock is not synchronised.//Certificates and logs depend on it being right.//To turn it on yourself // sudo timedatectl set-ntp true"
+        fi
+        ;;
+
+    reboot)
+        running=$(uname -r)
+        installed=$(pacman -Q linux 2>/dev/null | awk '{print $2}' | sed 's/\.arch/-arch/')
+        if [ -n "$installed" ] && [ "${running%%-arch*}" != "${installed%%-arch*}" ]; then
+            out "PENDING" alert "A newer kernel is installed than the one running.//Running // $running//Installed // $installed//A restart is needed to use it."
+        else
+            out "CURRENT" signal "The running kernel is the installed one.//Running // $running"
+        fi
+        ;;
+
+    docker)
+        if ! command -v docker > /dev/null 2>&1; then
+            out "NOT INSTALLED" dim "Docker is not installed on this machine."
+            exit 0
+        fi
+        if ! docker ps > /dev/null 2>&1; then
+            out "NO ACCESS" dim "Talking to the docker daemon needs membership of the docker group.//Run this yourself, then log out and back in://sudo usermod -aG docker $USER//Note that docker group membership is equivalent to root."
+            exit 0
+        fi
+        n=$(docker ps -q 2>/dev/null | grep -c . || true)
+        names=$(docker ps --format '{{.Names}}' 2>/dev/null | head -n4 | paste -sd'/' - | sed 's|/|//|g')
+        out "$n RUNNING" signal "Containers running // ${n:-0}//$names"
+        ;;
+
+    lab)
+        # Targets the user lists themselves, one "name host:port" per line.
+        f="${XDG_CONFIG_HOME:-$HOME/.config}/wrayth/lab-targets"
+        if [ ! -r "$f" ]; then
+            out "NONE SET" dim "No practice targets configured.//List them in ~/.config/wrayth/lab-targets, one per line://NAME host:port//e.g.  JUICE  127.0.0.1:3000"
+            exit 0
+        fi
+        up=0 total=0 detail=""
+        while read -r name hostport; do
+            [ -z "${name:-}" ] && continue
+            case "$name" in \#*) continue ;; esac
+            total=$((total + 1))
+            host=${hostport%%:*}; port=${hostport##*:}
+            # Positional args, not string interpolation: every line of this file
+            # is user-authored and must not be able to run as a command.
+            if timeout 2 bash -c 'exec 3<>/dev/tcp/"$0"/"$1"' "$host" "$port" 2> /dev/null; then
+                up=$((up + 1)); detail="$detail//$name // up"
+            else
+                detail="$detail//$name // down"
+            fi
+        done < "$f"
+        tone=signal; [ "$up" -lt "$total" ] && tone=alert
+        out "$up/$total UP" "$tone" "Practice targets${detail}"
+        ;;
+
+    *)
+        out "UNKNOWN" dim "No such daemon: $id"
+        exit 1
+        ;;
+esac

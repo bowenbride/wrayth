@@ -1,0 +1,150 @@
+#!/usr/bin/env python3
+"""Generate the deck terminal's emblem as a raw logo file.
+
+    wrayth-emblem ACCENT SIGNAL TEXT DIM OUTDIR
+
+Writes OUTDIR/emblem.raw and OUTDIR/emblem-small.raw: the distro's own logo
+(or wrayth's hazard fallback) with **per-character truecolour** baked in.
+
+fastfetch's own logo colouring has two slots for the whole image, which cannot
+express a fringe that depends on where a character sits in its run. So its
+markers are stripped and the colours are written in here instead, which a
+`file-raw` logo passes through untouched.
+
+The rule is chromatic aberration: each run of non-space characters gets an
+accent fringe on its left edge and a signal fringe on its right, fading into a
+body colour. It only ever looks at *where* a character is, so it works the same
+for any distro's logo and for the hazard fallback.
+"""
+import os
+import re
+import subprocess
+import sys
+
+ANSI = re.compile(r"\x1b\[[0-9;]*m")
+
+
+def hex_to_rgb(value):
+    value = value.lstrip("#")
+    return tuple(int(value[i:i + 2], 16) for i in (0, 2, 4))
+
+
+def blend(a, b, t):
+    """a moved toward b by t."""
+    t = max(0.0, min(1.0, t))
+    return tuple(round(a[i] * (1 - t) + b[i] * t) for i in range(3))
+
+
+def logo_lines(name):
+    """The logo as plain characters, with fastfetch's own colours stripped."""
+    try:
+        out = subprocess.run(
+            ["fastfetch", "-c", "none", "-s", "none", "-l", name, "--pipe", "false"],
+            capture_output=True, text=True, timeout=10,
+        ).stdout
+    except (OSError, subprocess.SubprocessError):
+        return []
+    return [ANSI.sub("", line).rstrip("\n") for line in out.split("\n")]
+
+
+def fallback_lines(path):
+    if not os.path.isfile(path):
+        return []
+    with open(path) as handle:
+        return [line.rstrip("\n") for line in handle]
+
+
+def colourise(lines, accent, signal, body):
+    """Per-character truecolour, one escape per character, reset per row."""
+    out = []
+    for line in lines:
+        # Runs of consecutive non-space characters.
+        runs = [(m.start(), m.end()) for m in re.finditer(r"\S+", line)]
+        row = []
+        cursor = 0
+        for start, end in runs:
+            row.append(line[cursor:start])
+            n = end - start
+            # A fringe is never wider than a third of its run: without the cap
+            # a two-character run would be all fringe and the aberration would
+            # read as noise rather than as an edge.
+            w = max(1, min(3, n // 3))
+            for i in range(n):
+                left = i
+                right = n - 1 - i
+                if left < w and left <= right:
+                    rgb = blend(accent, body, left / w)
+                elif right < w:
+                    rgb = blend(signal, body, right / w)
+                else:
+                    rgb = body
+                row.append("\x1b[38;2;%d;%d;%dm%s" % (rgb + (line[start + i],)))
+            cursor = end
+        row.append(line[cursor:])
+        out.append("".join(row) + "\x1b[0m")
+    return out
+
+
+def main():
+    if len(sys.argv) != 6:
+        sys.exit("usage: wrayth-emblem ACCENT SIGNAL TEXT DIM OUTDIR")
+    accent, signal, text, dim = (hex_to_rgb(v) for v in sys.argv[1:5])
+    outdir = sys.argv[5]
+    # The body is the text colour pulled 20% toward dim: present, but clearly
+    # behind the two fringes.
+    body = blend(text, dim, 0.2)
+
+    distro = ""
+    try:
+        with open("/etc/os-release") as handle:
+            for line in handle:
+                if line.startswith("ID="):
+                    distro = line.split("=", 1)[1].strip().strip('"')
+                    break
+    except OSError:
+        pass
+
+    known = ""
+    try:
+        known = subprocess.run(
+            ["fastfetch", "--list-logos", "--pipe"],
+            capture_output=True, text=True, timeout=10,
+        ).stdout.lower()
+    except (OSError, subprocess.SubprocessError):
+        pass
+
+    here = os.path.dirname(os.path.abspath(__file__))
+    fallback = os.path.join(os.path.dirname(here), "emblem-fallback.txt")
+    if not os.path.isfile(fallback):
+        fallback = os.path.expanduser("~/.config/wrayth/emblem-fallback.txt")
+
+    os.makedirs(outdir, exist_ok=True)
+    wrote = []
+    for suffix, name in (("", distro), ("-small", distro + "_small")):
+        lines = []
+        if distro and '"%s"' % name.lower() in known:
+            lines = logo_lines(name)
+        elif suffix == "":
+            # An unrecognised distro gets wrayth's own emblem.
+            lines = fallback_lines(fallback)
+        if not lines:
+            continue
+        # Trailing blank rows would push the fetch down for nothing.
+        while lines and not lines[-1].strip():
+            lines.pop()
+        path = os.path.join(outdir, "emblem%s.raw" % suffix)
+        # Written beside the target and renamed over it, so a reader -- the
+        # deck terminal printing its greeting while the shell regenerates the
+        # emblem at start-up -- sees the whole old file or the whole new one,
+        # never an empty or half-written one. (An in-place write lost that race
+        # on a fresh install: the first greeting showed fastfetch's plain logo.)
+        tmp = path + ".tmp"
+        with open(tmp, "w") as handle:
+            handle.write("\n".join(colourise(lines, accent, signal, body)) + "\n")
+        os.replace(tmp, path)
+        wrote.append(path)
+    print("\n".join(wrote))
+
+
+if __name__ == "__main__":
+    main()

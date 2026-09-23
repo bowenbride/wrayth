@@ -1,0 +1,58 @@
+// wrayth's deck-terminal fetch.
+//
+// The logo is handed in on the command line as a `file-raw` emblem that
+// wrayth-emblem generates -- per-character truecolour that fastfetch's two
+// colour slots could not express. Nothing about the logo is configured here.
+//
+// Every custom value comes from ~/.cache/wrayth/status through
+// wrayth-fetch. Nothing here runs a slow command.
+{
+  "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
+
+  "logo": {
+    "padding": { "top": 1, "right": 4 }
+  },
+
+  "display": {
+    "separator": "  ",
+    "key": { "width": 10 },
+    "color": { "keys": "90" }
+  },
+
+  "modules": [
+    // **`{$WR_TITLE}`, not `{user-name}@{host-name}`.** The title module
+    // expands environment variables, and `_wrayth_fetch` exports this one
+    // from the shell's status cache -- which is what lets demo mode mask the
+    // hostname for a recording without touching the system's. The function
+    // falls back to the real user and host, so this is never empty in an
+    // ordinary deck terminal; running fastfetch with this config by hand,
+    // outside that function, is the one case that shows a blank title.
+    { "type": "title", "format": "{$WR_TITLE}" },
+    "separator",
+    { "type": "os", "key": "OS", "format": "{pretty-name}" },
+    { "type": "kernel", "key": "KERNEL", "format": "{release}" },
+    { "type": "command", "key": "SESSION", "text": "$HOME/.local/bin/wrayth-fetch session" },
+    { "type": "command", "key": "PROFILE", "text": "$HOME/.local/bin/wrayth-fetch profile" },
+    { "type": "uptime", "key": "UPTIME" },
+    { "type": "command", "key": "QUEUE", "text": "$HOME/.local/bin/wrayth-fetch queue" },
+    { "type": "command", "key": "VULN", "text": "$HOME/.local/bin/wrayth-fetch vuln" },
+    { "type": "command", "key": "SHIELD", "text": "$HOME/.local/bin/wrayth-fetch shield" },
+    { "type": "command", "key": "ICE", "text": "$HOME/.local/bin/wrayth-fetch ice" },
+
+    // The welcome message, in the info column under the readout rather than
+    // below the logo -- which is what keeps the logo full height and the
+    // prompt directly beneath it instead of a screen further down.
+    //
+    // `custom` is the only module with no key and no indent, and its format
+    // expands {$VAR}, which is how generated text gets in here at all. The
+    // five slots keep this config static; wrayth-welcome fills as many as
+    // it has lines for and the rest render as blank rows, which cost nothing
+    // because the info column is shorter than the logo either way.
+    "break",
+    { "type": "custom", "format": "{$NR_WELCOME_1}" },
+    { "type": "custom", "format": "{$NR_WELCOME_2}" },
+    { "type": "custom", "format": "{$NR_WELCOME_3}" },
+    { "type": "custom", "format": "{$NR_WELCOME_4}" },
+    { "type": "custom", "format": "{$NR_WELCOME_5}" }
+  ]
+}

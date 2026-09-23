@@ -1,0 +1,180 @@
+#!/usr/bin/env bash
+# The deck terminal's welcome message.
+#
+#   wrayth-welcome          print the lines, coloured
+#   wrayth-welcome --env    print NR_WELCOME_1..5 shell assignments
+#
+# It lives in fastfetch's right-hand info column, under the readout, so the
+# logo keeps its full height and the prompt lands directly below it. That is
+# what --env is for: fastfetch's `custom` module expands {$VAR}, which is the
+# only way to get generated text into that column.
+#
+# Every line must fit one row of the info column, so the templates are short
+# and are not reflowed. At most three status lines are shown, highest priority
+# first -- the column has room for the greeting, three, and the closing without
+# pushing the prompt past the logo.
+#
+# It reads only ~/.cache/wrayth/status and ~/.config/wrayth/runner, plus
+# one call to wrayth-daemon for the kernel check, so it costs nothing.
+set -u
+
+cache="${XDG_CACHE_HOME:-$HOME/.cache}/wrayth/status"
+conf="${XDG_CONFIG_HOME:-$HOME/.config}/wrayth"
+state="${XDG_STATE_HOME:-$HOME/.local/state}/wrayth"
+
+QUEUE_DONE=0 QUEUE_TOTAL=0 QUEUE_ACTIVE=""
+VULN=0 VULN_HIGH=0 VULN_FIXABLE=0 ICE=0 PKG=0 SHIELD=UNKNOWN SHIELD_FW=
+# shellcheck disable=SC1090
+[ -r "$cache" ] && . "$cache" 2> /dev/null
+
+bright=$'\e[97m'
+text=$'\e[37m'
+dim=$'\e[90m'
+signal=$'\e[36m'
+accent=$'\e[31m'
+alert=$'\e[33m'
+off=$'\e[0m'
+
+# --- Who and when ------------------------------------------------------------
+
+# **The status cache wins.** The shell puts the handle there so demo mode can
+# mask it for a recording; without that key this falls through to the runner
+# file exactly as it always did.
+handle=""
+if [ -r "$cache" ]; then
+    handle=$(sed -n "s/^HANDLE='\(.*\)'\$/\1/p" "$cache" | tail -n1)
+fi
+if [ -z "$handle" ] && [ -r "$conf/runner" ]; then
+    handle=$(sed -n 's/^[[:space:]]*handle[[:space:]]*=[[:space:]]*//p' "$conf/runner" | tail -n1)
+fi
+if [ -z "$handle" ]; then
+    handle=${USER:-runner}
+    handle=$(printf '%s' "${handle^}")
+fi
+
+session=$(cat "$state/session" 2> /dev/null)
+case $session in '' | *[!0-9]*) session=1 ;; esac
+session=$((10#$session))
+
+# --- Helpers -----------------------------------------------------------------
+
+words=(zero one two three four five six seven eight nine ten eleven twelve)
+spell() {
+    local n=$1
+    if [ "$n" -ge 0 ] && [ "$n" -le 12 ]; then printf '%s' "${words[$n]}"; else printf '%s' "$n"; fi
+}
+Spell() { local w; w=$(spell "$1"); printf '%s' "${w^}"; }
+plural() { [ "$1" -eq 1 ] && printf '%s' "$2" || printf '%s' "$3"; }
+
+pick() {
+    local n=$#
+    local i=$((RANDOM % n + 1))
+    printf '%s' "${!i}"
+}
+
+lines=()
+add() { lines+=("$1$2$off"); }
+
+# --- Greeting ----------------------------------------------------------------
+
+hour=$(date +%-H)
+if   [ "$hour" -ge 5 ]  && [ "$hour" -lt 12 ]; then part=morning
+elif [ "$hour" -ge 12 ] && [ "$hour" -lt 17 ]; then part=afternoon
+elif [ "$hour" -ge 17 ] && [ "$hour" -lt 23 ]; then part=evening
+else part=late
+fi
+
+case $part in
+    morning)   greeting=$(pick "Good morning, $handle. Session $session is live." "Welcome back, $handle. Session $session initialised.") ;;
+    afternoon) greeting=$(pick "Good afternoon, $handle. Session $session is live." "Welcome back, $handle. Session $session initialised.") ;;
+    evening)   greeting=$(pick "Good evening, $handle. Session $session is live." "Welcome back, $handle. Session $session initialised.") ;;
+    late)      greeting=$(pick "Late session $session, $handle. Rest is advised." "Welcome back, $handle. Session $session initialised.") ;;
+esac
+add "$bright" "$greeting"
+
+# --- Status, in priority order, capped at three ------------------------------
+
+status=()
+tones=()
+push() { status+=("$2"); tones+=("$1"); }
+
+# 1. Failed services.
+if [ "${ICE:-0}" -gt 0 ]; then
+    n=$(spell "$ICE"); N=$(Spell "$ICE")
+    push "$alert" "$(pick \
+        "$N failed $(plural "$ICE" service services). Check ICE before trusting this machine." \
+        "Integrity warning: $n $(plural "$ICE" service services) down. Diagnostics advised.")"
+fi
+
+# 2. Fixes ready.
+if [ "${VULN_FIXABLE:-0}" -gt 0 ]; then
+    n=$(spell "$VULN_FIXABLE"); N=$(Spell "$VULN_FIXABLE")
+    push "$accent" "$(pick \
+        "$N vulnerability $(plural "$VULN_FIXABLE" fix fixes) ready. Update before anything else." \
+        "Patches available for $n $(plural "$VULN_FIXABLE" package packages). Update now.")"
+fi
+
+# 3. Reboot pending. The same check the REBOOT daemon makes, whether or not
+#    that daemon is on the HUD -- so it is asked for rather than duplicated.
+reboot_state=$("$HOME/.local/bin/wrayth-daemon" reboot 2> /dev/null | cut -d'|' -f1)
+if [ "${reboot_state:-}" = PENDING ]; then
+    push "$alert" "$(pick \
+        "Kernel update installed. Restart to apply it." \
+        "A restart is needed to load the new kernel.")"
+fi
+
+# 4. Vulnerabilities.
+if [ "${VULN:-0}" -gt 0 ]; then
+    n=$(spell "$VULN"); N=$(Spell "$VULN"); h=$(spell "$VULN_HIGH")
+    push "$alert" "$(pick \
+        "Watching $n vulnerabilities, $h high. No patches yet." \
+        "$N known vulnerabilities, $h high severity. Fixes pending upstream.")"
+else
+    push "$signal" "No known vulnerabilities. Sweep clean."
+fi
+
+# 5. Firewall. Warn only on a confirmed DOWN; UNKNOWN means the check could not
+# read the firewall state, which must not be dressed up as an open machine.
+if [ "$SHIELD" = DOWN ]; then
+    push "$accent" "$(pick \
+        "Firewall down. Incoming connections are unfiltered." \
+        "Shield offline. Unsolicited connections are getting through.")"
+elif [ "$SHIELD" = UNKNOWN ]; then
+    push "$text" "Firewall state could not be determined."
+fi
+
+# 6. Updates pending -- only when no fixes line was shown.
+if [ "${VULN_FIXABLE:-0}" -eq 0 ] && [ "${PKG:-0}" -gt 0 ]; then
+    N=$(Spell "$PKG")
+    push "$text" "$(pick \
+        "$N package updates pending." \
+        "$N updates queued in the repositories.")"
+fi
+
+if [ "${#status[@]}" -eq 0 ]; then
+    add "$signal" "All systems nominal."
+else
+    for i in 0 1 2; do
+        [ "$i" -lt "${#status[@]}" ] || break
+        add "${tones[$i]}" "${status[$i]}"
+    done
+fi
+
+# --- Closing -----------------------------------------------------------------
+
+add "$dim" "$(pick "Standing by." "Awaiting input." "Ready when you are.")"
+
+# --- Output ------------------------------------------------------------------
+
+if [ "${1:-}" = --env ]; then
+    # Five slots, so the fastfetch config can be static. Unused ones are empty
+    # and render as blank rows, which cost nothing: the info column is shorter
+    # than the logo either way.
+    for i in 1 2 3 4 5; do
+        printf 'NR_WELCOME_%d=%q\n' "$i" "${lines[$((i - 1))]:-}"
+    done
+else
+    printf '\n'
+    for l in "${lines[@]}"; do printf '%s\n' "$l"; done
+    printf '\n'
+fi

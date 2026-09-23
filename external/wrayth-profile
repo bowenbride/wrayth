@@ -1,0 +1,247 @@
+#!/usr/bin/env bash
+# Switch the wrayth colour profile from a terminal.
+#
+#   wrayth-profile              print the active profile and the six names
+#   wrayth-profile <Name>       apply one (case-insensitive)
+#   wrayth-profile -n <Name>    the same, without writing the profile file --
+#                                  what the shell uses, since it has just
+#                                  written the file itself and would otherwise
+#                                  be told about its own change
+#
+# Writes ~/.config/wrayth/profile, which the shell watches and follows, then
+# does the two things the shell cannot: regenerate kitty's colours and signal
+# running kitty instances, and set Hyprland's border colours.
+#
+# The palette below is a second copy of the one in config/Profiles.qml. It has
+# to be, because this script must work with the shell stopped. Change one and
+# change the other. Custom profiles are read from custom-profiles.json and
+# their two derived tokens computed here by the same factors, for the same
+# reason: a custom profile has to keep working when the shell is not running.
+set -u
+
+CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}"
+PROFILE_FILE="$CONFIG/wrayth/profile"
+KITTY_COLORS="$CONFIG/kitty/wrayth-colors.conf"
+
+NAMES=(Circuit Sodium Prism Redline Oxide Cobalt)
+CUSTOM_FILE="$CONFIG/wrayth/custom-profiles.json"
+
+# ground deep text bright dim mute accent signal alert hair
+palette() {
+    case "$1" in
+        Circuit) echo "0B0D10 05070A C9D1D9 E6EDF3 7D8894 56606B FF3B45 4FC3C9 E8E03A 2A323C" ;;
+        Sodium)  echo "0C0C0A 070706 D6D3C8 F2EFE4 8A877B 5A5850 F2E94E 36D6E7 FF3B45 2E2D27" ;;
+        Prism)   echo "0B0913 06040C D4CFE6 F0ECFA 8A83A3 5A5470 FF2E88 3FD7FF FFE066 2E2640" ;;
+        Redline) echo "060606 000000 E2E3E5 F7F7F8 878C92 4A4E53 FF1A1A 9EA7B0 FFC23D 2B2E32" ;;
+        Oxide)   echo "0D0A07 070504 D9CDBE F4EADC 8C7E6E 5A4E41 FF9F1C 5FB3A8 FF4B3E 33291F" ;;
+        Cobalt)  echo "080B10 04060A D3DBE6 F2F6FB 8390A2 4C5869 3D8BFF A9B8C8 FF4D4D 243042" ;;
+        *) custom_palette "$1" ;;
+    esac
+}
+
+# A custom profile stores only the nine colours it was authored with; `deep`
+# and `mute` are derived here by exactly the factors config/Profiles.qml uses,
+# and the two must be changed together for the same reason the preset table
+# must. Names are matched case-insensitively, like the presets'.
+custom_python() {
+    python3 - "$CUSTOM_FILE" "$1" "$2" <<'PYEOF'
+import json, sys
+path, want, mode = sys.argv[1], sys.argv[2], sys.argv[3]
+try:
+    with open(path) as fh:
+        profiles = json.load(fh).get("profiles", [])
+except Exception:
+    profiles = []
+
+if mode == "names":
+    print("\n".join(p["name"] for p in profiles if isinstance(p.get("name"), str)))
+    raise SystemExit(0)
+
+entry = next((p for p in profiles
+              if isinstance(p.get("name"), str)
+              and p["name"].lower() == want.lower()), None)
+if not entry:
+    raise SystemExit(1)
+
+if mode == "resolve":
+    print(entry["name"])
+    raise SystemExit(0)
+
+c = entry.get("colors", {})
+need = ("ground", "panel", "hair", "text", "bright", "dim",
+        "signal", "accent", "alert")
+if not all(isinstance(c.get(k), str) for k in need):
+    raise SystemExit(1)
+# **Each colour must be a real hex triple.** These strings are interpolated
+# into a `hyprctl eval` Lua expression downstream; a value like `")); os.exec…`
+# would otherwise run as Lua. Reject the whole profile if any colour is not
+# exactly six hex digits (with an optional leading #).
+import re
+if not all(re.fullmatch(r"#?[0-9A-Fa-f]{6}", c[k]) for k in need):
+    raise SystemExit(1)
+
+def rgb(h):
+    h = h.lstrip("#")
+    return [int(h[i:i + 2], 16) for i in (0, 2, 4)]
+
+def hexa(v):
+    return "".join(f"{max(0, min(255, round(x))):02X}" for x in v)
+
+def mix(a, b, t):
+    x, y = rgb(a), rgb(b)
+    return hexa([x[i] + (y[i] - x[i]) * t for i in range(3)])
+
+deep = hexa([v - 6 for v in rgb(c["ground"])])
+mute = mix(c["dim"], c["hair"], 0.56)
+print(" ".join(x.lstrip("#").upper() for x in (
+    c["ground"], "#" + deep, c["text"], c["bright"], c["dim"], "#" + mute,
+    c["accent"], c["signal"], c["alert"], c["hair"])))
+PYEOF
+}
+
+custom_palette() { custom_python "$1" palette; }
+
+resolve() {
+    local want=${1,,}
+    for n in "${NAMES[@]}"; do
+        [ "${n,,}" = "$want" ] && { printf '%s' "$n"; return 0; }
+    done
+    custom_python "$1" resolve 2>/dev/null
+}
+
+all_names() {
+    local customs
+    customs=$(custom_python "" names 2>/dev/null)
+    printf '%s' "${NAMES[*]}"
+    [ -n "$customs" ] && printf ' %s' "$(echo "$customs" | tr '\n' ' ')"
+    printf '\n'
+}
+
+current() {
+    local c
+    c=$(tr -d '[:space:]' < "$PROFILE_FILE" 2>/dev/null)
+    resolve "${c:-Circuit}" || printf 'Circuit'
+}
+
+write_profile=1
+if [ "${1:-}" = "-n" ] || [ "${1:-}" = "--no-write" ]; then
+    write_profile=0
+    shift
+fi
+
+if [ $# -eq 0 ]; then
+    printf 'active: %s\n' "$(current)"
+    printf 'profiles: %s\n' "$(all_names)"
+    exit 0
+fi
+
+name=$(resolve "$1")
+[ -n "$name" ] || {
+    printf 'wrayth-profile: unknown profile %s\n' "$1" >&2
+    printf 'profiles: %s\n' "$(all_names)" >&2
+    exit 1
+}
+
+read -r ground deep text bright dim mute accent signal alert hair <<< "$(palette "$name")"
+[ -n "${hair:-}" ] || {
+    printf 'wrayth-profile: %s has no usable palette\n' "$name" >&2
+    exit 1
+}
+
+# 1. The profile file. The shell watches this and recolours itself.
+if [ "$write_profile" -eq 1 ]; then
+    mkdir -p "$(dirname "$PROFILE_FILE")"
+    printf '%s\n' "$name" > "$PROFILE_FILE"
+fi
+
+# 2. kitty. Included from kitty.conf; SIGUSR1 makes live instances re-read it.
+# The deck terminal's emblem carries per-character truecolour baked in, so it
+# has to be regenerated whenever the palette changes. This is the one place
+# that knows both the profile and its colours.
+EMBLEM_SCRIPT="$HOME/.local/bin/wrayth-emblem"
+if [ -x "$EMBLEM_SCRIPT" ]; then
+    "$EMBLEM_SCRIPT" "#$accent" "#$signal" "#$text" "#$dim" \
+        "${XDG_CACHE_HOME:-$HOME/.cache}/wrayth" > /dev/null 2>&1 || true
+fi
+
+mkdir -p "$(dirname "$KITTY_COLORS")"
+cat > "$KITTY_COLORS" <<EOF
+# Generated by wrayth-profile. Profile: $name
+background            #$ground
+foreground            #$text
+# The cursor is the profile's ordinary text colour, not the accent: it is a
+# position, not a state, and an accent block competed with the accent sigil
+# sitting right beside it. The character under it takes the ground so it stays
+# readable.
+cursor                #$text
+cursor_text_color     #$ground
+# Selection reverses, the way a default terminal does: the profile's near-white
+# on its darkest ground. An accent wash tinted the selected text differently in
+# every profile; this is the same contrast in all six.
+selection_background  #$bright
+selection_foreground  #$ground
+background_opacity    0.85
+
+color0  #$deep
+color8  #$mute
+color1  #$accent
+color9  #$accent
+color2  #$signal
+color10 #$signal
+color3  #$alert
+color11 #$alert
+color4  #$signal
+color12 #$signal
+color5  #$accent
+color13 #$accent
+color6  #$signal
+color14 #$signal
+color7  #$text
+color15 #$bright
+
+active_tab_background    #$accent
+active_tab_foreground    #$ground
+inactive_tab_background  #$ground
+inactive_tab_foreground  #$dim
+
+tab_bar_background       #$ground
+# Deliberately \`none\`. kitty's tab bar is a grid of whole cells, and the pixels
+# left over at each end are painted by \`update_blank_rects\`. With a colour set
+# here they all take that one colour, which shows as a grey line near each end.
+# With it unset they take \`tab_bar_left_edge_color\` / \`tab_bar_right_edge_color\`
+# instead -- the background of the strip's own first and last cell -- so the
+# left leftover becomes the red TTY block and the right one the strip
+# background, and both disappear.
+#
+# The bottom margin then falls back to the default background, and the line at
+# the foot of the strip is drawn by tab_bar.py as a per-cell underline instead
+# -- accent under the red block, hair under the rest.
+tab_bar_margin_color     none
+# Unused by the shell (there are no window splits), so it carries the hair
+# colour for that underline, which has no palette slot of its own.
+inactive_border_color    #$hair
+EOF
+pkill -USR1 -x kitty 2>/dev/null
+
+# 3. Hyprland borders. This config is Lua, so `hyprctl keyword` does not work --
+#    the values go through an eval of hl.config.
+if command -v hyprctl > /dev/null 2>&1; then
+    hyprctl --instance 0 eval "hl.config({
+        [\"general.col.active_border\"]     = \"rgba(${accent}FF)\",
+        [\"general.col.inactive_border\"]   = \"rgba(${hair}FF)\",
+        [\"group.col.border_active\"]       = \"rgba(${accent}FF)\",
+        [\"group.col.border_inactive\"]     = \"rgba(${hair}FF)\",
+        [\"group.col.border_locked_active\"]   = \"rgba(${accent}FF)\",
+        [\"group.col.border_locked_inactive\"] = \"rgba(${hair}FF)\",
+    })" > /dev/null 2>&1
+
+    # The deck terminal's frame follows the panels around it, not the focus
+    # state: `hair` whether focused or not. It is a window rule rather than a
+    # global, so it has to be re-emitted per profile.
+    hyprctl --instance 0 eval "hl.window_rule({
+        match        = { class = \"wrayth-deck\" },
+        border_color = \"rgba(${hair}FF) rgba(${hair}FF)\",
+    })" > /dev/null 2>&1
+fi
+
+printf '%s\n' "$name"

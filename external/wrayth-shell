@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+#
+# wrayth-shell -- start the wrayth shell, and never leave a locked session
+# without a lockscreen.
+#
+# Hyprland's start-up runs this instead of `qs -c wrayth` directly. It runs the
+# shell in the foreground and waits. When the shell exits:
+#
+#   - if Hyprland says the session is still locked (`hyprctl locked`), the lock
+#     client has died -- a crash, a kill, or the lockscreen handing itself to a
+#     fresh process after it lost the keyboard -- so the shell is started again
+#     at once. The new shell sees the lock at start-up and takes it over
+#     (Hyprland allows that with misc:allow_session_lock_restore, which
+#     hypr-wrayth.lua sets). The session is never unlocked in between: the old
+#     client never sent an unlock, so Hyprland kept the session locked;
+#   - otherwise the shell was stopped on purpose, and this script stops too.
+#
+# Nothing here can unlock anything. It only ever starts a lockscreen.
+#
+# WRAYTH_QS_ARGS overrides how the shell is started (default `-c wrayth`); the
+# build's lock tests use it to point at a scratch copy with a test PAM stack.
+
+set -u
+
+read -r -a QS_ARGS <<< "${WRAYTH_QS_ARGS:--c wrayth}"
+
+runtime="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+tag="$(printf '%s' "${QS_ARGS[*]}" | cksum | cut -d' ' -f1)"
+
+# One supervisor per shell per login: a second one exits at once.
+exec 9> "$runtime/wrayth-shell-$tag.lock"
+flock -n 9 || exit 0
+
+locked() {
+    [ "$(hyprctl locked 2> /dev/null)" = "true" ]
+}
+
+# A live instance answers IPC; -n below makes a duplicate exit at once, and
+# this tells that apart from a death.
+alive() {
+    qs "${QS_ARGS[@]}" ipc show > /dev/null 2>&1
+}
+
+starts=()
+while :; do
+    WRAYTH_SUPERVISED=1 qs "${QS_ARGS[@]}" -n > /dev/null 2>&1 9>&-
+    rc=$?
+
+    locked || exit "$rc"
+    # Another instance is running and holding things; leave it be.
+    alive && exit 0
+
+    # Relaunch straight away, but back off if the shell keeps dying: more than
+    # five starts in thirty seconds waits five seconds between tries. It never
+    # gives up while the session is locked -- giving up is the wedge.
+    now=$(date +%s)
+    kept=()
+    for t in "${starts[@]}"; do
+        [ $((now - t)) -lt 30 ] && kept+=("$t")
+    done
+    starts=("${kept[@]}" "$now")
+    if [ "${#starts[@]}" -gt 5 ]; then
+        sleep 5
+    else
+        sleep 0.2
+    fi
+done

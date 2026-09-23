@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+# One field of the deck terminal's fetch, printed from the shell's status cache.
+#
+# Nothing here runs a slow command. Every figure is one the shell already keeps
+# current in ~/.cache/wrayth/status, which is the same rule the terminals'
+# status line follows -- a fetch that shelled out to checkupdates or arch-audit
+# would put seconds on every deck open.
+#
+# Colours are kitty's ANSI palette slots, which wrayth-profile regenerates
+# per profile, so this follows the profile without knowing the palette.
+set -u
+
+cache="${XDG_CACHE_HOME:-$HOME/.cache}/wrayth/status"
+state="${XDG_STATE_HOME:-$HOME/.local/state}/wrayth"
+
+QUEUE_DONE=0 QUEUE_TOTAL=0 VULN=0 VULN_HIGH=0 ICE=0 PKG=0
+SHIELD=UNKNOWN SHIELD_FW= PROFILE=Circuit
+# shellcheck disable=SC1090
+[ -r "$cache" ] && . "$cache" 2> /dev/null
+
+accent=$'\e[31m'
+signal=$'\e[36m'
+dim=$'\e[90m'
+off=$'\e[0m'
+
+case "${1:-}" in
+    session)
+        n=$(cat "$state/session" 2> /dev/null)
+        case $n in '' | *[!0-9]*) n=1 ;; esac
+        printf '%02d // LOCAL LAB' "$n"
+        ;;
+    profile)
+        printf '%s' "$(printf '%s' "$PROFILE" | tr '[:lower:]' '[:upper:]')"
+        ;;
+    queue)
+        printf '%s/%s CLEARED' "$QUEUE_DONE" "$QUEUE_TOTAL"
+        ;;
+    vuln)
+        # Accent above zero: the one figure here that is a warning.
+        if [ "${VULN:-0}" -gt 0 ]; then
+            printf '%s%s ON WATCH%s' "$accent" "$VULN" "$off"
+        else
+            printf '%s ON WATCH' "$VULN"
+        fi
+        ;;
+    shield)
+        # Name the firewall when armed; UNKNOWN (dim) is not the same as DOWN
+        # (accent) -- a check that could not read the state is not an open box.
+        if [ "$SHIELD" = ARMED ]; then
+            if [ -n "$SHIELD_FW" ]; then
+                printf '%sARMED // %s%s' "$signal" "$(printf '%s' "$SHIELD_FW" | tr '[:lower:]' '[:upper:]')" "$off"
+            else
+                printf '%sARMED%s' "$signal" "$off"
+            fi
+        elif [ "$SHIELD" = DOWN ]; then
+            printf '%sDOWN%s' "$accent" "$off"
+        else
+            printf '%sUNKNOWN%s' "$dim" "$off"
+        fi
+        ;;
+    ice)
+        if [ "${ICE:-0}" -gt 0 ]; then
+            printf '%sBREACH // %s FAILED%s' "$accent" "$ICE" "$off"
+        else
+            printf '%sNOMINAL%s' "$signal" "$off"
+        fi
+        ;;
+    *)
+        exit 1
+        ;;
+esac

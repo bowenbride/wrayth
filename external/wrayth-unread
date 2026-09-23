@@ -1,0 +1,188 @@
+#!/usr/bin/env python3
+"""Report whether the chat client's tray icon is showing unread messages.
+
+    wrayth-unread            print `read`, `unread` or `absent` once
+    wrayth-unread --watch    print a line whenever it changes, and on start
+
+**This reads an icon, never a message.** The only thing it looks at is the
+pixmap the client publishes on its StatusNotifierItem, and the only thing it
+decides is whether that pixmap has any saturated colour in it.
+
+That test comes from measuring the real thing rather than guessing at a
+colour: with nothing unread the official Discord client's tray icon is
+greyscale -- 357 opaque pixels and zero saturated -- and its unread state
+adds a red badge. Anything strongly coloured therefore means unread, which
+survives the client changing the exact shade of its badge.
+
+It subscribes to the item's own `NewIcon` signal; it does not poll. Nothing
+is written to disk, and no message content is ever touched.
+
+GDBus through python-gobject, which is already installed -- deliberately not
+`pydbus`, which would be a new dependency for one bus connection.
+"""
+
+import argparse
+import sys
+
+import gi
+gi.require_version("Gio", "2.0")
+from gi.repository import Gio, GLib  # noqa: E402
+
+ITEM_IFACE = "org.kde.StatusNotifierItem"
+WATCHER_NAME = "org.kde.StatusNotifierWatcher"
+WATCHER_PATH = "/StatusNotifierWatcher"
+
+# Bus ids that are a chat client worth watching.
+WANTED = ("discord", "vesktop", "webcord", "equibop")
+
+# A pixel counts as coloured if it is bright enough to see and far enough from
+# grey to be a badge rather than antialiasing on a white logo.
+MIN_VALUE = 110
+MIN_CHROMA = 60
+# One stray pixel is noise; a badge is tens of them.
+MIN_PIXELS = 8
+
+
+def get_property(conn, name, path, iface, prop):
+    reply = conn.call_sync(
+        name, path, "org.freedesktop.DBus.Properties", "Get",
+        GLib.Variant("(ss)", (iface, prop)), GLib.VariantType("(v)"),
+        Gio.DBusCallFlags.NONE, 4000, None,
+    )
+    return reply.unpack()[0]
+
+
+def find_item(conn):
+    """(bus name, object path) of a chat client's tray item, or None."""
+    try:
+        registered = get_property(
+            conn, WATCHER_NAME, WATCHER_PATH, WATCHER_NAME,
+            "RegisteredStatusNotifierItems",
+        )
+    except GLib.Error:
+        return None
+    for entry in registered:
+        name, sep, tail = entry.partition("/")
+        path = sep + tail if sep else "/StatusNotifierItem"
+        try:
+            item_id = get_property(conn, name, path, ITEM_IFACE, "Id")
+        except GLib.Error:
+            continue
+        if any(w in str(item_id).lower() for w in WANTED):
+            return name, path
+    return None
+
+
+def classify(conn, target):
+    """`unread`, `read`, or `absent` if the icon cannot be read."""
+    if target is None:
+        return "absent"
+    name, path = target
+    try:
+        pixmaps = get_property(conn, name, path, ITEM_IFACE, "IconPixmap")
+    except GLib.Error:
+        return "absent"
+    if not pixmaps:
+        return "absent"
+    # The largest pixmap: the badge is a few pixels, so resolution helps.
+    _, _, data = max(pixmaps, key=lambda p: p[0] * p[1])
+    coloured = 0
+    for i in range(0, len(data) - 3, 4):
+        alpha, r, g, b = data[i], data[i + 1], data[i + 2], data[i + 3]
+        if alpha < 40:
+            continue
+        high, low = max(r, g, b), min(r, g, b)
+        if high > MIN_VALUE and high - low > MIN_CHROMA:
+            coloured += 1
+            if coloured >= MIN_PIXELS:
+                return "unread"
+    return "read"
+
+
+def die_with_parent():
+    """End this watcher when the shell that started it ends.
+
+    It spends its life in a GLib loop and only writes when something changes,
+    so it never notices its reader has gone: every shell that was killed or
+    handed over to a fresh process left one of these running for ever (22 were
+    found after a day of lockscreen testing). The kernel is asked to send
+    SIGTERM when the parent exits, and a watcher that is already orphaned
+    leaves at once. Linux-only; elsewhere it quietly does nothing.
+    """
+    try:
+        import ctypes
+        import os
+        import signal
+
+        PR_SET_PDEATHSIG = 1
+        ctypes.CDLL(None, use_errno=True).prctl(PR_SET_PDEATHSIG, signal.SIGTERM)
+        if os.getppid() == 1:
+            sys.exit(0)
+    except (OSError, AttributeError):
+        pass
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser(add_help=True, description=__doc__)
+    ap.add_argument("--watch", action="store_true")
+    args = ap.parse_args(argv)
+
+    conn = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+
+    if not args.watch:
+        print(classify(conn, find_item(conn)), flush=True)
+        return 0
+
+    die_with_parent()
+
+    state = {"value": None, "target": None, "subscription": None}
+
+    def emit(value):
+        if value != state["value"]:
+            state["value"] = value
+            print(value, flush=True)
+
+    def on_change(*_args):
+        emit(classify(conn, state["target"]))
+
+    def attach():
+        target = find_item(conn)
+        if target == state["target"] and state["subscription"] is not None:
+            return
+        if state["subscription"] is not None:
+            conn.signal_unsubscribe(state["subscription"])
+            state["subscription"] = None
+        state["target"] = target
+        if target is None:
+            emit("absent")
+            return
+        name, path = target
+        # The item's own change signals. No polling.
+        state["subscription"] = conn.signal_subscribe(
+            name, ITEM_IFACE, None, path, None,
+            Gio.DBusSignalFlags.NONE, on_change,
+        )
+        emit(classify(conn, target))
+
+    attach()
+
+    # The client starting or stopping is a bus name coming or going, which is
+    # a signal too -- so a restart of either side re-attaches without polling.
+    def on_name_owner(_conn, _sender, _obj, _iface, _signal, params):
+        name = params.unpack()[0]
+        if state["target"] is not None and name == state["target"][0]:
+            attach()
+        elif state["target"] is None:
+            attach()
+
+    conn.signal_subscribe(
+        "org.freedesktop.DBus", "org.freedesktop.DBus", "NameOwnerChanged",
+        "/org/freedesktop/DBus", None, Gio.DBusSignalFlags.NONE, on_name_owner,
+    )
+
+    GLib.MainLoop().run()
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

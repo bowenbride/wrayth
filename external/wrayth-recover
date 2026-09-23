@@ -1,0 +1,165 @@
+#!/usr/bin/env bash
+#
+# wrayth-recover -- bring a stuck lockscreen back, from a text console.
+#
+# Use it when the screen is locked and you cannot get back in: Hyprland shows
+# "it looks like you locked your screen but the lock screen app died", or the
+# lockscreen is up but will not take your password. From the lock:
+#
+#   1. press Ctrl+Alt+F3 (any free console) and log in as yourself;
+#   2. type:   ~/.local/bin/wrayth-recover
+#   3. press the Ctrl+Alt+F<n> it tells you, and type your password.
+#
+# It works out everything a graphical program needs (the runtime directory,
+# Hyprland's instance and Wayland display) by itself, so nothing has to be
+# exported by hand. It ends the wrayth shell and lets its supervisor start one
+# new one, which takes over the existing lock -- whether the old lockscreen
+# was working, dead or frozen, exactly one fresh lockscreen is left. It unlocks
+# nothing: you still type your password on the new lockscreen. Your open
+# windows are kept.
+#
+# If it cannot recover, it prints the last resort -- ending the session -- with
+# your session's number already filled in.
+#
+# WRAYTH_QS_ARGS overrides how the shell is started (default `-c wrayth`), as
+# for wrayth-shell.
+
+set -u
+
+read -r -a QS_ARGS <<< "${WRAYTH_QS_ARGS:--c wrayth}"
+here="$(dirname "$(readlink -f "$0")")"
+
+say() { printf '%s\n' "$*"; }
+
+last_resort() {
+    local session=${1:-}
+    say ""
+    say "LAST RESORT -- ending the session. This closes every open window and"
+    say "loses anything unsaved in them; you then log in again from scratch."
+    if [ -n "$session" ]; then
+        say "Your graphical session is number $session. Type:"
+        say ""
+        say "    sudo loginctl terminate-session $session"
+    else
+        say "Type 'loginctl list-sessions' and read the SESSION number on the row"
+        say "whose TTY is the console your desktop runs on (usually tty1). Then type,"
+        say "with that number in place of NUMBER:"
+        say ""
+        say "    sudo loginctl terminate-session NUMBER"
+    fi
+}
+
+export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+# A bare console can have no locale at all; Qt then prints a warning on
+# stdout, which would spoil every answer read back from `qs ipc`.
+[ -n "${LANG:-}${LC_ALL:-}" ] || export LC_ALL=C.UTF-8
+
+# The Hyprland running for this user: `hyprctl instances` lists the live ones,
+# newest last, with the Wayland socket each one serves.
+inst_json="$(hyprctl instances -j 2> /dev/null)"
+read -r sig pid socket < <(printf '%s' "$inst_json" | python3 -c '
+import json, sys
+try:
+    rows = json.load(sys.stdin)
+except Exception:
+    rows = []
+rows = [r for r in rows if r.get("instance")]
+if rows:
+    r = max(rows, key=lambda r: r.get("time", 0))
+    print(r["instance"], r.get("pid", ""), r.get("wl_socket", ""))
+')
+
+if [ -z "${sig:-}" ]; then
+    say "No running Hyprland found for $USER, so there is no lock to recover."
+    say "If the screen is still stuck, the session is gone: log in again normally."
+    exit 1
+fi
+export HYPRLAND_INSTANCE_SIGNATURE="$sig"
+export WAYLAND_DISPLAY="${socket:-wayland-1}"
+
+# The console the desktop is on, and its logind session, for the messages.
+vt="$(ps -o tty= -p "$pid" 2> /dev/null | tr -dc '0-9')"
+session="$(loginctl show-session "$(cat "/proc/$pid/sessionid" 2> /dev/null)" -p Id --value 2> /dev/null)"
+back="Ctrl+Alt+F${vt:-1}"
+
+# One recovery at a time: a second copy exits rather than race the first.
+exec 8> "$XDG_RUNTIME_DIR/wrayth-recover.lock"
+if ! flock -n 8; then
+    say "wrayth-recover is already running."
+    exit 1
+fi
+
+# The supervisor's lock file, named exactly as wrayth-shell names it. It is
+# held while a supervisor runs.
+tag="$(printf '%s' "${QS_ARGS[*]}" | cksum | cut -d' ' -f1)"
+supervisor_lock="$XDG_RUNTIME_DIR/wrayth-shell-$tag.lock"
+supervised() {
+    [ -e "$supervisor_lock" ] && ! flock -n "$supervisor_lock" true
+}
+# The shell's own processes: `qs <args> -n` under the supervisor, possibly
+# `-d` if started by hand. Never an `ipc` call, never this script.
+pattern="^qs ${QS_ARGS[*]}( -n)?( -d)?\$"
+count_shells() {
+    # `pgrep -c` prints 0 and exits 1 when nothing matches; print its count only.
+    local n
+    n="$(pgrep -u "$(id -u)" -f -c "$pattern" 2> /dev/null)"
+    echo "${n:-0}"
+}
+
+if [ "$(hyprctl locked)" != "true" ]; then
+    say "The session is not locked. Switch back with $back."
+    if [ "$(count_shells)" = 0 ] && ! supervised; then
+        say "(wrayth was not running, so it has been started.)"
+        setsid -f "$here/wrayth-shell" > /dev/null 2>&1 < /dev/null 8>&-
+    fi
+    exit 0
+fi
+
+# A new lock client is only accepted with this on. hypr-wrayth.lua sets it;
+# only if the running config does not is it switched on here. It lets a
+# lockscreen take over a lock -- never unlock one.
+if ! hyprctl getoption misc:allow_session_lock_restore -j 2> /dev/null | grep -Eq '"(bool|int)": *(true|1)'; then
+    hyprctl eval 'hl.config({ misc = { allow_session_lock_restore = true } })' > /dev/null 2>&1
+    say "(Turned on Hyprland's misc:allow_session_lock_restore.)"
+fi
+
+# A recovery asked for by hand starts the lockscreen's hand-over count afresh.
+"$here/wrayth-lock-assist" count-set 0 2> /dev/null
+
+# **The one method that works in every state: end the shell and let exactly
+# one supervisor start exactly one new one.** This script never starts a lock
+# client itself. Stopping the shell never unlocks -- Hyprland keeps the session
+# locked until a lock client authenticates -- and the new shell takes the lock
+# over at start-up. Whatever state the lock was in (working, dead, or up but
+# deaf), what is left is one fresh lockscreen.
+if [ "$(count_shells)" != 0 ]; then
+    say "Stopping the wrayth shell..."
+    pkill -TERM -u "$(id -u)" -f "$pattern"
+    for _ in $(seq 1 30); do
+        [ "$(count_shells)" = 0 ] && break
+        sleep 0.1
+    done
+    if [ "$(count_shells)" != 0 ]; then
+        pkill -KILL -u "$(id -u)" -f "$pattern"
+        sleep 0.3
+    fi
+fi
+
+if ! supervised; then
+    # Nothing will restart it: start the supervisor, which starts the shell.
+    setsid -f "$here/wrayth-shell" > /dev/null 2>&1 < /dev/null 8>&-
+fi
+
+for _ in $(seq 1 30); do
+    sleep 0.5
+    if [ "$(count_shells)" = 1 ] &&
+        [ "$(qs "${QS_ARGS[@]}" ipc call lock isLocked 2> /dev/null | tail -n 1)" = "true" ]; then
+        say "wrayth has taken the lock back (one lockscreen, freshly started)."
+        say "Switch back with $back and type your password."
+        exit 0
+    fi
+done
+
+say "wrayth did not come back within fifteen seconds."
+last_resort "$session"
+exit 1

@@ -1,0 +1,168 @@
+#!/usr/bin/env bash
+# Refresh the deck terminal **in place**: clear it and reprint the banner and a
+# fresh prompt, without closing the deck, destroying the window, or creating
+# anything. Bound to Super + Shift + E, and called on a profile change so the
+# logo reprints in the new colours.
+#
+# The terminal is never restarted. The old reset closed the deck, killed the
+# kitty window and spawned a new one, so the deck's close and open animations
+# and the window's own spawn animation all played for what is a clear and a
+# reprint.
+#
+#   wrayth-deck-refresh            reset: bump the session, say why if it
+#                                     cannot refresh
+#   wrayth-deck-refresh --quiet    profile change: no session bump, and
+#                                     silence if it cannot refresh
+set -u
+
+# Must match the private socket wrayth-deck-reset launches the terminal on: a
+# per-user runtime-dir socket (0700), never an abstract `unix:@name` (which any
+# local process could connect to and inject text through).
+SOCKET="unix:${XDG_RUNTIME_DIR:-$HOME/.cache/wrayth}/wrayth-deck.sock"
+QUIET=0
+BUMP=1
+[ "${1:-}" = "--quiet" ] && { QUIET=1; BUMP=0; }
+
+kitty_rc() { kitten @ --to "$SOCKET" "$@" 2> /dev/null; }
+
+# --- Is the window there at all? ---------------------------------------------
+# **No window is the one case that still starts one**, and only for the
+# keypress: Super + Shift + E has to work after a logout, or the first time,
+# when there is nothing to refresh. A profile change never creates anything.
+ls_json=$(kitty_rc ls) || ls_json=""
+if [ -z "$ls_json" ]; then
+    [ "$QUIET" = 1 ] && exit 0
+    exec "$(dirname "$(readlink -f "$0")")/wrayth-deck-reset"
+fi
+
+# The shell's pid, and whether anything else is in the foreground. kitty reports
+# every foreground process of the window; at an idle prompt that is the shell
+# and nothing else.
+read -r shell_pid busy < <(printf '%s' "$ls_json" | python3 -c '
+import json, sys, os
+try:
+    data = json.load(sys.stdin)
+except Exception:
+    sys.exit(1)
+for osw in data:
+    for tab in osw.get("tabs", []):
+        for w in tab.get("windows", []):
+            pid = w.get("pid") or 0
+            fg = w.get("foreground_processes") or []
+            # Busy when any foreground process is not the shell itself. kitty
+            # lists the shell too, so the test is on the others.
+            busy = 0
+            for proc in fg:
+                if proc.get("pid") != pid:
+                    busy = 1
+            print(pid, busy)
+            sys.exit(0)
+sys.exit(1)
+') || exit 0
+
+[ -n "${shell_pid:-}" ] && [ "$shell_pid" -gt 0 ] || exit 0
+
+# --- Has anything been typed at the prompt? ----------------------------------
+# The prompt is ours, so its shape is known: it ends with `]`, the sigil and a
+# space. Everything after the **last** one of those on the screen is what has
+# been typed -- read across the whole screen rather than one line, so a command
+# long enough to wrap is still seen.
+#
+# **`--extent screen`, and the extent list is short.** The first version asked
+# for `last_visible_line`, which is not one of kitty's extents: the call failed,
+# the check read empty, and the refresh cleared a prompt with `echo
+# do-not-lose-me` sitting in it. A check that fails open is worse than no check.
+typed=0
+if [ "$busy" = 0 ]; then
+    screen=$(kitty_rc get-text --extent screen || true)
+    typed=$(printf '%s' "$screen" | python3 -c '
+import re, sys
+text = sys.stdin.read()
+# **No trailing space in the pattern.** kitty strips trailing whitespace from
+# every line it returns, so the live empty prompt comes back as
+# `[user@host ~]$` with nothing after it -- a pattern ending in a space skips
+# it and matches the *previous* prompt instead, which still has a command on
+# it. That read every idle terminal as having `sleep 6` typed into it.
+m = None
+for m in re.finditer(r"\][$#]", text):
+    pass
+print(1 if (m and text[m.end():].strip()) else 0)
+')
+fi
+
+# --- A refusal says why, and touches nothing ---------------------------------
+# **Written to the window tty, never sent as input.** Sending it as input would
+# append it to whatever was being typed, which is the one thing this must not
+# do. SIGWINCH afterwards is what makes readline repaint the prompt and the
+# half-typed command under it.
+# Two ways to say it, because the two cases are not alike.
+#
+# **At a prompt with something typed in it**, the note goes through the shell:
+# the reason is left in a file and `SIGUSR2` is sent, and the shell's own trap
+# prints it *between* readline's reads -- so bash redraws the prompt and the
+# half-typed command underneath it by itself. Writing to the tty here instead
+# left the display out of step with readline's buffer until the next keystroke.
+#
+# **While a command is running** there is no prompt to redraw and the trap
+# would not run until the command finished, which is a note arriving minutes
+# after the keypress. That one is written straight to the window's tty, where
+# it lands in the command's own output, which is where the user is looking.
+#
+# Neither is ever sent as *input*: that would append the note to whatever was
+# being typed, which is the one thing this must not do.
+note_via_shell() {
+    [ "$QUIET" = 1 ] && return 0
+    local tty
+    tty=$(readlink -f "/proc/$shell_pid/fd/1" 2> /dev/null) || return 0
+    case "$tty" in
+        /dev/pts/*) ;;
+        *) return 0 ;;
+    esac
+    # **The note goes below the prompt, and the prompt is left alone.** Two
+    # other ways were tried and both were worse. A `SIGUSR2` trap does not run
+    # while readline is waiting -- bash defers traps until readline returns, so
+    # the note arrived only when the user pressed Enter. And wiping the prompt
+    # line to print in its place did print the note, but nothing brings
+    # readline back: `SIGWINCH` moved the cursor down and redrew nothing, so
+    # the half-typed command was still in the buffer and no longer on the
+    # screen. Printing underneath leaves the command where the user can see it,
+    # and readline repaints over the note on the next keystroke.
+    printf '\n\033[2m-- deck refresh skipped: %s --\033[0m\n' "$1" > "$tty" 2> /dev/null || true
+}
+
+note_via_tty() {
+    [ "$QUIET" = 1 ] && return 0
+    local tty
+    tty=$(readlink -f "/proc/$shell_pid/fd/1" 2> /dev/null) || return 0
+    case "$tty" in
+        /dev/pts/*) ;;
+        *) return 0 ;;
+    esac
+    printf '\n\033[2m-- deck refresh skipped: %s --\033[0m\n' "$1" > "$tty" 2> /dev/null || true
+}
+
+if [ "$busy" = 1 ]; then
+    note_via_tty "a command is running"
+    exit 0
+fi
+if [ "$typed" = 1 ]; then
+    note_via_shell "there is something typed at the prompt"
+    exit 0
+fi
+
+# --- Refresh -----------------------------------------------------------------
+# The session number the greeting prints. A keypress is a reset and reads as
+# one; an automatic refresh is not a new session and must not claim to be.
+if [ "$BUMP" = 1 ]; then
+    STATE="${XDG_STATE_HOME:-$HOME/.local/state}/wrayth"
+    mkdir -p "$STATE"
+    session=$(cat "$STATE/session" 2> /dev/null || echo 0)
+    case $session in
+        '' | *[!0-9]*) session=0 ;;
+    esac
+    printf '%s\n' "$((session + 1))" > "$STATE/session"
+fi
+
+# Ctrl-U first, which is safe because the line was checked empty, then a leading
+# space so the command stays out of history, then Enter.
+kitty_rc send-text '\x15 _wrayth_refresh\r' > /dev/null

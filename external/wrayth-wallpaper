@@ -1,0 +1,156 @@
+#!/usr/bin/env python3
+"""Recolour a wrayth wallpaper for a colour profile.
+
+    wrayth-wallpaper --out FILE --accent '#RRGGBB' --signal '#RRGGBB'
+                        [--src FILE] [--src-accent '#RRGGBB']
+                        [--src-signal '#RRGGBB']
+
+The render is a two-hue image: one hue carries the profile's `accent` and the
+other its `signal`, over neutral darks. Recolouring it is therefore a *colour
+mapping*, not a generation -- every pixel keeps its lightness and its place in
+its own hue's spread, and only the hue and the saturation move. There is no
+model and no network call; the six shipped wallpapers were drawn by hand and
+this reproduces the relationship between them, nothing more.
+
+`--src` defaults to the base render shipped inside the shell. The pools screen
+can hand it any surviving `net-*.png` instead, with that profile's own accent
+and signal as `--src-accent` / `--src-signal`, which is how a deleted wallpaper
+is restored when the base is not the one to hand.
+
+The mapping is applied as a 33^3 lookup table rather than pixel by pixel:
+Pillow interpolates a LUT in C, and a 1920x1080 image takes about a tenth of
+the time a Python loop over two million pixels does. It also smooths the seam
+between the two hue regions for free, which is what the render's gradients
+want anyway.
+"""
+
+import argparse
+import colorsys
+import os
+import sys
+
+from PIL import Image, ImageFilter
+
+# The base render's own two colours. It is Circuit's own wallpaper, so these
+# are Circuit's.
+BASE_ACCENT = "#FF3B45"
+BASE_SIGNAL = "#4FC3C9"
+
+# Grid points per axis. 33 is Pillow's own practical ceiling for a table built
+# in Python (35937 entries, about 40 ms) and is finer than the render's
+# gradients resolve.
+GRID = 33
+
+# Below this saturation a pixel is structure, not colour: the render's darks,
+# its greys and its white highlights. Moving them would tint the whole image
+# rather than remap its two hues.
+NEUTRAL = 0.06
+
+
+def parse_hex(value):
+    text = value.strip().lstrip("#")
+    if len(text) != 6:
+        raise argparse.ArgumentTypeError(f"not a 6-digit hex colour: {value!r}")
+    try:
+        return tuple(int(text[i:i + 2], 16) / 255 for i in (0, 2, 4))
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"not a 6-digit hex colour: {value!r}")
+
+
+def hue_distance(a, b):
+    """Distance between two hues on the circle, in turns: 0 to 0.5."""
+    d = abs(a - b) % 1.0
+    return min(d, 1.0 - d)
+
+
+def make_mapper(src_accent, src_signal, dst_accent, dst_signal):
+    """A function from one RGB triple in 0..1 to another."""
+    # One entry per hue the render carries: where it is now, where it goes.
+    channels = (
+        (colorsys.rgb_to_hls(*src_accent), colorsys.rgb_to_hls(*dst_accent)),
+        (colorsys.rgb_to_hls(*src_signal), colorsys.rgb_to_hls(*dst_signal)),
+    )
+
+    def mapper(r, g, b):
+        h, l, s = colorsys.rgb_to_hls(r, g, b)
+        if s <= NEUTRAL:
+            return r, g, b
+
+        # Which of the render's two hues is this pixel part of? The nearest
+        # one wins outright; the LUT's interpolation is what softens the
+        # boundary, and the render has almost nothing sitting on it.
+        src_hls, dst_hls = min(
+            channels, key=lambda pair: hue_distance(h, pair[0][0])
+        )
+        src_h, src_l, src_s = src_hls
+        dst_h, dst_l, dst_s = dst_hls
+
+        # Keep the pixel's offset within its own hue's spread rather than
+        # flattening every pixel of a channel onto one hue -- the spread is
+        # most of what the render's depth is made of.
+        new_h = (dst_h + (h - src_h)) % 1.0
+        new_s = min(1.0, s * (dst_s / src_s)) if src_s > 0 else dst_s
+
+        # Lightness is mostly left alone: it is the render's structure. The
+        # destination's own lightness is only allowed to pull it, and only in
+        # proportion to how much of this channel's colour the pixel carries,
+        # so darks stay dark whatever colour they are tinted.
+        weight = min(1.0, s / src_s) if src_s > 0 else 1.0
+        new_l = max(0.0, min(1.0, l + (dst_l - src_l) * weight * 0.6))
+
+        return colorsys.hls_to_rgb(new_h, new_l, new_s)
+
+    return mapper
+
+
+def build_lut(mapper, grid=GRID):
+    table = []
+    step = 1.0 / (grid - 1)
+    for bi in range(grid):
+        b = bi * step
+        for gi in range(grid):
+            g = gi * step
+            for ri in range(grid):
+                table.extend(mapper(ri * step, g, b))
+    return ImageFilter.Color3DLUT(grid, table)
+
+
+def main(argv=None):
+    here = os.path.dirname(os.path.realpath(__file__))
+    # The shipped Circuit preset is the base render (the separate net-base.png
+    # was the same image, pixel for pixel, and is gone).
+    default_src = os.path.join(os.path.dirname(here), "assets", "wallpapers",
+                               "net-circuit.png")
+
+    ap = argparse.ArgumentParser(add_help=True, description=__doc__)
+    ap.add_argument("--out", required=True, help="PNG to write")
+    ap.add_argument("--accent", required=True, type=parse_hex)
+    ap.add_argument("--signal", required=True, type=parse_hex)
+    ap.add_argument("--src", default=default_src)
+    ap.add_argument("--src-accent", default=BASE_ACCENT, type=parse_hex)
+    ap.add_argument("--src-signal", default=BASE_SIGNAL, type=parse_hex)
+    args = ap.parse_args(argv)
+
+    if not os.path.exists(args.src):
+        print(f"wrayth-wallpaper: no source render at {args.src}",
+              file=sys.stderr)
+        return 2
+
+    image = Image.open(args.src).convert("RGB")
+    lut = build_lut(make_mapper(
+        args.src_accent, args.src_signal, args.accent, args.signal))
+    out = image.filter(lut)
+
+    os.makedirs(os.path.dirname(os.path.abspath(args.out)) or ".",
+                exist_ok=True)
+    # Written beside the target and renamed, so a half-written PNG is never
+    # visible to the shell watching the folder.
+    tmp = f"{args.out}.tmp"
+    out.save(tmp, "PNG", optimize=False)
+    os.replace(tmp, args.out)
+    print(args.out)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

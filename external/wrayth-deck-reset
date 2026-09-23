@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+# Close the deck terminal and start a fresh one, which brings the DIVE greeting
+# back. Bound to Super + Shift + E, and also how the terminal is first started.
+set -u
+
+CLASS="wrayth-deck"
+
+# Hyprland is configured in Lua here, so a dispatch is a Lua expression that
+# returns a dispatcher -- `closewindow class:...` is a syntax error. Closing
+# every match rather than one keeps a failed close from stacking terminals up.
+close_all() {
+    hyprctl dispatch "(function()
+        for _, w in ipairs(hl.get_windows({ class = \"$CLASS\" })) do
+            hl.dispatch(hl.dsp.window.close({ window = w }))
+        end
+        return hl.dsp.no_op()
+    end)()" > /dev/null
+}
+
+count() {
+    hyprctl clients -j | grep -c "\"class\": \"$CLASS\""
+}
+
+# The session number the greeting prints, bumped on every launch and reset.
+# **The emblem exists before the terminal does.** The greeting draws the
+# recoloured distro logo from ~/.cache/wrayth/emblem.raw; if it is missing the
+# terminal would open on fastfetch's plain logo. Made here, from the current
+# profile, when it is not there yet.
+EMBLEM="${XDG_CACHE_HOME:-$HOME/.cache}/wrayth/emblem.raw"
+if [ ! -s "$EMBLEM" ]; then
+    profile=$(head -1 "${XDG_CONFIG_HOME:-$HOME/.config}/wrayth/profile" 2> /dev/null)
+    "$HOME/.local/bin/wrayth-profile" -n "${profile:-Circuit}" > /dev/null 2>&1 ||
+        "$HOME/.local/bin/wrayth-profile" -n Circuit > /dev/null 2>&1
+fi
+
+STATE="${XDG_STATE_HOME:-$HOME/.local/state}/wrayth"
+mkdir -p "$STATE"
+session=$(cat "$STATE/session" 2>/dev/null || echo 0)
+case $session in
+    '' | *[!0-9]*) session=0 ;;
+esac
+printf '%s\n' "$((session + 1))" > "$STATE/session"
+
+if [ "$(count)" -gt 0 ]; then
+    close_all
+    for _ in $(seq 1 60); do
+        [ "$(count)" -eq 0 ] && break
+        sleep 0.05
+    done
+fi
+
+# **A private socket, not an abstract one.** `allow_remote_control=socket-only`
+# is not in kitty.conf, because that file is every kitty on this machine: the
+# deck terminal is launched with its own override so `wrayth-deck-refresh` can
+# reach this window and nothing can reach any other. The socket lives in the
+# per-user runtime directory ($XDG_RUNTIME_DIR, mode 0700), **not** an abstract
+# socket (`unix:@name`): an abstract socket carries no filesystem permissions
+# and is reachable by any process in the network namespace -- including another
+# user's -- so anything on the machine could `kitten @ --to unix:@wrayth-deck
+# send-text` a command straight into this shell. A socket under a 0700 runtime
+# dir is reachable only by its owner.
+RUNDIR="${XDG_RUNTIME_DIR:-$HOME/.cache/wrayth}"
+mkdir -p -m 700 "$RUNDIR" 2> /dev/null || mkdir -p "$RUNDIR"
+SOCK="unix:${RUNDIR}/wrayth-deck.sock"
+
+# A window rule pins it to special:deck; the shell sizes and places it there.
+# --directory so it opens in $HOME like any other terminal, rather than
+# inheriting whatever directory this script happened to be run from.
+setsid -f kitty --class "$CLASS" --directory "$HOME" \
+    --override "env=WRAYTH_DECK=1" \
+    --override "allow_remote_control=socket-only" \
+    --listen-on "$SOCK" > /dev/null 2>&1
