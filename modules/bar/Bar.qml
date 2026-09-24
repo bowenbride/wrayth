@@ -39,9 +39,10 @@ Variants {
             right: true
         }
 
-        // The dropdown layer positions itself against this window and keeps it
-        // inside its focus grab, so it has to be reachable from there.
-        Component.onCompleted: ShellState.barWindow = bar
+        // The dropdown layer positions itself against its own screen's bar and
+        // keeps every bar inside its focus grab, so each has to be reachable.
+        Component.onCompleted: ShellState.registerBar(bar)
+        Component.onDestruction: ShellState.unregisterBar(bar)
 
         // Reported to the dropdown layer, which holds its focus grab back while
         // the pointer is still up here. A handler rather than a MouseArea: it
@@ -89,10 +90,14 @@ Variants {
             acceptedButtons: Qt.LeftButton
 
             onPressed: stamp = ShellState.dropdownStamp
-            onClicked: {
-                if (ShellState.dropdownStamp === stamp)
-                    ShellState.dropdown = "";
-            }
+            // Decided a turn later, once every handler on this release has
+            // run: whether a readout's own tap lands before or after this is
+            // Qt's delivery order, and the click that opens a dropdown must
+            // never be the one that closes it.
+            onClicked: Qt.callLater(() => {
+                if (ShellState.dropdownStamp === dismiss.stamp)
+                    ShellState.closeDropdown("click on bare bar");
+            })
         }
 
         // 1px hair bottom border.

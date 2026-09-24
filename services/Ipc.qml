@@ -1,4 +1,5 @@
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Io
 import Quickshell.Services.SystemTray
 import qs.config
@@ -133,6 +134,18 @@ Scope {
     // state` reporting a dropdown that was not on screen.
     readonly property var dropdownNames: ["ident", "wifi", "bluetooth", "power"]
 
+    // The screen a dropdown opened without a click belongs on: the focused
+    // monitor, or the first screen when Hyprland has not said.
+    function focusedScreen(): string {
+        const name = Hyprland.focusedMonitor?.name ?? "";
+        return ShellState.screens.some(s => s.name === name) ? name : (ShellState.screens[0]?.name ?? "");
+    }
+
+    function readoutX(name: string, screen: string): string {
+        const x = ShellState.anchorFor(name, screen);
+        return x < 0 ? "none" : String(Math.round(x));
+    }
+
     // Shared by `demo drag` and `demo dragFile`; see the note on them.
     function runDemoDrag(profile: string, file: string): string {
         if (!Demo.active)
@@ -154,14 +167,25 @@ Scope {
         function open(name: string): string {
             if (root.dropdownNames.indexOf(name) < 0)
                 return `unknown dropdown ${name}; one of ${root.dropdownNames.join(", ")}`;
-            // Under the readout that owns it, so the panel hangs where a
-            // click would have put it rather than in the middle of the bar.
-            ShellState.dropdownAnchorX = ShellState.anchorFor(name);
-            ShellState.dropdown = name;
+            // On the focused screen, under the readout that owns it there, so
+            // the panel hangs where a click would have put it.
+            ShellState.openDropdown(name, root.focusedScreen());
             return name;
         }
         function close(): void {
-            ShellState.dropdown = "";
+            ShellState.closeDropdown("ipc: dropdown close");
+        }
+        // Where a readout sits on the bar, in bar-window x, or `none` when it
+        // has not published one (it is hidden). For the tests' pointer.
+        function anchor(name: string): string {
+            return root.readoutX(name, root.focusedScreen());
+        }
+        // The same, on a named screen (`hyprctl monitors` names).
+        function anchorOn(name: string, screen: string): string {
+            return root.readoutX(name, screen);
+        }
+        function screen(): string {
+            return ShellState.dropdown ? ShellState.dropdownScreen : "none";
         }
         function state(): string {
             return ShellState.dropdown || "none";

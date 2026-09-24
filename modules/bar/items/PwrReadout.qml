@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell
 import Quickshell.Services.UPower
 import qs.components
 import qs.config
@@ -56,22 +57,16 @@ Row {
     }
 
 
-    // Published so `dropdown open power` can hang the panel where a click
-    // would have. `mapToItem` is a function call, so it is re-read from a
-    // handler rather than bound -- a binding through it captures whatever it
-    // returned the first time and never runs again.
-    function _publish(): void {
-        ShellState.publishAnchor("power", root.mapToItem(null, 0, 0).x);
-    }
+    // Registered with ShellState so `dropdown open power` can hang the panel where
+    // a click would have, on this readout's own screen. The x is measured when
+    // it is needed rather than published: see `ShellState.readouts`.
+    readonly property string dropdownName: "power"
+    readonly property string screenName: QsWindow.window?.screen?.name ?? ""
 
-    onXChanged: root._publish()
-    onWidthChanged: root._publish()
-    Component.onCompleted: Qt.callLater(root._publish)
+    Component.onCompleted: ShellState.registerReadout(root)
+    Component.onDestruction: ShellState.unregisterReadout(root)
     TapHandler {
-        onTapped: {
-            ShellState.dropdownAnchorX = root.mapToItem(null, 0, 0).x;
-            ShellState.toggleDropdown("power");
-        }
+        onTapped: ShellState.toggleDropdown(root)
     }
 
 }

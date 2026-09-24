@@ -51,6 +51,20 @@ Variants {
         // making one of those means moving off the bar first, so it holds until
         // the pointer leaves and then stays armed until the dropdown closes.
         property bool grabArmed: false
+        // **This screen's popup is the one showing the dropdown.** Only it
+        // draws the panel and only it takes a focus grab; see
+        // `ShellState.dropdownScreen` for why two grabs closed it at once.
+        readonly property bool mine: ShellState.dropdownScreen === modelData.name
+        readonly property string wanted: mine ? ShellState.dropdown : ""
+        // A focus grab cleared in the first `spuriousMs` after opening is
+        // taken to be spurious -- nothing a person does lands that fast -- and
+        // is taken again, once per opening, with the dropdown left open. A
+        // second clear closes it as usual. `grabHeld` is what re-takes it: the
+        // grab is active while armed *and* held, so dropping and restoring it
+        // for a turn asks the compositor for a fresh one.
+        readonly property int spuriousMs: 250
+        property bool regrabbed: false
+        property bool grabHeld: true
         // How far above its resting place the panel starts, i.e. how much of it
         // is still behind the bar at the start of the slide.
         readonly property real slide: 16
@@ -85,7 +99,7 @@ Variants {
         // the panel off the right edge. Both windows share an origin, so the
         // bar's x maps straight across.
         margins.left: {
-            const avail = ShellState.barWindow?.width ?? popup.screen.width;
+            const avail = ShellState.barOn(popup.modelData.name)?.width ?? popup.screen.width;
             return Math.round(Math.max(popup.edge, Math.min(popup.anchorX, avail - popup.implicitWidth - popup.edge)));
         }
 
@@ -133,52 +147,71 @@ Variants {
             }
         }
 
+        onWantedChanged: popup.sync()
+
+        function sync(): void {
+            const want = popup.wanted;
+            if (want !== "" && want !== popup.current)
+                popup.regrabbed = false;
+
+            // **The ID editor arms at once.** It is typed into the moment
+            // it opens, from a click on the bar -- and with the pointer
+            // still over the bar, an unarmed grab left the surface without
+            // the keyboard (measured: the editor's window went active and
+            // lost it again 4 ms later, and a key typed then never arrived)
+            // until the pointer moved into the panel. The other panels are
+            // reached by moving into them first, and keep the wait.
+            popup.grabArmed = want !== "" && (!ShellState.barHovered || want === "ident");
+
+            openAnim.stop();
+            swapAnim.stop();
+
+            if (want === "") {
+                // Immediate: the compositor fades the surface on unmap.
+                popup.reveal = 0;
+                popup.current = "";
+            } else if (popup.current === "" || popup.current === want) {
+                // Nothing showing, or the same panel caught mid-close.
+                popup.anchorX = ShellState.dropdownAnchorX;
+                popup.current = want;
+                openAnim.start();
+            } else {
+                swapAnim.next = want;
+                swapAnim.nextX = ShellState.dropdownAnchorX;
+                swapAnim.start();
+            }
+        }
+
         Connections {
             target: ShellState
 
-            function onDropdownChanged(): void {
-                const want = ShellState.dropdown;
-
-                // **The ID editor arms at once.** It is typed into the moment
-                // it opens, from a click on the bar -- and with the pointer
-                // still over the bar, an unarmed grab left the surface without
-                // the keyboard (measured: the editor's window went active and
-                // lost it again 4 ms later, and a key typed then never arrived)
-                // until the pointer moved into the panel. The other panels are
-                // reached by moving into them first, and keep the wait.
-                popup.grabArmed = want !== "" && (!ShellState.barHovered || want === "ident");
-
-                openAnim.stop();
-                swapAnim.stop();
-
-                if (want === "") {
-                    // Immediate: the compositor fades the surface on unmap.
-                    popup.reveal = 0;
-                    popup.current = "";
-                } else if (popup.current === "" || popup.current === want) {
-                    // Nothing showing, or the same panel caught mid-close.
-                    popup.anchorX = ShellState.dropdownAnchorX;
-                    popup.current = want;
-                    openAnim.start();
-                } else {
-                    swapAnim.next = want;
-                    swapAnim.nextX = ShellState.dropdownAnchorX;
-                    swapAnim.start();
-                }
-            }
-
             function onBarHoveredChanged(): void {
-                if (!ShellState.barHovered && ShellState.dropdown !== "")
+                if (!ShellState.barHovered && popup.wanted !== "")
                     popup.grabArmed = true;
             }
         }
 
-        // A click anywhere outside closes. The bar is in the list so clicking
-        // another readout reaches it and switches dropdowns in one go.
+        function grabCleared(): void {
+            if (popup.wanted === "")
+                return;
+            const age = Date.now() - ShellState.dropdownOpenedAt;
+            if (age < popup.spuriousMs && !popup.regrabbed) {
+                popup.regrabbed = true;
+                ShellState.logDropdown(`${popup.wanted} on ${popup.modelData.name}: focus grab cleared ${age} ms after opening; taken again, dropdown kept open`);
+                popup.grabHeld = false;
+                Qt.callLater(() => popup.grabHeld = true);
+                return;
+            }
+            ShellState.closeDropdown(popup.regrabbed ? `focus grab cleared again, ${age} ms after opening (it had been taken again once)` : "focus grab cleared (a click outside, or the compositor ended the grab)");
+        }
+
+        // A click anywhere outside closes. Every bar is in the list, so a click
+        // on any readout -- on any screen -- reaches it and switches dropdowns
+        // in one go instead of counting as a click outside.
         HyprlandFocusGrab {
-            active: popup.grabArmed
-            windows: ShellState.barWindow ? [popup, ShellState.barWindow] : [popup]
-            onCleared: ShellState.dropdown = ""
+            active: popup.grabArmed && popup.grabHeld && popup.wanted !== ""
+            windows: [popup].concat(ShellState.barWindows.filter(b => b))
+            onCleared: popup.grabCleared()
         }
 
         Item {
@@ -200,7 +233,7 @@ Variants {
                 if (content.item && content.item.canGoBack === true)
                     content.item.goBack();
                 else
-                    ShellState.dropdown = "";
+                    ShellState.closeDropdown("Escape");
             }
 
             // Below a short view the surface is sized to the taller one, so
@@ -212,7 +245,7 @@ Variants {
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
-                onClicked: ShellState.dropdown = ""
+                onClicked: ShellState.closeDropdown("click on the empty space under the panel")
             }
 
             Loader {

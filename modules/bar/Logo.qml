@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell
 import qs.components
 import qs.config
 import qs.services
@@ -190,25 +191,20 @@ SlantBlock {
     }
 
 
-    // Published so `dropdown open ident` can hang the panel where a click
-    // would have. `mapToItem` is a function call, so it is re-read from a
-    // handler rather than bound -- a binding through it captures whatever it
-    // returned the first time and never runs again.
-    function _publish(): void {
-        ShellState.publishAnchor("ident", root.mapToItem(null, 0, 0).x);
-    }
+    // Registered with ShellState so `dropdown open ident` can hang the panel where
+    // a click would have, on this readout's own screen. The x is measured when
+    // it is needed rather than published: see `ShellState.readouts`.
+    readonly property string dropdownName: "ident"
+    readonly property string screenName: QsWindow.window?.screen?.name ?? ""
 
-    onXChanged: root._publish()
-    onWidthChanged: root._publish()
-    Component.onCompleted: Qt.callLater(root._publish)
+    Component.onCompleted: ShellState.registerReadout(root)
+    Component.onDestruction: ShellState.unregisterReadout(root)
 
     MouseArea {
         anchors.fill: parent
         cursorShape: Qt.PointingHandCursor
 
         onClicked: {
-            // Where the dropdown hangs from, the same as the other readouts.
-            ShellState.dropdownAnchorX = root.mapToItem(null, 0, 0).x;
             // **Through `toggleDropdown`, like every other readout.** It bumps
             // `dropdownStamp`, which is what lets the bar's own dismiss
             // handler tell a click on a readout from a click on bare bar.
@@ -216,7 +212,7 @@ SlantBlock {
             // this is a `MouseArea` and consumes the press where the other
             // readouts use a `TapHandler` that lets it through -- a latent
             // bug that comes true the moment the handler type changes.
-            ShellState.toggleDropdown("ident");
+            ShellState.toggleDropdown(root);
         }
     }
 }

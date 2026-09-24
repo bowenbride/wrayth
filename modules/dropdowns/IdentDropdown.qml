@@ -88,7 +88,7 @@ ChamferPanel {
         if (!complete)
             return;
         Runner.saveIdent(draftCode, draftSuffix);
-        ShellState.dropdown = "";
+        ShellState.closeDropdown("APPLY in the ID editor");
     }
 
     // The keys come from a real TextInput parked out of sight: an item inside a

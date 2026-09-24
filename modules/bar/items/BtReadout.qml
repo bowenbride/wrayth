@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell
 import Quickshell.Bluetooth
 import qs.components
 import qs.config
@@ -58,22 +59,16 @@ Row {
     }
 
 
-    // Published so `dropdown open bluetooth` can hang the panel where a click
-    // would have. `mapToItem` is a function call, so it is re-read from a
-    // handler rather than bound -- a binding through it captures whatever it
-    // returned the first time and never runs again.
-    function _publish(): void {
-        ShellState.publishAnchor("bluetooth", root.mapToItem(null, 0, 0).x);
-    }
+    // Registered with ShellState so `dropdown open bluetooth` can hang the panel where
+    // a click would have, on this readout's own screen. The x is measured when
+    // it is needed rather than published: see `ShellState.readouts`.
+    readonly property string dropdownName: "bluetooth"
+    readonly property string screenName: QsWindow.window?.screen?.name ?? ""
 
-    onXChanged: root._publish()
-    onWidthChanged: root._publish()
-    Component.onCompleted: Qt.callLater(root._publish)
+    Component.onCompleted: ShellState.registerReadout(root)
+    Component.onDestruction: ShellState.unregisterReadout(root)
     TapHandler {
-        onTapped: {
-            ShellState.dropdownAnchorX = root.mapToItem(null, 0, 0).x;
-            ShellState.toggleDropdown("bluetooth");
-        }
+        onTapped: ShellState.toggleDropdown(root)
     }
 
 }

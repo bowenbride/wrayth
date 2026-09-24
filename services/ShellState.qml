@@ -41,13 +41,33 @@ Singleton {
     // Set by the deck plumbing in step 4, from Hyprland's workspace events.
     property bool deckVisible: false
 
-    // The bar's PanelWindow, published by Bar.qml. The dropdown layer needs it
-    // to size itself against the bar's width and to keep the bar clickable
-    // under its focus grab.
-    property var barWindow: null
+    // **Every bar, one per screen**, registered by Bar.qml. The dropdown layer
+    // sizes itself against its own screen's bar, and whitelists *all* of them
+    // in its focus grab, so a click on any bar's readout switches dropdowns
+    // rather than counting as a click outside.
+    property var barWindows: []
 
-    // Which bar dropdown is open: "", "wifi", "bluetooth" or "power".
+    function registerBar(bar: var): void {
+        barWindows = barWindows.filter(b => b && b !== bar).concat([bar]);
+    }
+
+    function unregisterBar(bar: var): void {
+        barWindows = barWindows.filter(b => b && b !== bar);
+    }
+
+    function barOn(screenName: string): var {
+        return barWindows.find(b => b && b.screen?.name === screenName) ?? null;
+    }
+
+    // Which bar dropdown is open: "", "ident", "wifi", "bluetooth" or "power".
     property string dropdown: ""
+    // **The screen it is open on.** One dropdown at a time, on the screen whose
+    // bar was clicked. The dropdown layer is one surface per screen, and every
+    // one of them used to open -- each taking its own focus grab. Hyprland
+    // holds one grab at a time, so with two monitors the second grab ended
+    // the first, which closed the dropdown about 20 ms after it opened (the
+    // "opens for a frame" report).
+    property string dropdownScreen: ""
     // The x of the bar readout that opened it, in bar-window coordinates. The
     // dropdown overlay shares that origin, so it can use the value directly.
     property real dropdownAnchorX: 0
@@ -58,27 +78,92 @@ Singleton {
     // waits on this; see the comment there.
     property bool barHovered: false
 
-    // **Where each bar readout is, published by the readouts themselves.**
-    // `dropdown open <name>` used to hang every panel at a fixed x in the
-    // middle of the bar, which is fine for a frame burst and wrong on camera.
-    // A readout knows its own position; nothing else does.
-    property var dropdownAnchors: ({})
+    // **The bar readouts that open a dropdown, registered by themselves.**
+    // Each has a `dropdownName` and a `screenName`. The x a dropdown
+    // hangs from is measured from the readout when it is needed, on the right
+    // screen: it used to be published into one map for all screens, so a
+    // second bar overwrote the first's positions with its own, and a readout
+    // that moved without its own x changing left a stale value behind.
+    property var readouts: []
 
-    function publishAnchor(name: string, x: real): void {
-        if (dropdownAnchors[name] === x)
-            return;
-        const next = Object.assign({}, dropdownAnchors);
-        next[name] = x;
-        dropdownAnchors = next;
+    function registerReadout(item: var): void {
+        readouts = readouts.filter(r => r && r !== item).concat([item]);
     }
 
-    function anchorFor(name: string): real {
-        return dropdownAnchors[name] ?? 0;
+    function unregisterReadout(item: var): void {
+        readouts = readouts.filter(r => r && r !== item);
     }
 
-    function toggleDropdown(name: string): void {
-        dropdown = dropdown === name ? "" : name;
+    function readoutOn(name: string, screenName: string): var {
+        return readouts.find(r => r && r.dropdownName === name && r.screenName === screenName) ?? null;
+    }
+
+    // In bar-window x, or -1 when that screen's bar has no such readout (it is
+    // hidden, or not built yet).
+    function anchorFor(name: string, screenName: string): real {
+        const r = readoutOn(name, screenName);
+        return r ? r.mapToItem(null, 0, 0).x : -1;
+    }
+
+    // A readout was clicked: open its dropdown on its own screen, or close it
+    // if it is the one already open there.
+    function toggleDropdown(readout: var): void {
+        const name = readout.dropdownName, screenName = readout.screenName;
+        if (dropdown === name && dropdownScreen === screenName) {
+            closeDropdown("its readout clicked again");
+        } else {
+            if (dropdown === name)
+                closeDropdown("the same dropdown opened on another screen");
+            dropdownAnchorX = readout.mapToItem(null, 0, 0).x;
+            dropdownScreen = screenName;
+            dropdown = name;
+        }
         dropdownStamp++;
+    }
+
+    // Opened without a click (IPC): on the given screen, under its readout if
+    // it has one there.
+    function openDropdown(name: string, screenName: string): void {
+        if (dropdown === name && dropdownScreen !== screenName)
+            closeDropdown("the same dropdown opened on another screen");
+        dropdownAnchorX = Math.max(0, anchorFor(name, screenName));
+        dropdownScreen = screenName;
+        dropdown = name;
+    }
+
+    // **Every close says why, in the shell's log** (`qs -c wrayth log`): one
+    // line naming the dropdown, how long it had been open and the reason, so a
+    // "it opens and closes at once" report is diagnosable from the log alone.
+    // Closing goes through `closeDropdown(reason)`; the line itself is written
+    // from `onDropdownChanged`, so a close from a path that gives no reason is
+    // still logged (as `unspecified`) rather than missed.
+    property string _dropdownShown: ""
+    property string _dropdownShownOn: ""
+    property double dropdownOpenedAt: 0
+    property string _closeReason: ""
+
+    function closeDropdown(reason: string): void {
+        if (dropdown === "")
+            return;
+        _closeReason = reason;
+        dropdown = "";
+    }
+
+    function logDropdown(message: string): void {
+        console.info(`wrayth: dropdown ${message}`);
+    }
+
+    onDropdownChanged: {
+        const now = Date.now();
+        if (_dropdownShown !== "" && _dropdownShown !== dropdown) {
+            const reason = _closeReason || (dropdown !== "" ? `another dropdown opening (${dropdown})` : "unspecified");
+            logDropdown(`closed: ${_dropdownShown} on ${_dropdownShownOn || "?"} after ${now - dropdownOpenedAt} ms: ${reason}`);
+        }
+        if (dropdown !== "" && dropdown !== _dropdownShown)
+            dropdownOpenedAt = now;
+        _dropdownShown = dropdown;
+        _dropdownShownOn = dropdownScreen;
+        _closeReason = "";
     }
 
     // **One overlay at a time, and this is the only way in.**
@@ -102,12 +187,12 @@ Singleton {
         // grab, and two things on screen asking for the keyboard is the bug
         // whatever they are called.
         if (which !== "")
-            dropdown = "";
+            closeDropdown(`${which} opened`);
     }
 
     function closeAll(): void {
         openExclusive("");
-        dropdown = "";
+        closeDropdown("everything closed (lock, launch or session action)");
     }
 
     // **Reaches into the custom editor from outside it.** Its swatch rows and

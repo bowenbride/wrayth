@@ -460,12 +460,39 @@ those too:
 [DESIGN.md](DESIGN.md) covers the design rules, the colour logic, the profiles
 and how the shell is organised. Read it before changing a panel.
 
+## Reporting a bug
+
+Please open an issue with what happened, what you expected, and the output of
+these commands:
+
+1. **Hyprland and Quickshell versions:**
+
+        hyprctl version | head -1
+        qs --version
+
+2. **Install mode** (`complete`, or `add` if Wrayth was added to your own
+   `hyprland.lua`):
+
+        grep MODE ~/.local/state/wrayth/install.env
+
+3. **Monitors and scale:**
+
+        hyprctl monitors | grep -E '^Monitor|scale:'
+
+4. **The shell's log**, run straight after the problem happens:
+
+        qs -c wrayth log | tail -40
+
+   The log records things like why each bar dropdown closed, so it often shows
+   the cause directly.
+
 ## Issues
 
 Wrayth is a personal project. **Bug reports are welcome.** Please include your
 Hyprland and Quickshell versions, your screen size and scale, and what you
-expected to happen. There are **no support guarantees**: issues are looked at
-when time allows, and some may not be fixed.
+expected to happen; see [Reporting a bug](#reporting-a-bug). There are **no
+support guarantees**: issues are looked at when time allows, and some may not
+be fixed.
 
 ## Licence
 
