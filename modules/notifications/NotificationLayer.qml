@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Wayland
 import qs.config
 import qs.services
@@ -25,7 +26,15 @@ Variants {
 
         property real reveal: 0
 
-        screen: ShellState.screens[0] ?? null
+        // **On the focused screen**, where the active window is -- not always
+        // the first screen. Hyprland reports the window in whole-layout
+        // coordinates, so the card's margins are taken relative to this
+        // monitor's own origin; with the window on a second monitor they used
+        // to push the card off the edge of the first.
+        screen: ShellState.screenNamed(ShellState.focusedScreen) ?? ShellState.screens[0] ?? null
+        readonly property var monitorIpc: Hyprland.monitorFor(screen)?.lastIpcObject ?? null
+        readonly property real originX: monitorIpc?.x ?? 0
+        readonly property real originY: monitorIpc?.y ?? 0
         color: "transparent"
 
         implicitWidth: 400
@@ -51,10 +60,12 @@ Variants {
         // so sitting on `at` already leaves the window's border visible around
         // the card. With nothing open on the workspace there is no corner to sit
         // in, and it falls back to the screen's top right under the bar.
-        readonly property bool inWindow: ActiveWindow.present
+        // ...and only a window on this screen: the last-focused window can sit
+        // on another monitor while focus is on an empty one.
+        readonly property bool inWindow: ActiveWindow.present && (monitorIpc === null || ActiveWindow.ipc?.monitor === monitorIpc.id)
 
-        margins.top: (inWindow ? ActiveWindow.y + ActiveWindow.borderSize : Appearance.metrics.barHeight + 16) + Notifications.offsetOf(index)
-        margins.right: inWindow ? Math.max(0, (screen?.width ?? 0) - (ActiveWindow.x + ActiveWindow.width) + ActiveWindow.borderSize) : 24
+        margins.top: (inWindow ? ActiveWindow.y - originY + ActiveWindow.borderSize : Appearance.metrics.barHeight + 16) + Notifications.offsetOf(index)
+        margins.right: inWindow ? Math.max(0, (screen?.width ?? 0) - (ActiveWindow.x - originX + ActiveWindow.width) + ActiveWindow.borderSize) : 24
 
         onImplicitHeightChanged: Notifications.setHeight(modelData.id, implicitHeight)
         Component.onCompleted: {

@@ -17,6 +17,12 @@ Singleton {
     readonly property int windowCount: monitor?.activeWorkspace?.lastIpcObject?.windows ?? 0
     readonly property bool occupied: windowCount > 0
 
+    // **Per screen**, for the wallpaper under it: each monitor has its own
+    // active workspace. Read inside a binding, so it updates like a property.
+    function occupiedOn(screen: var): bool {
+        return (Hyprland.monitorFor(screen)?.activeWorkspace?.lastIpcObject?.windows ?? 0) > 0;
+    }
+
     Connections {
         target: Hyprland
 

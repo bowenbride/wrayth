@@ -1,4 +1,5 @@
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Wayland
 import qs.components
 import qs.config
@@ -9,7 +10,13 @@ Variants {
     model: ShellState.screens
 
     PanelWindow {
+        id: background
+
         required property ShellScreen modelData
+
+        // This screen's own workspace, not the focused one: with two monitors,
+        // opening a window on one used to blur the other's empty desktop too.
+        readonly property bool occupied: Desktop.occupiedOn(modelData)
 
         screen: modelData
         color: Theme.deep
@@ -30,8 +37,8 @@ Variants {
 
             // Crisp on an empty workspace, the lockscreen's treatment once
             // something is open. Wallpaper animates both over 250 ms.
-            blurRadius: Desktop.occupied ? 16 : 0
-            dim: Desktop.occupied ? 0.58 : 0
+            blurRadius: background.occupied ? 16 : 0
+            dim: background.occupied ? 0.58 : 0
         }
 
         // Only under EVERYTHING. This surface is behind every window, so lines

@@ -16,7 +16,8 @@ Variants {
 
         required property ShellScreen modelData
 
-        readonly property bool shown: ShellState.launcherOpen
+        // One screen only: see `ShellState.overlayScreen`.
+        readonly property bool shown: ShellState.launcherOpen && ShellState.overlayScreen === modelData.name
 
         screen: modelData
         color: "transparent"

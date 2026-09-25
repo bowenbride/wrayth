@@ -23,7 +23,8 @@ Variants {
 
         required property ShellScreen modelData
 
-        readonly property bool shown: ShellState.pickerOpen
+        // One screen only: see `ShellState.overlayScreen`.
+        readonly property bool shown: ShellState.pickerOpen && ShellState.overlayScreen === modelData.name
 
         // "grid", "editor" or "pools". Held on `ShellState` rather than here so
         // the IPC can drive it; **not called `screen`**, because `PanelWindow`

@@ -14,7 +14,8 @@ Variants {
 
         required property ShellScreen modelData
 
-        readonly property bool shown: Osd.showing !== ""
+        // On the focused screen only, not every one.
+        readonly property bool shown: Osd.showing !== "" && ShellState.focusedScreen === modelData.name
 
         screen: modelData
         color: "transparent"

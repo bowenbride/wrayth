@@ -89,7 +89,8 @@ Variants {
 
         screen: modelData
         color: "transparent"
-        visible: Deck.visible
+        // Only on the monitor the deck is showing on.
+        visible: Deck.monitorName === modelData.name
 
         WlrLayershell.layer: WlrLayer.Top
         WlrLayershell.namespace: "wrayth-deck"
@@ -192,9 +193,11 @@ Variants {
         function placeTerminal(): void {
             if (!reserved || termW <= 0 || termH <= 0)
                 return;
-            // One deck places the one terminal: the one on the monitor the
-            // deck opens on.
-            if (!visible && Hyprland.focusedMonitor && Hyprland.focusedMonitor.name !== deck.screen.name)
+            // One deck places the one terminal: the one on the monitor showing
+            // the deck, or -- while it is closed -- the focused one, which is
+            // where Super + E will open it. Every screen's deck used to place
+            // it while the deck was open, and the last one to run won.
+            if ((Deck.monitorName || ShellState.focusedScreen) !== deck.modelData.name)
                 return;
             Deck.placeTerminal(originX + margin + border, originY + margin + border, termW - border * 2, termH - border * 2);
         }

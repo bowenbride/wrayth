@@ -134,11 +134,9 @@ Scope {
     // state` reporting a dropdown that was not on screen.
     readonly property var dropdownNames: ["ident", "wifi", "bluetooth", "power"]
 
-    // The screen a dropdown opened without a click belongs on: the focused
-    // monitor, or the first screen when Hyprland has not said.
+    // The screen a dropdown opened without a click belongs on.
     function focusedScreen(): string {
-        const name = Hyprland.focusedMonitor?.name ?? "";
-        return ShellState.screens.some(s => s.name === name) ? name : (ShellState.screens[0]?.name ?? "");
+        return ShellState.focusedScreen;
     }
 
     function readoutX(name: string, screen: string): string {
@@ -278,6 +276,28 @@ Scope {
 
         function state(): string {
             return Deck.visible ? "open" : "closed";
+        }
+
+        // The monitor showing the deck, or "none".
+        function screen(): string {
+            return Deck.monitorName || "none";
+        }
+    }
+
+    // The volume and brightness popup, for the tests: there is no audio server
+    // or backlight in a nested session to change.
+    IpcHandler {
+        target: "osd"
+
+        function flash(which: string): string {
+            if (which !== "vol" && which !== "bri")
+                return "one of vol, bri";
+            Osd.flash(which);
+            return which;
+        }
+        // The screen it shows on (the focused one).
+        function screen(): string {
+            return ShellState.focusedScreen || "none";
         }
     }
 
@@ -498,6 +518,10 @@ Scope {
             return was.length ? `released ${was.join(" ")}` : "nothing was open";
         }
 
+        // The screen the open full-screen overlay is on, or "none".
+        function screen(): string {
+            return (ShellState.launcherOpen || ShellState.powerOpen || ShellState.pickerOpen || Daemons.libraryOpen) ? ShellState.overlayScreen : "none";
+        }
         function state(): string {
             const up = [];
             if (ShellState.launcherOpen)
@@ -600,6 +624,11 @@ Scope {
         }
         function isLocked(): bool {
             return ShellState.locked;
+        }
+        // Which screens have a lock surface, space-separated: every screen
+        // must be covered. Names only -- nothing about what is typed.
+        function surfaces(): string {
+            return Lock.surfaceScreens.slice().sort().join(" ") || "none";
         }
     }
 

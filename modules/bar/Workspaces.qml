@@ -1,10 +1,12 @@
 import QtQuick
+import Quickshell
+import Quickshell.Hyprland
 import qs.components
 import qs.config
 import qs.services
 
 // Five slots, never more, never fewer, never a different width. What is in them
-// is `Spaces`' business: the page of numbered workspaces holding the active one,
+// is `MonitorSpaces`' business, for this bar's monitor: the page of numbered workspaces holding the active one,
 // or the special workspaces while one of those is up.
 Row {
     id: root
@@ -13,12 +15,17 @@ Row {
     // is lit. -1 leaves the line short rather than guessing.
     readonly property int itemWidth: Appearance.metrics.workspaceWidth
     readonly property int itemSpacing: 2
-    readonly property int activeIndex: Spaces.activeIndex
+    readonly property int activeIndex: spaces.activeIndex
+
+    // This bar's own monitor's workspaces, not the focused monitor's.
+    readonly property MonitorSpaces spaces: MonitorSpaces {
+        monitor: Hyprland.monitorFor(root.QsWindow.window?.screen ?? null)
+    }
 
     spacing: itemSpacing
 
     Repeater {
-        model: Spaces.slots
+        model: root.spaces.slots
 
         Item {
             id: button

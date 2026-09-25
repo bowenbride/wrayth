@@ -238,8 +238,8 @@ What the installer does:
 2. **Fetches Wrayth** into `~/.config/quickshell/wrayth`, from this
    repository or from `--source`. Nothing else is downloaded.
 3. **Sets up the rest as you:**
-   - the `wrayth-*` helpers in `~/.local/bin`;
-   - the kitty and hypridle configs;
+   - the `wrayth-*` helpers in `~/.local/bin`, `wrayth-update` included;
+   - the kitty and hypridle configs, as files of your own to edit;
    - the bundled Chakra Petch font;
    - the six profile wallpapers in `~/Pictures/wallpapers/wrayth`;
    - one line in `~/.bashrc`;
@@ -249,7 +249,57 @@ What the installer does:
      `hyprland.lua`, it backs that file up and adds one line that loads Wrayth.
 
 Every file it replaces is backed up first, and the closing summary says where.
-Running it again updates Wrayth and changes nothing else.
+Running it again is safe; see [Updating](#updating).
+
+## Updating
+
+    ~/.local/bin/wrayth-update
+
+This is the recommended way to update. It works from your existing install:
+
+1. It fetches the latest version from this repository into
+   `~/.config/quickshell/wrayth`.
+2. It shows your installed version, the new one and a list of what changed,
+   then asks before changing anything. If you're already up to date, it says
+   so and stops.
+3. It installs any newly required packages the same way the installer does,
+   with one `sudo pacman -S --needed ...` command shown for you to approve.
+4. It adds any new helpers, fonts and wallpapers.
+5. It restarts the shell so the update takes effect. If the screen is locked,
+   it doesn't restart; it tells you to log out and back in instead.
+
+Updating never touches your data in `~/.config/wrayth`,
+`~/.local/state/wrayth` or `~/.cache/wrayth`.
+
+**Your edited configs are kept.** This covers the configs Wrayth installs:
+`kitty.conf`, kitty's `tab_bar.py`, `hypr-wrayth.lua`, `hypridle.conf`, and
+Wrayth's complete `hyprland.lua`.
+
+- **If you haven't edited one,** it's replaced with the new version.
+- **If you've edited one,** yours is left exactly as it is. When Wrayth's
+  version has changed, the new one is saved beside yours as
+  `<file>.wrayth-new`, and the summary lists each one. Compare them with
+  `diff` and take what you want.
+
+**When it stops.** `wrayth-update` makes no changes if:
+
+- Wrayth's own folder contains changes you've made;
+- Wrayth was installed from a plain folder rather than from git.
+
+In both cases it explains what to do.
+
+**Re-running the install command also works,** and is safe. It keeps your
+data and follows the same rules for edited configs. Use it if you installed
+from a plain folder, or if you're updating from the first release. The first
+release linked some configs into Wrayth's folder, and re-running the
+installer turns them into files of your own, keeping any edits.
+
+**No automatic checks.** Wrayth never checks for updates or contacts GitHub
+by itself. Updates happen only when you run one of these commands.
+
+**Versions.** The version is in the `VERSION` file, and each release is
+tagged `v<version>`. `wrayth-update` shows the installed and available
+versions. The first release had no version number.
 
 ### Optional packages
 
@@ -389,7 +439,8 @@ anywhere**, because every wrong attempt can restart the ten minutes.
   - a ping to your router for the uplink readout;
   - `checkupdates` and `arch-audit` if they are installed.
 
-  The installer contacts only this repository and pacman's mirrors.
+  The installer and `wrayth-update` contact only this repository and pacman's
+  mirrors, and only when you run them.
 
 ## Recovering a stuck lockscreen
 
@@ -436,6 +487,8 @@ This removes what the installer added:
 - the helper links;
 - the font;
 - its line in `~/.bashrc`;
+- its kitty and Hyprland configs, but only ones you haven't edited (edited
+  ones are left where they are);
 - its line in your `hyprland.lua`, or its complete Hyprland config, which is
   moved aside rather than deleted.
 
@@ -452,6 +505,16 @@ those too:
 - Hyprland with the Lua config only.
 - The deck targets 1920×1080 or larger. Smaller screens are clipped, not
   reflowed.
+- **Multiple monitors work.** Each screen gets its own bar and wallpaper, and
+  each bar shows its own monitor's workspaces. The following open on one
+  screen only, the focused one:
+  - the deck;
+  - the launcher, power menu and profile picker;
+  - the bar dropdowns;
+  - notifications;
+  - the volume and brightness popup.
+
+  The lockscreen covers every screen, including one plugged in while locked.
 - CPU temperature needs an Intel `coretemp`, AMD `k10temp`/`zenpower` or ARM
   `cpu_thermal` sensor. Without one, no temperature is shown.
 

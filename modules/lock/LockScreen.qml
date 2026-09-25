@@ -119,9 +119,14 @@ Scope {
             // stranded-focus watchdog below.
             readonly property bool keyboardHeld: input.Window.active
             onKeyboardHeldChanged: root.focusedSurfaces += keyboardHeld ? 1 : -1
+            // Registered while it exists, so a test can see every screen
+            // covered, including one plugged in while locked.
+            id: lockSurface
+            Component.onCompleted: Lock.surfaceUp(lockSurface)
             Component.onDestruction: {
                 if (keyboardHeld)
                     root.focusedSurfaces -= 1;
+                Lock.surfaceDown(lockSurface);
             }
 
             // The real input. The slots only draw what is typed; a Keys handler
@@ -152,14 +157,22 @@ Scope {
                     Lock.clear();
                 }
 
-                // submit() takes the buffer and blanks it; the field follows, or
-                // the next attempt would resend what was already tried.
+                // **Every screen's field mirrors the one buffer.** Each lock
+                // surface has its own field, and the keyboard goes to whichever
+                // surface Hyprland focuses -- with two monitors, the one the
+                // pointer moves to. A field that only followed the buffer when
+                // it was cleared started the second screen from empty, and its
+                // first key replaced everything typed on the first. submit()
+                // blanking the buffer is the same path: the fields follow, so
+                // the next attempt never resends what was already tried.
                 Connections {
                     target: Lock
 
                     function onBufferChanged(): void {
-                        if (Lock.buffer === "" && input.text !== "")
-                            input.text = "";
+                        if (input.text !== Lock.buffer) {
+                            input.text = Lock.buffer;
+                            input.cursorPosition = input.text.length;
+                        }
                     }
                 }
 

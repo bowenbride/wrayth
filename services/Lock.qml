@@ -22,6 +22,21 @@ Singleton {
     property string state: ""
     property int attempts: 0
     property string buffer: ""
+
+    // The lock surfaces that exist, kept by the surfaces themselves
+    // (LockScreen.qml); `surfaceScreens` names their screens, read when asked,
+    // since a surface is given its screen after it is built. Read by
+    // `ipc call lock surfaces`.
+    property var surfaces: []
+    readonly property var surfaceScreens: surfaces.filter(s => s).map(s => s.screen?.name ?? "?")
+
+    function surfaceUp(surface: var): void {
+        surfaces = surfaces.filter(s => s && s !== surface).concat([surface]);
+    }
+
+    function surfaceDown(surface: var): void {
+        surfaces = surfaces.filter(s => s && s !== surface);
+    }
     // What PAM will actually be handed, captured the moment a submit is
     // accepted. Keeping it apart from `buffer` means nothing typed afterwards
     // can leak into an attempt already in flight.

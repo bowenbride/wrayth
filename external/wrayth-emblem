@@ -113,10 +113,13 @@ def main():
     except (OSError, subprocess.SubprocessError):
         pass
 
-    here = os.path.dirname(os.path.abspath(__file__))
-    fallback = os.path.join(os.path.dirname(here), "emblem-fallback.txt")
+    # A copy in ~/.config/wrayth is the user's own override; otherwise the one
+    # shipped beside this script, which updates with Wrayth. (realpath: this
+    # runs through a link in ~/.local/bin.)
+    here = os.path.dirname(os.path.realpath(__file__))
+    fallback = os.path.expanduser("~/.config/wrayth/emblem-fallback.txt")
     if not os.path.isfile(fallback):
-        fallback = os.path.expanduser("~/.config/wrayth/emblem-fallback.txt")
+        fallback = os.path.join(here, "emblem-fallback.txt")
 
     os.makedirs(outdir, exist_ok=True)
     wrote = []

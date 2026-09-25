@@ -16,8 +16,18 @@ Singleton {
     readonly property string workspace: "deck"
     readonly property string terminalClass: "wrayth-deck"
 
-    readonly property HyprlandMonitor monitor: Hyprland.focusedMonitor
-    readonly property bool visible: (monitor?.lastIpcObject?.specialWorkspace?.name ?? "") === `special:${workspace}`
+    // **The monitor the deck is showing on**, by name, or "" when it is closed.
+    // It used to be read from the *focused* monitor only, so with two monitors
+    // moving focus to the other screen while the deck was open hid its panels
+    // on the screen still showing it, and every screen's deck surface drew its
+    // panels -- and placed the terminal -- when it was open anywhere.
+    readonly property string monitorName: {
+        for (const m of Hyprland.monitors.values)
+            if ((m.lastIpcObject?.specialWorkspace?.name ?? "") === `special:${workspace}`)
+                return m.name;
+        return "";
+    }
+    readonly property bool visible: monitorName !== ""
 
     onVisibleChanged: ShellState.deckVisible = visible
 

@@ -226,7 +226,10 @@ _wrayth_refresh() {
 
 _wrayth_fetch() {
     local conf="${XDG_CONFIG_HOME:-$HOME/.config}/wrayth"
+    # A copy in ~/.config/wrayth is the user's own override; otherwise the one
+    # shipped beside this file, which updates with Wrayth.
     local cfg="$conf/fastfetch.jsonc"
+    [ -r "$cfg" ] || cfg="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/wrayth/external/fastfetch.jsonc"
 
     command -v fastfetch > /dev/null 2>&1 || return
     [ -r "$cfg" ] || return

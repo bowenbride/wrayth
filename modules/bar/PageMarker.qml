@@ -1,4 +1,6 @@
 import QtQuick
+import Quickshell
+import Quickshell.Hyprland
 import qs.components
 import qs.config
 import qs.services
@@ -26,7 +28,12 @@ Item {
     readonly property int pipGap: 3
     readonly property int labelGap: 8
 
-    readonly property int shown: Math.max(1, Math.min(Spaces.pipCount, maxPips))
+    readonly property int shown: Math.max(1, Math.min(spaces.pipCount, maxPips))
+
+    // This bar's own monitor's workspaces, not the focused monitor's.
+    readonly property MonitorSpaces spaces: MonitorSpaces {
+        monitor: Hyprland.monitorFor(root.QsWindow.window?.screen ?? null)
+    }
 
     implicitWidth: labelSlot.implicitWidth + labelGap + shown * (pipSize + pipGap) - pipGap
     implicitHeight: 11
@@ -55,7 +62,7 @@ Item {
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
             color: Theme.dim
-            text: Spaces.pageLabel
+            text: root.spaces.pageLabel
         }
     }
 
@@ -73,7 +80,7 @@ Item {
             Rectangle {
                 required property int index
 
-                readonly property bool lit: index === Math.min(Spaces.litPip, root.shown - 1)
+                readonly property bool lit: index === Math.min(root.spaces.litPip, root.shown - 1)
 
                 width: root.pipSize
                 height: root.pipSize

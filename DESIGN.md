@@ -135,6 +135,16 @@ temporary output the lockscreen uses to recover keyboard focus. Layer
 namespaces are `wrayth-(bar|deck|deckbg|popup|overlay|notifications|background|scanlines)`,
 matched by exact string in `hypr-wrayth.lua` — change both together.
 
+**Which screen.** Per-screen surfaces are one per screen, but most things
+appear on one screen only, and each such thing names its screen:
+`ShellState.dropdownScreen` (the bar that was clicked),
+`ShellState.overlayScreen` (the screen focused when a full-screen overlay
+opened), `Deck.monitorName` (the monitor showing `special:deck`) and
+`ShellState.focusedScreen` (the popup and notifications). Anything a bar shows
+about "the current workspace" comes from its own monitor
+(`services/MonitorSpaces.qml`). Never drive a per-screen surface from one
+global flag, or place it from the focused monitor's coordinates: that's how
+dropdowns closed themselves and overlays grabbed the keyboard on every screen.
 **The deck** is a Hyprland special workspace (`special:deck`) holding a kitty
 window of class `wrayth-deck`, with the shell's panels drawn around it. The
 shell sizes and places that window (`services/Deck.qml`,
@@ -185,6 +195,18 @@ around `pam_unix`), so nothing is installed under `/etc`.
 
 The threat model: the lock protects against someone at the keyboard and other
 local users. It cannot protect against software already running as you.
+
+## Installing and updating
+
+`install.sh` installs the configs a user may edit (`kitty.conf`,
+`tab_bar.py`, `hypr-wrayth.lua`, `hypridle.conf`, the complete
+`hyprland.lua`) as **copies**, never as links into the checkout, so an edit
+never lands in Wrayth's own files. A re-run and `wrayth-update` (which runs
+the new version's `install.sh --update-from <old commit>`) replace a copy only
+while it is exactly what Wrayth shipped before; an edited one is kept, with
+the new version saved beside it as `<file>.wrayth-new`. Updating never writes
+to `~/.config/wrayth`, `~/.local/state/wrayth` or `~/.cache/wrayth`. When you
+change a shipped config, bump `VERSION` in the release that carries it.
 
 ## Testing changes
 

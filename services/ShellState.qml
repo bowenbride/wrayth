@@ -1,6 +1,7 @@
 pragma Singleton
 
 import Quickshell
+import Quickshell.Hyprland
 import qs.services
 
 // Which overlays are up. IPC and keybinds flip these; the overlay modules bind
@@ -18,6 +19,39 @@ Singleton {
     // covers every output, that one included, as the protocol requires.
     readonly property string refocusOutputPrefix: "WRAYTH-REFOCUS-"
     readonly property var screens: Quickshell.screens.filter(s => !String(s.name).startsWith(refocusOutputPrefix))
+
+    // **The focused screen, by name**: Hyprland's focused monitor when it is
+    // one of `screens`, else the first screen. Everything that appears on one
+    // screen only -- the full-screen overlays, the volume and brightness popup,
+    // notifications -- appears on this one (the overlays on the one focused
+    // when they opened, see `overlayScreen`).
+    readonly property string focusedScreen: {
+        const name = Hyprland.focusedMonitor?.name ?? "";
+        return screens.some(s => s.name === name) ? name : (screens[0]?.name ?? "");
+    }
+
+    function screenNamed(name: string): var {
+        return screens.find(s => s.name === name) ?? null;
+    }
+
+    // **The screen the open full-screen overlay is on.** The launcher, the
+    // power menu, the picker and the daemon library are one surface per
+    // screen, and every one of them used to open -- each asking for the whole
+    // keyboard, with keys landing on whichever the compositor picked. Set by
+    // `openExclusive` to the focused screen at the moment of opening, and
+    // kept while the overlay is up, so moving the pointer to another monitor
+    // does not move it.
+    property string overlayScreen: ""
+
+    // A monitor unplugged under something open on it: that thing is closed,
+    // rather than left "open" on a screen that no longer exists, holding a
+    // flag that the next toggle would read as "close".
+    onScreensChanged: {
+        if (overlayScreen !== "" && !screenNamed(overlayScreen) && (launcherOpen || powerOpen || pickerOpen || Daemons.libraryOpen))
+            openExclusive("");
+        if (dropdown !== "" && !screenNamed(dropdownScreen))
+            closeDropdown("its screen was removed");
+    }
 
     property bool launcherOpen: false
     property bool powerOpen: false
@@ -179,6 +213,8 @@ Singleton {
     // `daemons` is a name here like any other, so the library opens through
     // the same call rather than through a flag of its own.
     function openExclusive(which: string): void {
+        if (which !== "")
+            overlayScreen = focusedScreen;
         launcherOpen = which === "launcher";
         powerOpen = which === "power";
         pickerOpen = which === "picker";

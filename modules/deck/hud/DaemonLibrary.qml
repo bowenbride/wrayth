@@ -15,7 +15,8 @@ Variants {
         id: overlay
 
         required property ShellScreen modelData
-        readonly property bool shown: Daemons.libraryOpen
+        // One screen only: see `ShellState.overlayScreen`.
+        readonly property bool shown: Daemons.libraryOpen && ShellState.overlayScreen === modelData.name
 
         screen: modelData
         color: "transparent"

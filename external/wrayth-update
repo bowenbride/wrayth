@@ -1,0 +1,189 @@
+#!/usr/bin/env bash
+#
+# wrayth-update -- update Wrayth from its official repository.
+#
+#   ~/.local/bin/wrayth-update          # shows what is new, asks, then updates
+#   ~/.local/bin/wrayth-update --yes    # the same, without asking
+#
+# It fetches the latest version into the checkout Wrayth already runs from
+# (~/.config/quickshell/wrayth), from the repository it was installed from; it
+# never downloads and runs a new installer. Before changing anything it shows
+# the installed version, the new one and what changed, and asks.
+#
+# Updating:
+#   - never touches your data: ~/.config/wrayth, ~/.local/state/wrayth and
+#     ~/.cache/wrayth are left exactly as they are;
+#   - never overwrites a config you have edited (kitty.conf, tab_bar.py,
+#     hypr-wrayth.lua, hypridle.conf, and Wrayth's complete hyprland.lua):
+#     yours stays, and Wrayth's new version is saved beside it as
+#     <file>.wrayth-new -- the summary lists each one;
+#   - installs any newly required packages the way the installer does, with
+#     one visible `sudo pacman -S --needed ...` for you to approve;
+#   - adds any new helpers, fonts and wallpapers;
+#   - restarts the shell so the update takes effect -- but never while the
+#     screen is locked: then it tells you to log out and back in instead.
+#
+# It stops without changing anything when the checkout has changes of your own
+# in it, or when Wrayth was installed from a plain folder rather than git.
+#
+# Nothing in Wrayth checks for updates on its own or contacts the repository
+# by itself; this command is the only thing that does, and only when you run
+# it.
+
+set -u
+
+CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}"
+CHECKOUT="$CONFIG/quickshell/wrayth"
+BIN="$HOME/.local/bin"
+YES=0
+
+say() { printf '%s\n' "$*"; }
+stop() {
+    say ""
+    for line in "$@"; do say "$line"; done
+    exit 1
+}
+
+for arg in "$@"; do
+    case "$arg" in
+        -y | --yes) YES=1 ;;
+        -h | --help)
+            sed -n '2,33p' "$0" | sed 's/^# \{0,1\}//'
+            exit 0
+            ;;
+        *) stop "Unknown option: $arg  (try --help)" ;;
+    esac
+done
+
+[ "$(id -u)" != 0 ] || stop "Run this as yourself, not as root (and not with sudo)." \
+    "It asks for your password itself if a package has to be installed."
+
+[ -f "$CHECKOUT/shell.qml" ] ||
+    stop "Wrayth is not installed at $CHECKOUT, so there is nothing to update." \
+        "To install it, see the README."
+
+G() { git -C "$CHECKOUT" "$@"; }
+
+if ! command -v git > /dev/null 2>&1 || ! G rev-parse --git-dir > /dev/null 2>&1; then
+    stop "Wrayth at $CHECKOUT was installed from a plain folder, not from git," \
+        "so it has no repository to update from. Nothing was changed." \
+        "" \
+        "To update, run the install command again -- it is safe: it keeps your" \
+        "data and never overwrites a config you have edited:" \
+        "" \
+        "    bash <(curl -fsSL https://raw.githubusercontent.com/bowenbride/wrayth/main/install.sh)"
+fi
+
+# --- Your own changes in the checkout --------------------------------------
+# Files an older install linked into your config: an edit to the config was
+# an edit to these. Re-running the installer turns them into files of your
+# own, keeping the edits.
+LINKED_BEFORE="external/kitty.conf external/tab_bar.py external/hypr-wrayth.lua external/hypridle.conf external/fastfetch.jsonc external/emblem-fallback.txt"
+changes="$(G status --porcelain --untracked-files=normal 2> /dev/null)"
+if [ -n "$changes" ]; then
+    say "Wrayth's folder has changes of your own in it, so nothing was updated and"
+    say "nothing was changed. These files differ from the installed version:"
+    say ""
+    printf '%s\n' "$changes" | sed 's/^/    /'
+    through_links=0
+    for f in $(printf '%s\n' "$changes" | awk '{ print $NF }'); do
+        case " $LINKED_BEFORE " in *" $f "*) through_links=1 ;; esac
+    done
+    if [ "$through_links" = 1 ]; then
+        stop "Some of these are configs an earlier version of Wrayth linked into your" \
+            "own settings (kitty.conf, hypr-wrayth.lua, ...), so editing your config" \
+            "edited these. Run the install command once; it keeps your edits, as files" \
+            "of your own, and wrayth-update works from then on:" \
+            "" \
+            "    bash <(curl -fsSL https://raw.githubusercontent.com/bowenbride/wrayth/main/install.sh)"
+    fi
+    stop "To update, first move your changes out of the way. To keep them for later:" \
+        "    git -C $CHECKOUT stash" \
+        "then run wrayth-update again. (git -C $CHECKOUT stash pop puts them back.)"
+fi
+
+origin="$(G remote get-url origin 2> /dev/null)" ||
+    stop "Wrayth's folder has no repository to update from (no 'origin'). Nothing was changed."
+branch="$(G rev-parse --abbrev-ref HEAD 2> /dev/null)"
+[ -n "$branch" ] && [ "$branch" != HEAD ] ||
+    stop "Wrayth's folder is not on a branch (it is at a single commit), so it cannot" \
+        "be updated in place. Nothing was changed. Run the install command again instead."
+
+version_at() {
+    local v
+    v="$(G show "$1:VERSION" 2> /dev/null | head -1 | tr -d '[:space:]')"
+    printf '%s (%s, %s)' "${v:-no version number}" "$(G rev-parse --short "$1")" "$(G log -1 --format=%cs "$1")"
+}
+
+say "Checking $origin for a new version..."
+G fetch --quiet origin "$branch" ||
+    stop "Could not reach $origin. Nothing was changed; check the network and try again."
+old="$(G rev-parse HEAD)"
+new="$(G rev-parse FETCH_HEAD)"
+
+if [ "$old" = "$new" ]; then
+    say "Wrayth is up to date: $(version_at "$old")."
+    exit 0
+fi
+G merge-base --is-ancestor "$old" "$new" ||
+    stop "Wrayth's folder has commits of its own that the official version does not," \
+        "so it cannot simply move forward. Nothing was changed."
+
+say ""
+say "  Installed:  $(version_at "$old")"
+say "  Available:  $(version_at "$new")"
+say ""
+say "  What changed:"
+G log --no-merges --format='    - %s' "$old..$new" | head -30
+[ "$(G rev-list --count --no-merges "$old..$new")" -gt 30 ] && say "    ... and more: git -C $CHECKOUT log $old..$new"
+say ""
+
+if [ "$YES" = 0 ]; then
+    reply=""
+    printf 'Update now? [y/N] '
+    read -r reply 2> /dev/null < /dev/tty || { reply=""; printf '\n'; }
+    case "$reply" in y | Y | yes | YES) ;; *) say "Nothing was changed."; exit 0 ;; esac
+fi
+
+G merge --ff-only --quiet "$new" || stop "Could not move Wrayth's folder to the new version. Nothing was changed."
+
+# The new version's own installer does the rest, in update mode: packages,
+# new helpers, configs (never an edited one), fonts, wallpapers.
+bash "$CHECKOUT/install.sh" --update-from "$old" ||
+    stop "The update was fetched, but setting it up did not finish (see above)." \
+        "Running the install command again completes it safely."
+
+# --- Restart the shell -------------------------------------------------------
+say ""
+if [ -z "${HYPRLAND_INSTANCE_SIGNATURE:-}" ] || ! hyprctl version > /dev/null 2>&1; then
+    say "Not running inside Hyprland here, so the shell was not restarted:"
+    say "log out and back in to start the new version."
+    exit 0
+fi
+if [ "$(hyprctl locked 2> /dev/null)" = true ]; then
+    say "The screen is locked, so the shell was not restarted (restarting it would"
+    say "hand the lock to a new process). Log out and back in to start the new"
+    say "version -- or, once unlocked, run wrayth-update again to restart it."
+    exit 0
+fi
+
+# The supervisor (wrayth-shell) exits with the shell when the screen is not
+# locked; wait for it to let go of its lock before starting a new one, or the
+# new one would see the old one still running and step aside.
+runtime="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+tag="$(printf '%s' "-c wrayth" | cksum | cut -d' ' -f1)"
+lockfile="$runtime/wrayth-shell-$tag.lock"
+say "Restarting the shell..."
+qs -c wrayth kill > /dev/null 2>&1
+for _ in $(seq 1 50); do
+    { [ ! -e "$lockfile" ] || flock -n "$lockfile" true; } && ! qs -c wrayth ipc show > /dev/null 2>&1 && break
+    sleep 0.1
+done
+# Started by Hyprland, exactly as at login, so it has the session's own
+# environment rather than this terminal's.
+hyprctl dispatch "hl.dsp.exec_cmd(\"$BIN/wrayth-shell\")" > /dev/null 2>&1
+for _ in $(seq 1 100); do
+    qs -c wrayth ipc show > /dev/null 2>&1 && { say "Done: Wrayth $(G show HEAD:VERSION 2> /dev/null | head -1) is running."; exit 0; }
+    sleep 0.1
+done
+say "The shell did not come back by itself. Log out and back in to start it."
