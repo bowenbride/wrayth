@@ -32,3 +32,8 @@ scratchpad/
 .qmlls.ini
 .vscode/
 .idea/
+
+# Private: the style guide and the instructions for sessions. Never committed,
+# never pushed, never part of the release.
+STYLE.md
+CLAUDE.md
