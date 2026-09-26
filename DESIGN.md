@@ -74,6 +74,17 @@ caret, no focus frame. Free-text fields (`components/InputField.qml`) keep a
 cut. **Full-screen views** (the picker's pages, the keybind list) have `BACK`
 above the header, doing what Escape does.
 
+**Reduced motion** (the SYSTEM page): `Appear` fades in over the `state`
+duration with no rise, and glitches are off. **Game mode** pauses the
+visualiser, glitches and the scanline band while anything is fullscreen
+(`SystemSettings.gaming`); anything new that animates in the background should
+check it too.
+
+**Low-rate previews.** The overview and the window switcher use
+`ScreencopyView` with `live: false` and capture a frame on a timer (one a
+second in the overview, one on open in the switcher), inside a `Loader` that is
+only active while the surface is shown, so closing it ends every capture.
+
 **Key hints** are keycaps (`components/Keycap.qml`), named (`ENTER`, `ESC`),
 in the surrounding text's colour.
 

@@ -1,5 +1,6 @@
 import QtQuick
 import qs.config
+import qs.services
 
 // Anything that comes and goes. **Nothing in the shell appears or disappears
 // without going through this, or without doing exactly what this does.**
@@ -41,13 +42,15 @@ Item {
 
     Behavior on opacity {
         NumberAnimation {
-            duration: root.shown ? Appearance.duration.enter : Appearance.duration.exit
+            // REDUCED motion (SYSTEM page): a quick fade and nothing moving.
+            duration: SystemSettings.reducedMotion ? Appearance.duration.state : (root.shown ? Appearance.duration.enter : Appearance.duration.exit)
             easing.type: root.shown ? Easing.OutCubic : Easing.InCubic
         }
     }
 
     // --- The rise ------------------------------------------------------------
-    property real rise: Appearance.enterRise
+    readonly property real startRise: SystemSettings.reducedMotion ? 0 : Appearance.enterRise
+    property real rise: startRise
     // Nothing animates until the first frame has been laid out, or an item
     // that is shown from the start slides up on every config reload.
     property bool ready: false
@@ -65,10 +68,10 @@ Item {
     }
 
     onShownChanged: if (shown) rise = 0
-    onVisibleChanged: if (!visible) rise = Appearance.enterRise
+    onVisibleChanged: if (!visible) rise = startRise
 
     Component.onCompleted: {
-        rise = shown ? 0 : Appearance.enterRise;
+        rise = shown ? 0 : startRise;
         ready = true;
     }
 

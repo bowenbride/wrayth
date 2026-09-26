@@ -61,7 +61,9 @@ Singleton {
     property bool captureOpen: false
     property bool keybindsOpen: false
     property bool clipboardOpen: false
-    readonly property bool anyOverlay: launcherOpen || powerOpen || pickerOpen || captureOpen || keybindsOpen || clipboardOpen || Daemons.libraryOpen
+    property bool overviewOpen: false
+    property bool switcherOpen: false
+    readonly property bool anyOverlay: launcherOpen || powerOpen || pickerOpen || captureOpen || keybindsOpen || clipboardOpen || overviewOpen || switcherOpen || Daemons.libraryOpen
     // Which of the picker's three screens is up: "grid", "editor" or "pools".
     // It lives here rather than on the overlay so the IPC can drive it -- the
     // two inner screens are reached by clicking, and nothing in a test session
@@ -227,6 +229,8 @@ Singleton {
         captureOpen = which === "capture";
         keybindsOpen = which === "keybinds";
         clipboardOpen = which === "clipboard";
+        overviewOpen = which === "overview";
+        switcherOpen = which === "switcher";
         Daemons.libraryOpen = which === "daemons";
         // A dropdown is not an overlay, but it is a surface holding a focus
         // grab, and two things on screen asking for the keyboard is the bug

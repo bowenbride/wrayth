@@ -216,7 +216,7 @@ Singleton {
             // The shell's own summary of what was held is not itself history.
             const internal = (notification.hints?.["x-wrayth-internal"] ?? "") !== "";
             const critical = root.levelOf(notification) === "CRITICAL";
-            const hold = !critical && !internal && (root.dnd || root.fullscreen) && !Demo.active;
+            const hold = !critical && !internal && (root.dnd || (root.fullscreen && SystemSettings.notify === "hold")) && !Demo.active;
             if (!internal)
                 root._remember(notification, hold);
             if (hold) {

@@ -32,7 +32,8 @@ Singleton {
     // cold start), and a stopped process costs nothing. It used to run, and be
     // read, the whole session for a panel almost always hidden -- about 2% of
     // a core, the largest single part of the shell's idle cost.
-    readonly property bool wanted: ShellState.deckVisible
+    // Paused while game mode is on (SYSTEM page).
+    readonly property bool wanted: ShellState.deckVisible && !SystemSettings.gaming
     property bool _paused: false
     function _pause(on: bool): void {
         if (!cava.running || on === root._paused)

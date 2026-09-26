@@ -10,6 +10,8 @@ import qs.modules.deck.hud
 import qs.modules.dropdowns
 import qs.modules.notifications
 import qs.modules.keybinds
+import qs.modules.overview
+import qs.modules.switcher
 import qs.modules.launcher
 import qs.modules.lock
 import qs.modules.picker
@@ -32,6 +34,8 @@ ShellRoot {
     PickerOverlay {}
     CaptureOverlay {}
     KeybindsOverlay {}
+    OverviewOverlay {}
+    WindowSwitcher {}
     ClipboardOverlay {}
     DaemonLibrary {}
     LockScreen {}

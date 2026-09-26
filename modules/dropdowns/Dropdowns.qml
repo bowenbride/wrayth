@@ -271,6 +271,10 @@ Variants {
                         return trayPanel;
                     case "comms":
                         return commsPanel;
+                    case "calendar":
+                        return calendarPanel;
+                    case "input":
+                        return inputPanel;
                     default:
                         return null;
                     }
@@ -321,6 +325,22 @@ Variants {
                 id: commsPanel
 
                 CommsDropdown {
+                    width: holder.width
+                }
+            }
+
+            Component {
+                id: inputPanel
+
+                InputDropdown {
+                    width: holder.width
+                }
+            }
+
+            Component {
+                id: calendarPanel
+
+                CalendarDropdown {
                     width: holder.width
                 }
             }

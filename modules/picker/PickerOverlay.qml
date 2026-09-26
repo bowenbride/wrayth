@@ -8,6 +8,7 @@ import qs.modules.picker.editor
 import qs.modules.picker.effects
 import qs.modules.picker.privacy
 import qs.modules.picker.pools
+import qs.modules.picker.system
 
 // PROFILE // SELECT, and the two screens it leads to. Moving the selection
 // recolours the whole shell at once; Enter keeps it, Escape puts the old one
@@ -107,7 +108,7 @@ Variants {
             }
             // Nothing on the effects page waits for Enter: every control there
             // applies itself the moment it is pressed.
-            if (view === "effects" || view === "privacy")
+            if (view === "effects" || view === "privacy" || view === "system")
                 return;
             confirm();
         }
@@ -214,6 +215,8 @@ Variants {
                 return;
             if (view === "privacy" && privacyScreen.back())
                 return;
+            if (view === "system" && systemScreen.back())
+                return;
             if (view === "effects" && effectsScreen.back())
                 return;
             if (confirming) {
@@ -313,6 +316,8 @@ Variants {
                         return effectsScreen.contentRect;
                     if (overlay.view === "privacy")
                         return privacyScreen.contentRect;
+                    if (overlay.view === "system")
+                        return systemScreen.contentRect;
                     return gridScreen.contentRect;
                 }
 
@@ -758,6 +763,84 @@ Variants {
                         onTapped: overlay.show("privacy")
                     }
                 }
+
+                // --- The way to the system page, beside PRIVACY -------------------------
+                // On the key hints' line and at the composition's right edge,
+                // so it reads as a way out of this screen rather than as one
+                // more thing on it. The wallpaper column's own `MANAGE
+                // WALLPAPER POOLS` is the same button in the same role.
+                Item {
+                    id: systemButton
+
+                    x: privacyButton.x - width - 12
+                    y: 756
+                    // **The whole row, not just the word.** It was sized from
+                    // the label alone while it holds the label *and* its
+                    // katakana, so the tag was pressed against the chamfer and
+                    // the word against the left edge.
+                    width: systemRow.implicitWidth + 40
+                    height: 30
+
+                    ChamferPanel {
+                        anchors.fill: parent
+
+                        chamfer: 8
+                        chamferTopRight: 0
+                        chamferBottomLeft: 8
+                        // Opaque, blended rather than laid over: it sits on a
+                        // wallpaper, and a translucent accent fill lets the
+                        // image through the label.
+                        fillColor: Theme.blend(Theme.ground, Theme.accent, systemHover.hovered ? 0.24 : 0.14)
+                        borderColor: Theme.accent
+
+                        Behavior on fillColor {
+                            ColorAnimation {
+                                duration: Appearance.duration.state
+                                easing.type: Easing.OutCubic
+                            }
+                        }
+                    }
+
+                    Row {
+                        id: systemRow
+
+                        anchors.centerIn: parent
+                        spacing: 8
+
+                        NrLabel {
+                            id: systemLabel
+
+                            anchors.verticalCenter: parent.verticalCenter
+                            centred: true
+                            color: Theme.accent
+                            text: "SYSTEM"
+                        }
+
+                        KanaTag {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: "設定"
+                            title: systemLabel
+                        }
+                    }
+
+                    HoverHandler {
+                        id: systemHover
+
+                        cursorShape: Qt.PointingHandCursor
+                    }
+
+                    Feedback {
+                        id: systemFeedback
+
+                        anchors.fill: parent
+                        flashOpacity: 0.3
+                    }
+
+                    TapHandler {
+                        onPressedChanged: if (pressed) systemFeedback.flash()
+                        onTapped: overlay.show("system")
+                    }
+                }
             }
             }
 
@@ -782,6 +865,21 @@ Variants {
                     }
                 }
                 onCancelled: overlay.show("grid")
+            }
+            }
+
+            // --- The system page -------------------------------------------------
+            Appear {
+                anchors.fill: parent
+                fills: true
+                shown: overlay.view === "system"
+
+            SystemPage {
+                id: systemScreen
+
+                anchors.fill: parent
+
+                onFinished: overlay.show("grid")
             }
             }
 

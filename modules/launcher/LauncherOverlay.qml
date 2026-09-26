@@ -61,7 +61,7 @@ Variants {
             y: 190
 
             width: 680
-            height: header.height + search.height + list.height + footer.height + 2
+            height: header.height + search.height + (modes.active ? modes.implicitHeight : list.height) + footer.height + 2
 
             chamfer: Appearance.chamfer.panel
             fillColor: Theme.panel2
@@ -114,7 +114,7 @@ Variants {
                     anchors.right: parent.right
                     anchors.rightMargin: 16
                     anchors.verticalCenter: parent.verticalCenter
-                    text: `${Launcher.count} MATCHES`
+                    text: modes.active ? "" : `${Launcher.count} MATCHES`
                 }
             }
 
@@ -149,13 +149,29 @@ Variants {
                     font.weight: Appearance.font.weightBold
                 }
 
+                // The current mode's name, at the right of the field.
+                Text {
+                    id: modeName
+
+                    anchors.right: parent.right
+                    anchors.rightMargin: 16
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: modes.modeName
+                    color: Theme.signal
+                    font.family: Appearance.font.data
+                    font.pixelSize: 9
+                    font.weight: Appearance.font.weightSemi
+                    font.letterSpacing: 9 * 0.14
+                    renderType: Text.NativeRendering
+                }
+
                 TextInput {
                     id: input
 
                     anchors.left: prompt.right
                     anchors.leftMargin: 10
-                    anchors.right: parent.right
-                    anchors.rightMargin: 16
+                    anchors.right: modeName.left
+                    anchors.rightMargin: 12
                     anchors.verticalCenter: parent.verticalCenter
 
                     color: Theme.bright
@@ -171,10 +187,22 @@ Variants {
                     }
 
                     onTextChanged: Launcher.query = text
-                    Keys.onUpPressed: Launcher.move(-1)
-                    Keys.onDownPressed: Launcher.move(1)
-                    Keys.onReturnPressed: Launcher.activate()
-                    Keys.onEnterPressed: Launcher.activate()
+                    Keys.onUpPressed: modes.active ? modes.move(modes.mode === "emoji" ? -10 : -1) : Launcher.move(-1)
+                    Keys.onDownPressed: modes.active ? modes.move(modes.mode === "emoji" ? 10 : 1) : Launcher.move(1)
+                    Keys.onLeftPressed: event => {
+                        if (modes.mode === "emoji")
+                            modes.move(-1);
+                        else
+                            event.accepted = false;
+                    }
+                    Keys.onRightPressed: event => {
+                        if (modes.mode === "emoji")
+                            modes.move(1);
+                        else
+                            event.accepted = false;
+                    }
+                    Keys.onReturnPressed: modes.active ? modes.activate() : Launcher.activate()
+                    Keys.onEnterPressed: modes.active ? modes.activate() : Launcher.activate()
                     Keys.onEscapePressed: Launcher.close()
                 }
 
@@ -192,12 +220,24 @@ Variants {
             }
 
             // --- Results ---------------------------------------------------
+            LauncherModes {
+                id: modes
+
+                anchors.top: search.bottom
+                anchors.left: parent.left
+                anchors.right: parent.right
+                visible: active
+                query: input.text
+                onDone: Launcher.close()
+            }
+
             Column {
                 id: list
 
                 anchors.top: search.bottom
                 anchors.left: parent.left
                 anchors.right: parent.right
+                visible: !modes.active
 
                 // **A fixed set of rows that rebind, not a model of results.**
                 // Given the results array as its model, the Repeater destroyed
@@ -226,7 +266,7 @@ Variants {
             Item {
                 id: footer
 
-                anchors.top: list.bottom
+                anchors.top: modes.active ? modes.bottom : list.bottom
                 anchors.left: parent.left
                 anchors.right: parent.right
                 height: 34
@@ -287,6 +327,19 @@ Variants {
                         color: Theme.mute
                         text: "ABORT"
                     }
+                }
+
+                // The modes, by their prefixes.
+                Text {
+                    anchors.right: parent.right
+                    anchors.rightMargin: 16
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "= CALCULATE · : EMOJI · > RUN A COMMAND"
+                    color: Theme.dim
+                    font.family: Appearance.font.data
+                    font.pixelSize: 9
+                    font.letterSpacing: 9 * 0.12
+                    renderType: Text.NativeRendering
                 }
             }
         }

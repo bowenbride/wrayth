@@ -20,6 +20,31 @@ Row {
         active: Wifi.radioOn && (Wifi.connected || Wifi.wired)
     }
 
+    // A tunnel is up: a small drawn lock beside the signal.
+    Item {
+        anchors.verticalCenter: parent.verticalCenter
+        visible: Radio.tunnelUp
+        width: 8
+        height: 10
+
+        // The shackle and the body.
+        Rectangle {
+            x: 1.5
+            y: 0
+            width: 5
+            height: 6
+            color: "transparent"
+            border.width: 1.2
+            border.color: Theme.signal
+        }
+        Rectangle {
+            y: 4
+            width: 8
+            height: 6
+            color: Theme.signal
+        }
+    }
+
     Sparkline {
         anchors.verticalCenter: parent.verticalCenter
         visible: Wifi.radioOn || Wifi.wired

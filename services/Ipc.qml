@@ -102,7 +102,7 @@ Scope {
         // reached by clicking, and a recording has no pointer -- this is the
         // only way to put one of them on screen without one.
         function view(name: string): string {
-            if (["grid", "editor", "pools", "effects", "privacy"].indexOf(name) < 0)
+            if (["grid", "editor", "pools", "effects", "privacy", "system"].indexOf(name) < 0)
                 return `unknown view ${name}`;
             ShellState.pickerEditing = "";
             ShellState.pickerView = name;
@@ -132,7 +132,7 @@ Scope {
     // reasons to have a way in that is not the pointer. It validates the name
     // now: setting `dropdown` to something no panel answers to left `overlay
     // state` reporting a dropdown that was not on screen.
-    readonly property var dropdownNames: ["ident", "wifi", "bluetooth", "power", "audio", "tray", "comms"]
+    readonly property var dropdownNames: ["ident", "wifi", "bluetooth", "power", "audio", "tray", "comms", "calendar", "input"]
 
     // The screen a dropdown opened without a click belongs on.
     function focusedScreen(): string {
@@ -894,6 +894,108 @@ Scope {
         }
         function clearPreview(): void {
             Theme.clearPreview();
+        }
+    }
+
+    // Keyboard layouts and input methods. `next` is Super + Space. `simulate`
+    // shows made-up modes instead of the real ones ("EN:ENGLISH (US),あ:JAPANESE
+    // // HIRAGANA"), for testing the readout without touching the keyboard;
+    // `simulate ""` ends it.
+    IpcHandler {
+        target: "input"
+
+        function next(): void {
+            InputModes.next();
+        }
+        function state(): string {
+            return JSON.stringify({ shown: InputModes.shown, current: InputModes.current, simulating: InputModes.simulating, modes: InputModes.modes });
+        }
+        function simulate(spec: string): string {
+            InputModes.simulatedIndex = 0;
+            InputModes.simulated = spec === "" ? [] : spec.split(",").map((p, i) => {
+                const [glyph, ...name] = p.split(":");
+                return { id: `sim:${i}`, kind: "layout", name: name.join(":") || glyph, code: glyph, glyph: glyph };
+            });
+            return `${InputModes.simulated.length} simulated`;
+        }
+    }
+
+    // NIGHT LIGHT, for tests and scripts: the settings as the dropdown sets them.
+    IpcHandler {
+        target: "nightlight"
+
+        function state(): string {
+            return JSON.stringify({ on: NightLight.on, active: NightLight.active, kelvin: NightLight.kelvin, schedule: NightLight.schedule, from: NightLight.from, to: NightLight.to, available: NightLight.available });
+        }
+        function toggle(): void {
+            NightLight.setOn(!NightLight.on);
+        }
+        function schedule(which: string): string {
+            NightLight.setSchedule(which);
+            return NightLight.schedule;
+        }
+        function times(from: string, to: string): string {
+            return NightLight.setTimes(from, to) ? "ok" : "invalid";
+        }
+    }
+
+    // Airplane mode and VPNs. `simulate true` swaps in made-up state for tests,
+    // so toggles never touch a radio or a tunnel; `simulate false` ends it.
+    IpcHandler {
+        target: "radio"
+
+        function state(): string {
+            return JSON.stringify({ airplane: Radio.airplane, tunnelUp: Radio.tunnelUp, simulating: Radio.simulating, vpns: Radio.vpns });
+        }
+        function simulate(on: bool): string {
+            Radio.simulate(on);
+            return Radio.simulating ? "simulating" : "real";
+        }
+        function airplane(on: bool): string {
+            if (!Radio.simulating)
+                return "only while simulating";
+            Radio.setAirplane(on);
+            return "ok";
+        }
+        function vpn(name: string, up: bool): string {
+            if (!Radio.simulating)
+                return "only while simulating";
+            Radio.setVpn(name, up);
+            return "ok";
+        }
+    }
+
+    // OVERVIEW, Super + Tab.
+    IpcHandler {
+        target: "overview"
+
+        function toggle(): void {
+            ShellState.openExclusive(ShellState.overviewOpen ? "" : "overview");
+        }
+        function open(): void {
+            ShellState.openExclusive("overview");
+        }
+        function close(): void {
+            ShellState.overviewOpen = false;
+        }
+    }
+
+    // The window switcher, Alt + Tab / Alt + Shift + Tab. `commit` focuses
+    // the selection, as letting go of Alt does.
+    IpcHandler {
+        target: "switcher"
+
+        function next(): void {
+            Switcher.next();
+        }
+        function prev(): void {
+            Switcher.prev();
+        }
+        function commit(): void {
+            Switcher.commit();
+        }
+        function close(): void {
+            ShellState.switcherOpen = false;
         }
     }
 }

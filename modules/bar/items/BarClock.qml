@@ -2,10 +2,23 @@ import QtQuick
 import Quickshell
 import qs.components
 import qs.config
+import qs.services
 import qs.utils
 
 Row {
     id: root
+
+    // Clicking the clock opens CALENDAR under it.
+    readonly property string dropdownName: "calendar"
+    readonly property string screenName: QsWindow.window?.screen?.name ?? ""
+    Component.onCompleted: ShellState.registerReadout(root)
+    Component.onDestruction: ShellState.unregisterReadout(root)
+    HoverHandler {
+        cursorShape: Qt.PointingHandCursor
+    }
+    TapHandler {
+        onTapped: ShellState.toggleDropdown(root)
+    }
 
     // The seconds sit this far right of the minutes, with no colon between.
     readonly property int secondsGap: 4

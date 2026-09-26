@@ -103,7 +103,7 @@ REQUIRED=(quickshell hyprland kitty networkmanager pipewire wireplumber python
           grim wl-clipboard polkit
           xdg-desktop-portal-hyprland xdg-desktop-portal-gtk)
 RECOMMENDED=(cava fastfetch pacman-contrib arch-audit brightnessctl bluez
-             bluez-utils hypridle xdg-utils)
+             bluez-utils hypridle hyprsunset xdg-utils)
 
 say()  { printf '%s\n' "$*"; }
 step() { printf '\n== %s ==\n' "$*"; }

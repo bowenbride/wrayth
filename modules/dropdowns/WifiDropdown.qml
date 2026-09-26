@@ -149,12 +149,28 @@ DropdownFrame {
     title: "UPLINK // WLAN"
     katakana: "無線"
 
-    headerRight: ToggleButton {
-        on: Networking.wifiEnabled
-        action: radioAction
-        onToggled: {
-            radioAction.begin(Networking.wifiEnabled ? "DISABLING" : "ENABLING");
-            Networking.wifiEnabled = !Networking.wifiEnabled;
+    // AIRPLANE beside Wi-Fi's own ON / OFF. Airplane mode turns every radio
+    // off (Radio.qml), so the Wi-Fi toggle waits it out.
+    headerRight: Row {
+        spacing: 6
+
+        ToggleButton {
+            width: 76
+            height: 22
+            on: Radio.airplane
+            onText: "AIRPLANE"
+            offText: "AIRPLANE"
+            onToggled: Radio.setAirplane(!Radio.airplane)
+        }
+        ToggleButton {
+            height: 22
+            on: Networking.wifiEnabled && !Radio.airplane
+            usable: !Radio.airplane
+            action: radioAction
+            onToggled: {
+                radioAction.begin(Networking.wifiEnabled ? "DISABLING" : "ENABLING");
+                Networking.wifiEnabled = !Networking.wifiEnabled;
+            }
         }
     }
 
@@ -229,10 +245,28 @@ DropdownFrame {
                 width: parent.width
                 spacing: root.padding
 
+                // Airplane mode: the list gives way to one dim line.
+                Item {
+                    width: parent.width
+                    height: 60
+                    visible: Radio.airplane
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "AIRPLANE MODE // ALL RADIOS OFF"
+                        color: Theme.dim
+                        font.family: Appearance.font.data
+                        font.pixelSize: 10
+                        font.letterSpacing: 10 * 0.14
+                        renderType: Text.NativeRendering
+                    }
+                }
+
                 // Status line.
                 Item {
                     width: parent.width
                     height: 14
+                    visible: !Radio.airplane
 
                     NrLabel {
                         anchors.left: parent.left
@@ -267,6 +301,7 @@ DropdownFrame {
                 ListView {
                     id: list
 
+                    visible: !Radio.airplane
                     width: parent.width
                     height: Math.min(contentHeight, 7 * 34 + (root.pending ? 90 : 0))
                     clip: true
@@ -527,8 +562,91 @@ DropdownFrame {
                     }
                 }
 
+                // --- TUNNEL // VPN: NetworkManager's VPN connections ------------
+                Column {
+                    width: parent.width
+                    spacing: 0
+                    visible: Radio.vpns.length > 0
+
+                    Rectangle {
+                        width: parent.width
+                        height: Appearance.metrics.hairline
+                        color: Theme.hair
+                    }
+                    Text {
+                        height: 28
+                        verticalAlignment: Text.AlignVCenter
+                        text: "TUNNEL // VPN"
+                        color: Theme.signal
+                        font.family: Appearance.font.data
+                        font.pixelSize: 10
+                        font.weight: Appearance.font.weightSemi
+                        font.letterSpacing: 10 * 0.14
+                        renderType: Text.NativeRendering
+                    }
+                    Repeater {
+                        model: Radio.vpns
+
+                        Item {
+                            id: vpnRow
+
+                            required property var modelData
+
+                            width: parent.width
+                            height: 34
+
+                            Row {
+                                anchors.left: parent.left
+                                anchors.leftMargin: 10
+                                anchors.right: vpnToggle.left
+                                anchors.rightMargin: 8
+                                anchors.verticalCenter: parent.verticalCenter
+                                spacing: 8
+                                clip: true
+
+                                Text {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: Math.min(implicitWidth, parent.width - vpnType.implicitWidth - 8)
+                                    elide: Text.ElideRight
+                                    text: vpnRow.modelData.name
+                                    textFormat: Text.PlainText
+                                    color: vpnRow.modelData.up ? Theme.bright : Theme.text
+                                    font.family: Appearance.font.data
+                                    font.pixelSize: 12
+                                    renderType: Text.NativeRendering
+                                }
+                                Text {
+                                    id: vpnType
+
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: vpnRow.modelData.type
+                                    color: Theme.dim
+                                    font.family: Appearance.font.data
+                                    font.pixelSize: 10
+                                    font.letterSpacing: 10 * 0.1
+                                    renderType: Text.NativeRendering
+                                }
+                            }
+                            ToggleButton {
+                                id: vpnToggle
+
+                                anchors.right: parent.right
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: 58
+                                height: 22
+                                on: vpnRow.modelData.up
+                                onText: "UP"
+                                offText: "DOWN"
+                                usable: Radio.busy === "" && !Radio.airplane
+                                onToggled: Radio.setVpn(vpnRow.modelData.name, !vpnRow.modelData.up)
+                            }
+                        }
+                    }
+                }
+
                 // Rescan.
                 ActionButton {
+                    visible: !Radio.airplane
                     width: parent.width
                     text: "RESCAN NETWORKS"
                     verbText: "SCANNING"

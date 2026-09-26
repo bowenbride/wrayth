@@ -106,10 +106,42 @@ someone else. See [Issues](#issues).
 - Every key, grouped and searchable, read from Hyprland itself. Click one to
   change it; your changes go in `~/.config/wrayth/keybinds.lua`.
 
+**Overview** (`Super + Tab`) and **window switcher** (`Alt + Tab`)
+
+- OVERVIEW shows the current page's five workspaces with live previews of
+  their windows, laid out as they are; drag a window onto another workspace to
+  move it. Open special workspaces sit on a second row.
+- Hold `Alt` and tap `Tab` to go through every window, most recent first;
+  `Shift + Tab` goes back; let go to focus.
+
+**Launcher modes**
+
+- `=` calculates (arithmetic, powers, brackets, unit conversions such as
+  `5 km to mi`); a plain sum answers without the `=`. `Enter` copies.
+- `:` searches emoji by name; `Enter` copies.
+- `>` runs a command in kitty or in the background -- never as root. Recent
+  commands are kept the way the clipboard history is.
+
+**Calendar, input methods and night light**
+
+- Click the clock for the month. Weeks start on Monday.
+- With two or more keyboard layouts, or fcitx5, the bar shows the mode (`EN`,
+  `あ`, `ア`); `Super + Space` cycles them.
+- NIGHT LIGHT in the power dropdown warms the screen through `hyprsunset`, by
+  hand or between two times you set. No location is ever used.
+
+**SYSTEM page** (in the profile picker, beside PRIVACY)
+
+- Interface scale (per screen), reduced motion, game mode (pauses the
+  visualiser, glitches and the scanline band while anything is fullscreen, and
+  holds notifications), and idle timings for plugged in and on battery. Lock
+  always comes before sleep. Saved to `~/.config/wrayth/system.json`.
+
 **Everything else**
 
-- Wi-Fi, Bluetooth, audio, tray, notification, power-profile and identity
-  dropdowns from the bar.
+- Wi-Fi (with AIRPLANE mode and your NetworkManager VPNs), Bluetooth, audio,
+  tray, notification, power-profile and identity dropdowns from the bar. A
+  lock beside the Wi-Fi readout means a tunnel is up.
 - A launcher (tap `Super`) for apps, profiles, the keybind list and the
   clipboard, listing your most-used first.
 - Notifications, held back while a window is fullscreen, and an on-screen
@@ -132,6 +164,9 @@ Wrayth's own keys, from `external/hypr-wrayth.lua`:
 | `Super + /` | the keybind list |
 | `Super + Shift + V` | clipboard history |
 | `Super + Shift + A` | next audio output |
+| `Super + Tab` | overview of the workspaces |
+| `Alt + Tab`, `Alt + Shift + Tab` | switch windows (hold Alt) |
+| `Super + Space` | next keyboard layout or input method |
 | `Print` | screenshot of a region |
 | `Alt + Print` | screenshot of the focused window |
 | `Shift + Print` | screenshot of the whole screen |
@@ -173,6 +208,7 @@ ones that are easy to miss.
 - `+ NEW CUSTOM` (the last card) makes a custom profile.
 - **PRIVACY** (clipboard history) is a button beside EFFECTS; see
   [Security](#security).
+- **SYSTEM** (scale, motion, game mode, idle) is a button beside PRIVACY.
 - Custom profiles have edit and delete buttons on their card; presets don't.
   `Delete` also removes the selected custom profile after asking.
 - **EFFECTS** (scanlines and glitches) is a button in the picker.
@@ -190,7 +226,9 @@ ones that are easy to miss.
 | the Bluetooth readout | the Bluetooth dropdown (devices, `DISCOVERY`) |
 | the speaker readout | the audio dropdown: outputs, inputs, volume and `MIXER` |
 | the tray readout | the tray dropdown: click an app for its menu, `OPEN` for its window |
-| `PWR` | the power-profile dropdown |
+| `PWR` | the power-profile dropdown, with NIGHT LIGHT |
+| the clock | CALENDAR |
+| the input mode (`EN`, `あ`) | INPUT: layouts and input methods |
 | `IDLE // AUTO` / `IDLE // HOLD` | toggles keep-awake: `HOLD` stops idle locking |
 | the message icon | COMMS: notification history, `DO NOT DISTURB`, `CLEAR ALL` |
 | empty bar space, or `Escape` | closes an open dropdown |
@@ -390,6 +428,7 @@ Each of these features degrades gracefully without its package:
 | `power-profiles-daemon` | the power-profile readout and switch | blank |
 | `bluez`, `bluez-utils` | the Bluetooth dropdown | no Bluetooth |
 | `hypridle` | lock on idle and before sleep | no automatic lock |
+| `hyprsunset` | NIGHT LIGHT | the switch does nothing |
 | a firewall (`ufw`, `nftables`, `firewalld`) | the SHIELD readout | `NOT CONFIGURED` |
 | `xdg-utils` | opening the wallpaper folder and screenshots | the buttons do nothing |
 

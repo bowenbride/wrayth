@@ -192,7 +192,9 @@ hl.on("hyprland.start", function()
     hl.exec_cmd(os.getenv("HOME") .. "/.local/bin/wrayth-shell")
     -- Idle: dim, lock, screen off, suspend (optional; needs the `hypridle`
     -- package and ~/.config/hypr/hypridle.conf -- see the install step).
-    hl.exec_cmd("command -v hypridle > /dev/null && exec hypridle")
+    -- Once the SYSTEM page's idle timings have been set, the shell writes
+    -- ~/.config/wrayth/hypridle.conf and hypridle runs from that instead.
+    hl.exec_cmd('command -v hypridle > /dev/null || exit 0; f="$HOME/.config/wrayth/hypridle.conf"; [ -f "$f" ] && exec hypridle -c "$f"; exec hypridle')
     -- The deck terminal. The reset script is also how it is first started.
     hl.exec_cmd(os.getenv("HOME") .. "/.local/bin/wrayth-deck-reset")
 end)
@@ -237,6 +239,10 @@ local catalogue = {
     { id = "lock",          group = "SHELL", label = "Lock the screen",               keys = "SUPER + L",         run = hl.dsp.exec_cmd(IPC .. "lock lock") },
     { id = "keybinds",      group = "SHELL", label = "Keybinds",                      keys = "SUPER + slash",     run = hl.dsp.exec_cmd(IPC .. "keybinds toggle") },
     { id = "clipboard",     group = "SHELL", label = "Clipboard history",             keys = "SUPER + SHIFT + V", run = hl.dsp.exec_cmd(IPC .. "clipboard toggle") },
+    { id = "overview",      group = "SHELL", label = "Overview of the workspaces",    keys = "SUPER + Tab",       run = hl.dsp.exec_cmd(IPC .. "overview toggle") },
+    { id = "switcher-next", group = "WINDOWS", label = "Switch windows (hold Alt)",     keys = "ALT + Tab",         run = hl.dsp.exec_cmd(IPC .. "switcher next") },
+    { id = "switcher-prev", group = "WINDOWS", label = "Switch windows, backwards",     keys = "ALT + SHIFT + Tab", run = hl.dsp.exec_cmd(IPC .. "switcher prev") },
+    { id = "input-next",    group = "SHELL", label = "Next keyboard layout or input method", keys = "SUPER + space", run = hl.dsp.exec_cmd(IPC .. "input next") },
     { id = "audio-next",    group = "MEDIA AND CAPTURE", label = "Next audio output", keys = "SUPER + SHIFT + A", run = hl.dsp.exec_cmd(IPC .. "audio next") },
     { id = "shot-region",   group = "MEDIA AND CAPTURE", label = "Screenshot of a region",          keys = "Print",         run = hl.dsp.exec_cmd(IPC .. "screenshot region") },
     { id = "shot-window",   group = "MEDIA AND CAPTURE", label = "Screenshot of the focused window", keys = "ALT + Print",   run = hl.dsp.exec_cmd(IPC .. "screenshot window") },

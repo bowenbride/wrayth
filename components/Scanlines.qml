@@ -70,7 +70,9 @@ Item {
         return Effects.scanlinesOnPanels;
     }
 
-    readonly property bool bandWanted: root.active && root.treatment.band && Effects.scanlinesOn && (root.previewing || root.screenSurface)
+    // The moving band pauses while game mode is on (SYSTEM page); the still
+    // lines stay.
+    readonly property bool bandWanted: root.active && root.treatment.band && Effects.scanlinesOn && (root.previewing || root.screenSurface) && !SystemSettings.gaming
     readonly property bool vignetteWanted: root.active && root.treatment.vignette && Effects.scanlinesOn && (root.previewing || root.screenSurface)
 
     readonly property bool wanted: root.linesWanted || root.bandWanted || root.vignetteWanted

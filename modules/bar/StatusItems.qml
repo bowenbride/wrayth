@@ -1,6 +1,7 @@
 import QtQuick
 import qs.components
 import qs.config
+import qs.services
 import qs.modules.bar.items
 
 // The right-hand readouts, separated by hairline dividers.
@@ -109,6 +110,15 @@ Row {
     }
     Divider {
         anchors.verticalCenter: parent.verticalCenter
+    }
+    // The input mode, only with two or more layouts or an input method.
+    InputReadout {
+        anchors.verticalCenter: parent.verticalCenter
+        visible: InputModes.shown
+    }
+    Divider {
+        anchors.verticalCenter: parent.verticalCenter
+        visible: InputModes.shown
     }
     // **The clock is a figure, so it never scrambles.** It may split and slice
     // like anything else, but a time that flickers through junk for 150 ms is

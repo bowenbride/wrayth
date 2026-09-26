@@ -50,7 +50,8 @@ Singleton {
     // config reload drops it -- which is the safe direction.
     property bool suppressed: false
 
-    readonly property bool enabled: Effects.glitch !== "OFF" && !root.suppressed
+    // Off with REDUCED motion, and while game mode is on (SYSTEM page).
+    readonly property bool enabled: Effects.glitch !== "OFF" && !root.suppressed && !SystemSettings.reducedMotion && !SystemSettings.gaming
 
     // --- What is running ----------------------------------------------------
     // **One element at a time.** Two at once reads as a rendering fault rather
