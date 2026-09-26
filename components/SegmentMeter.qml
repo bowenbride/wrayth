@@ -11,11 +11,11 @@ Row {
     property int segments: 5
     property real segmentWidth: 4
     property real segmentHeight: 10
-    property color litColor: Theme.signal
-    property color unlitColor: Theme.track
+    property color litColor: Tokens.color.signal
+    property color unlitColor: Tokens.color.track
     // Segments at or past this fraction light in accent instead.
     property real hotThreshold: -1
-    property color hotColor: Theme.accent
+    property color hotColor: Tokens.color.accent
     property bool animate: true
 
     // **The displayed value moves only when something you can see changes.**
@@ -114,8 +114,9 @@ Row {
 
             Behavior on color {
                 ColorAnimation {
-                    duration: Appearance.duration.state
-                    easing.type: Easing.OutCubic
+                    duration: Tokens.motion.feedback
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: Tokens.motion.easeIn
                 }
             }
         }

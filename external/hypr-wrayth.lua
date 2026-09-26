@@ -232,16 +232,16 @@ end
 -- `own = false`: the action's default bind lives in Wrayth's complete
 -- hyprland.lua (the window keys), so it is only re-bound here once moved.
 local catalogue = {
-    { id = "deck",          group = "SHELL", label = "Open or close the deck",        keys = "SUPER + E",         run = hl.dsp.workspace.toggle_special("deck") },
+    { id = "deck",          group = "SHELL", label = "Open or close the deck",        keys = "SUPER + E",         run = hl.dsp.exec_cmd(IPC .. "deck toggle") },
     { id = "deck-refresh",  group = "SHELL", label = "Refresh the deck terminal",     keys = "SUPER + SHIFT + E", run = hl.dsp.exec_cmd(HOME .. "/.local/bin/wrayth-deck-refresh") },
     { id = "launcher",      group = "SHELL", label = "Launcher",                      keys = "SUPER + SUPER_L",   run = hl.dsp.exec_cmd(IPC .. "launcher toggle"), opts = { release = true } },
     { id = "power",         group = "SHELL", label = "Power menu",                    keys = "SUPER + P",         run = hl.dsp.exec_cmd(IPC .. "power toggle") },
     { id = "lock",          group = "SHELL", label = "Lock the screen",               keys = "SUPER + L",         run = hl.dsp.exec_cmd(IPC .. "lock lock") },
     { id = "keybinds",      group = "SHELL", label = "Keybinds",                      keys = "SUPER + slash",     run = hl.dsp.exec_cmd(IPC .. "keybinds toggle") },
     { id = "clipboard",     group = "SHELL", label = "Clipboard history",             keys = "SUPER + SHIFT + V", run = hl.dsp.exec_cmd(IPC .. "clipboard toggle") },
-    { id = "overview",      group = "SHELL", label = "Overview of the workspaces",    keys = "SUPER + Tab",       run = hl.dsp.exec_cmd(IPC .. "overview toggle") },
-    { id = "switcher-next", group = "WINDOWS", label = "Switch windows (hold Alt)",     keys = "ALT + Tab",         run = hl.dsp.exec_cmd(IPC .. "switcher next") },
-    { id = "switcher-prev", group = "WINDOWS", label = "Switch windows, backwards",     keys = "ALT + SHIFT + Tab", run = hl.dsp.exec_cmd(IPC .. "switcher prev") },
+    { id = "overview",      group = "SHELL", label = "Overview of the workspaces",    keys = "SUPER + Tab",       run = hl.dsp.exec_cmd(IPC .. "overview toggle"), optional = "overview" },
+    { id = "switcher-next", group = "WINDOWS", label = "Switch windows (hold Alt)",     keys = "ALT + Tab",         run = hl.dsp.exec_cmd(IPC .. "switcher next"), optional = "switcher" },
+    { id = "switcher-prev", group = "WINDOWS", label = "Switch windows, backwards",     keys = "ALT + SHIFT + Tab", run = hl.dsp.exec_cmd(IPC .. "switcher prev"), optional = "switcher" },
     { id = "record",        group = "MEDIA AND CAPTURE", label = "Record the screen, or stop", keys = "SUPER + SHIFT + R", run = hl.dsp.exec_cmd(IPC .. "record toggle") },
     { id = "input-next",    group = "SHELL", label = "Next keyboard layout or input method", keys = "SUPER + space", run = hl.dsp.exec_cmd(IPC .. "input next") },
     { id = "audio-next",    group = "MEDIA AND CAPTURE", label = "Next audio output", keys = "SUPER + SHIFT + A", run = hl.dsp.exec_cmd(IPC .. "audio next") },
@@ -299,14 +299,24 @@ function wrayth_apply_keybinds()
     -- about to be used, is unbound first -- one action at a time, the second
     -- of two swapped actions would take the first's new bind away with its
     -- old one.
+    -- Optional features (the window switcher, the overview) are bound only
+    -- when turned on in the SYSTEM page, which writes this file. No file: off,
+    -- so their keys stay with whatever your own config binds to them.
+    local okOpt, optional = pcall(dofile, HOME .. "/.config/wrayth/optional-binds.lua")
+    if not okOpt or type(optional) ~= "table" then
+        optional = {}
+    end
     local was = bound
     local plan = {}
     for _, a in ipairs(catalogue) do
-        local keys = changes[a.id] or a.keys
-        -- Wrayth's own binds always; a window key of the complete config only
-        -- once it has been moved, or when it is coming back to its default.
-        if a.own ~= false or keys ~= a.keys or was[a.id] then
-            table.insert(plan, { a = a, keys = keys })
+        if not (a.optional and not optional[a.optional]) then
+            local keys = changes[a.id] or a.keys
+            -- Wrayth's own binds always; a window key of the complete config
+            -- only once it has been moved, or when it is coming back to its
+            -- default.
+            if a.own ~= false or keys ~= a.keys or was[a.id] then
+                table.insert(plan, { a = a, keys = keys })
+            end
         end
     end
     for _, keys in pairs(was) do

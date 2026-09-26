@@ -24,10 +24,10 @@ Item {
         elide: Text.ElideRight
         maximumLineCount: 1
 
-        color: Theme.text
-        font.family: Appearance.font.data
+        color: Tokens.color.text
+        font.family: Tokens.font.data
         font.pixelSize: Appearance.size.body
-        font.weight: Appearance.font.weightSemi
+        font.weight: Tokens.font.dataWeight
         font.features: Appearance.tabularFigures
         renderType: Text.NativeRendering
     }

@@ -56,7 +56,7 @@ Item {
                 anchors.centerIn: parent
                 text: Runner.code
                 color: root.palette.ground
-                font.family: Appearance.font.data
+                font.family: Tokens.font.data
                 font.pixelSize: 11
                 font.weight: Appearance.font.weightBold
                 renderType: Text.NativeRendering
@@ -81,7 +81,7 @@ Item {
                 // `.r`. The helper's parameter is typed `color`, so a string
                 // and a colour both arrive as one.
                 color: Theme.alpha(root.palette.ground, 0.55)
-                font.family: Appearance.font.data
+                font.family: Tokens.font.data
                 font.pixelSize: 11
                 font.weight: Appearance.font.weightBold
                 renderType: Text.NativeRendering
@@ -145,16 +145,16 @@ Item {
                 width: spaces.slotWidth
                 height: spaces.slotHeight
                 color: lit ? Theme.alpha(root.palette.accent, 0.18) : "transparent"
-                border.width: Appearance.metrics.hairline
+                border.width: Tokens.measure.hairline
                 border.color: lit ? root.palette.accent : "transparent"
 
                 Text {
                     anchors.centerIn: parent
                     text: `0${parent.index + 1}`
                     color: parent.lit ? root.palette.accent : root.palette.dim
-                    font.family: Appearance.font.data
+                    font.family: Tokens.font.data
                     font.pixelSize: 9
-                    font.weight: Appearance.font.weightSemi
+                    font.weight: Tokens.font.dataWeight
                     renderType: Text.NativeRendering
                 }
             }
@@ -206,7 +206,7 @@ Item {
 
         text: Qt.formatDateTime(new Date(), "HH:mm")
         color: root.palette.bright
-        font.family: Appearance.font.display
+        font.family: Tokens.font.display
         font.pixelSize: 12
         font.weight: Appearance.font.weightBold
         renderType: Text.NativeRendering

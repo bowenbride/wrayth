@@ -20,18 +20,19 @@ Item {
 
         color: {
             if (root.checked)
-                return Theme.mute;
+                return Tokens.color.mute;
             if (root.active)
-                return Theme.alpha(Theme.accent, 0.15);
+                return Theme.alpha(Tokens.color.accent, 0.15);
             return "transparent";
         }
-        border.width: Appearance.metrics.hairline
-        border.color: root.active && !root.checked ? Theme.accent : Theme.hair
+        border.width: Tokens.measure.hairline
+        border.color: root.active && !root.checked ? Tokens.color.accent : Tokens.color.hair
 
         Behavior on color {
             ColorAnimation {
-                duration: Appearance.duration.state
-                easing.type: Easing.OutCubic
+                duration: Tokens.motion.feedback
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Tokens.motion.easeIn
             }
         }
     }
@@ -47,14 +48,15 @@ Item {
         visible: opacity > 0
         opacity: root.checked ? 1 : 0
         text: "✓"
-        color: Theme.ground
+        color: Tokens.color.ground
         pixelSize: 12
         weight: Appearance.font.weightBold
 
         Behavior on opacity {
             NumberAnimation {
-                duration: Appearance.duration.state
-                easing.type: root.checked ? Easing.OutCubic : Easing.InCubic
+                duration: Tokens.motion.feedback
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: root.checked ? Tokens.motion.easeIn : Tokens.motion.easeOut
             }
         }
     }

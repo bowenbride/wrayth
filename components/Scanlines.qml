@@ -87,8 +87,9 @@ Item {
 
     Behavior on opacity {
         NumberAnimation {
-            duration: root.wanted ? Appearance.duration.enter : Appearance.duration.exit
-            easing.type: root.wanted ? Easing.OutCubic : Easing.InCubic
+            duration: root.wanted ? Tokens.motion.panels : Tokens.motion.panels
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: root.wanted ? Tokens.motion.easeIn : Tokens.motion.easeOut
         }
     }
 

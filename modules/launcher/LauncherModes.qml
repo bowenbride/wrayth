@@ -81,8 +81,8 @@ Item {
                 elide: Text.ElideRight
                 text: root.calc ? root.calc.expression : (root.query.slice(1).trim() || "TYPE A SUM")
                 textFormat: Text.PlainText
-                color: Theme.dim
-                font.family: Appearance.font.data
+                color: Tokens.color.dim
+                font.family: Tokens.font.data
                 font.pixelSize: 11
                 renderType: Text.NativeRendering
             }
@@ -91,16 +91,16 @@ Item {
                 elide: Text.ElideRight
                 text: root.calc ? root.calc.result : "—"
                 textFormat: Text.PlainText
-                color: root.calc ? Theme.bright : Theme.mute
-                font.family: Appearance.font.display
+                color: root.calc ? Tokens.color.bright : Tokens.color.mute
+                font.family: Tokens.font.display
                 font.pixelSize: 30
                 font.weight: Appearance.font.weightBold
                 renderType: Text.NativeRendering
             }
             Text {
                 text: "ENTER COPIES THE RESULT"
-                color: Theme.dim
-                font.family: Appearance.font.data
+                color: Tokens.color.dim
+                font.family: Tokens.font.data
                 font.pixelSize: 9
                 font.letterSpacing: 9 * 0.12
                 renderType: Text.NativeRendering
@@ -164,9 +164,9 @@ Item {
 
                     width: 44
                     height: 44
-                    color: sel ? Theme.alpha(Theme.accent, 0.12) : (cellHover.hovered ? Theme.cell : "transparent")
+                    color: sel ? Tokens.color.accentTint : (cellHover.hovered ? Theme.cell : "transparent")
                     border.width: sel ? 1 : 0
-                    border.color: Theme.accent
+                    border.color: Tokens.color.accent
 
                     Text {
                         anchors.centerIn: parent
@@ -190,8 +190,8 @@ Item {
             anchors.centerIn: parent
             visible: root.emojiResults.length === 0
             text: root.emoji.length === 0 ? "LOADING" : "NO EMOJI BY THAT NAME"
-            color: Theme.dim
-            font.family: Appearance.font.data
+            color: Tokens.color.dim
+            font.family: Tokens.font.data
             font.pixelSize: 9
             font.letterSpacing: 9 * 0.12
             renderType: Text.NativeRendering
@@ -275,8 +275,8 @@ Item {
             height: 32
             verticalAlignment: Text.AlignVCenter
             text: "TYPE A COMMAND"
-            color: Theme.dim
-            font.family: Appearance.font.data
+            color: Tokens.color.dim
+            font.family: Tokens.font.data
             font.pixelSize: 9
             font.letterSpacing: 9 * 0.12
             renderType: Text.NativeRendering
@@ -294,12 +294,12 @@ Item {
 
                 width: commandView.width
                 height: 32
-                color: sel ? Theme.alpha(Theme.ground, 0.55) : "transparent"
+                color: sel ? Theme.alpha(Tokens.color.ground, 0.55) : "transparent"
 
                 Rectangle {
                     width: 2
                     height: parent.height
-                    color: Theme.accent
+                    color: Tokens.color.accent
                     visible: crow.sel
                 }
                 Text {
@@ -312,10 +312,10 @@ Item {
                     elide: Text.ElideRight
                     text: crow.modelData.label
                     textFormat: Text.PlainText
-                    color: !crow.modelData.usable ? Theme.alert : (crow.sel ? Theme.bright : Theme.text)
-                    font.family: Appearance.font.data
+                    color: !crow.modelData.usable ? Tokens.color.alert : (crow.sel ? Tokens.color.bright : Tokens.color.text)
+                    font.family: Tokens.font.data
                     font.pixelSize: crow.modelData.kind === "recent" ? 12 : 11
-                    font.weight: crow.modelData.kind === "recent" ? Appearance.font.weightRegular : Appearance.font.weightSemi
+                    font.weight: crow.modelData.kind === "recent" ? Tokens.font.dataWeight : Tokens.font.dataWeight
                     font.letterSpacing: crow.modelData.kind === "recent" ? 0 : 11 * 0.1
                     renderType: Text.NativeRendering
                 }
@@ -329,8 +329,8 @@ Item {
                     elide: Text.ElideMiddle
                     text: crow.modelData.tag
                     textFormat: Text.PlainText
-                    color: Theme.dim
-                    font.family: Appearance.font.data
+                    color: Tokens.color.dim
+                    font.family: Tokens.font.data
                     font.pixelSize: 9
                     font.letterSpacing: crow.modelData.kind === "recent" ? 9 * 0.12 : 0
                     renderType: Text.NativeRendering

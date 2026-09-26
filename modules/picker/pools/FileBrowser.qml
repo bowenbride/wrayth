@@ -60,8 +60,8 @@ Item {
         height: 540
 
         chamfer: Appearance.chamfer.panel
-        fillColor: Qt.rgba(Theme.ground.r, Theme.ground.g, Theme.ground.b, 0.98)
-        borderColor: Theme.accent
+        fillColor: Qt.rgba(Tokens.color.ground.r, Tokens.color.ground.g, Tokens.color.ground.b, 0.98)
+        borderColor: Tokens.color.accent
 
         // --- Header -----------------------------------------------------
         Item {
@@ -82,9 +82,9 @@ Item {
                     id: taggedTitle
 
                     anchors.verticalCenter: parent.verticalCenter
-                    text: `ADD FILES${Appearance.separator}LIBRARY`
-                    color: Theme.bright
-                    font.family: Appearance.font.display
+                    text: "ADD FILES"
+                    color: Tokens.color.bright
+                    font.family: Tokens.font.display
                     font.pixelSize: 18
                     font.weight: Appearance.font.weightBold
                     renderType: Text.NativeRendering
@@ -100,7 +100,7 @@ Item {
             NrLabel {
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
-                color: Theme.dim
+                color: Tokens.color.dim
                 text: `${root.selected.length} SELECTED`
             }
         }
@@ -129,7 +129,7 @@ Item {
             NrLabel {
                 anchors.verticalCenter: parent.verticalCenter
                 width: parent.width - upButton.width - 10
-                color: Theme.text
+                color: Tokens.color.text
                 tracked: false
                 elide: Text.ElideLeft
                 text: Paths.display(root.dir)
@@ -183,9 +183,9 @@ Item {
 
                         Rectangle {
                             anchors.fill: parent
-                            color: parent.picked ? Theme.alpha(Theme.accent, 0.16) : rowHover.hovered ? Theme.alpha(Theme.hair, 0.4) : "transparent"
-                            border.width: Appearance.metrics.hairline
-                            border.color: parent.picked ? Theme.accent : "transparent"
+                            color: parent.picked ? Theme.alpha(Tokens.color.accent, 0.16) : rowHover.hovered ? Theme.alpha(Tokens.color.hair, 0.4) : "transparent"
+                            border.width: Tokens.measure.hairline
+                            border.color: parent.picked ? Tokens.color.accent : "transparent"
                         }
 
                         // A folder is named by its trailing slash rather than
@@ -197,10 +197,10 @@ Item {
                             anchors.verticalCenter: parent.verticalCenter
 
                             text: parent.fileIsDir ? `${parent.fileName}/` : parent.fileName
-                            color: parent.fileIsDir ? Theme.signal : parent.picked ? Theme.accent : Theme.text
-                            font.family: Appearance.font.data
+                            color: parent.fileIsDir ? Tokens.color.signal : parent.picked ? Tokens.color.accent : Tokens.color.text
+                            font.family: Tokens.font.data
                             font.pixelSize: Appearance.size.label
-                            font.weight: parent.fileIsDir ? Appearance.font.weightSemi : Appearance.font.weightRegular
+                            font.weight: parent.fileIsDir ? Tokens.font.dataWeight : Tokens.font.dataWeight
                             renderType: Text.NativeRendering
                         }
 
@@ -209,7 +209,7 @@ Item {
                             anchors.rightMargin: 10
                             anchors.verticalCenter: parent.verticalCenter
                             visible: parent.picked
-                            color: Theme.accent
+                            color: Tokens.color.accent
                             text: "✓ ADDING"
                         }
 
@@ -233,7 +233,7 @@ Item {
                 NrLabel {
                     visible: listing.count === 0 && listing.status === FolderListModel.Ready
                     height: 40
-                    color: Theme.dim
+                    color: Tokens.color.dim
                     text: "NO IMAGES OR FOLDERS HERE"
                 }
             }
@@ -260,7 +260,7 @@ Item {
             NrLabel {
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
-                color: Theme.dim
+                color: Tokens.color.dim
                 text: "CLICK A FOLDER TO OPEN IT    CLICK AN IMAGE TO TICK IT"
             }
 

@@ -9,7 +9,7 @@ Row {
     id: root
 
     property bool running: false
-    property color litColor: Theme.accent
+    property color litColor: Tokens.color.accent
     property int step: 0
 
     readonly property int segmentWidth: 5
@@ -20,8 +20,9 @@ Row {
 
     Behavior on opacity {
         NumberAnimation {
-            duration: Appearance.duration.state
-            easing.type: Easing.OutCubic
+            duration: Tokens.motion.feedback
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: Tokens.motion.easeIn
         }
     }
 
@@ -40,7 +41,8 @@ Row {
             Behavior on color {
                 ColorAnimation {
                     duration: 90
-                    easing.type: Easing.OutCubic
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: Tokens.motion.easeIn
                 }
             }
         }

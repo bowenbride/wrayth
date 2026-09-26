@@ -17,7 +17,7 @@ import qs.config
 Item {
     id: root
 
-    property color color: Theme.text
+    property color color: Tokens.color.text
     property real thickness: 2
     // How far the ends of the cross stop short of the button's edge.
     property real inset: 3

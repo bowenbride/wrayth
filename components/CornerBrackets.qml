@@ -8,7 +8,7 @@ import qs.config
 Item {
     id: root
 
-    property color color: Theme.accent
+    property color color: Tokens.color.accent
     property real size: 12
     property real thickness: 2
     property real inset: 0

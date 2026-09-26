@@ -21,8 +21,8 @@ ChamferPanel {
     implicitHeight: 444
 
     chamfer: Appearance.chamfer.panel
-    fillColor: Theme.panel2
-    borderColor: Theme.hair
+    fillColor: Tokens.color.panel2
+    borderColor: Tokens.color.hair
 
     Column {
         id: column
@@ -51,8 +51,8 @@ ChamferPanel {
 
                     anchors.verticalCenter: parent.verticalCenter
                     text: "WALLPAPER"
-                    color: Theme.bright
-                    font.family: Appearance.font.display
+                    color: Tokens.color.bright
+                    font.family: Tokens.font.display
                     font.pixelSize: 14
                     font.weight: Appearance.font.weightBold
                     renderType: Text.NativeRendering
@@ -69,8 +69,8 @@ ChamferPanel {
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
                 pixelSize: 10
-                color: Wallpapers.dynamic ? Theme.signal : Theme.dim
-                text: Wallpapers.dynamic ? `DYNAMIC${Appearance.separator}FOLLOWS PROFILE` : `STATIC${Appearance.separator}LOCKED`
+                color: Wallpapers.dynamic ? Tokens.color.signal : Tokens.color.dim
+                text: Wallpapers.dynamic ? "DYNAMIC · FOLLOWS PROFILE" : "STATIC · LOCKED"
             }
         }
 
@@ -81,9 +81,9 @@ ChamferPanel {
 
             Rectangle {
                 anchors.fill: parent
-                color: Theme.deep
-                border.width: Appearance.metrics.hairline
-                border.color: Theme.hair
+                color: Tokens.color.deep
+                border.width: Tokens.measure.hairline
+                border.color: Tokens.color.hair
             }
 
             // **`Wallpaper`, not a bare `Image`.** This box shows the same
@@ -113,7 +113,7 @@ ChamferPanel {
                     anchors.right: parent.right
                     anchors.rightMargin: 8
                     pixelSize: 10
-                    color: Theme.bright
+                    color: Tokens.color.bright
                     elide: Text.ElideMiddle
                     text: root.currentName
                 }
@@ -128,7 +128,7 @@ ChamferPanel {
             NrLabel {
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
-                color: Theme.text
+                color: Tokens.color.text
                 text: "DYNAMIC"
             }
 
@@ -143,8 +143,8 @@ ChamferPanel {
         Text {
             width: parent.width
             text: Wallpapers.dynamic ? "Applying a profile switches to its wallpaper. Previewing one shows it." : "The wallpaper stays as it is through every profile change."
-            color: Theme.text
-            font.family: Appearance.font.data
+            color: Tokens.color.text
+            font.family: Tokens.font.data
             font.pixelSize: 10
             wrapMode: Text.Wrap
             renderType: Text.NativeRendering
@@ -152,7 +152,7 @@ ChamferPanel {
 
         // --- Folder ---------------------------------------------------------
         NrLabel {
-            color: Theme.text
+            color: Tokens.color.text
             text: "FOLDER"
         }
 
@@ -229,8 +229,8 @@ ChamferPanel {
         anchors.right: noteSlot.right
 
         text: "The wrayth subfolder inside it holds the generated net-*.png wallpapers."
-        color: Theme.dim
-        font.family: Appearance.font.data
+        color: Tokens.color.dim
+        font.family: Tokens.font.data
         font.pixelSize: 10
         wrapMode: Text.Wrap
         renderType: Text.NativeRendering
@@ -260,13 +260,14 @@ ChamferPanel {
             // label. The tint is blended into `ground` instead of laid over
             // it, which also keeps it inside the cut corner -- a square
             // rectangle on top would have overhung the chamfer.
-            fillColor: Theme.blend(Theme.ground, Theme.accent, poolsHover.hovered ? 0.24 : 0.14)
-            borderColor: Theme.accent
+            fillColor: Theme.blend(Tokens.color.ground, Tokens.color.accent, poolsHover.hovered ? 0.24 : 0.14)
+            borderColor: Tokens.color.accent
 
             Behavior on fillColor {
                 ColorAnimation {
-                    duration: Appearance.duration.state
-                    easing.type: Easing.OutCubic
+                    duration: Tokens.motion.feedback
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: Tokens.motion.easeIn
                 }
             }
         }
@@ -274,7 +275,7 @@ ChamferPanel {
         NrLabel {
             anchors.centerIn: parent
             centred: true
-            color: Theme.accent
+            color: Tokens.color.accent
             text: "MANAGE WALLPAPER POOLS"
         }
 

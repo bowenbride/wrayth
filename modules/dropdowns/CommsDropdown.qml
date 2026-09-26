@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell.Hyprland
 import qs.components
+import qs.components.ui as UI
 import qs.config
 import qs.services
 import qs.utils
@@ -14,8 +15,7 @@ DropdownFrame {
 
     title: "COMMS"
     katakana: "通信"
-    // Read by Dropdowns: this dropdown is 420 px wide.
-    readonly property int panelWidth: 420
+    panelWidth: Tokens.measure.dropdownStandard
 
     // Refreshed while open, for the ages; nothing ticks while it is closed.
     property real now: Date.now()
@@ -38,10 +38,10 @@ DropdownFrame {
             anchors.verticalCenter: parent.verticalCenter
             visible: Notifications.dnd
             text: "DO NOT DISTURB"
-            color: Theme.accent
-            font.family: Appearance.font.data
+            color: Tokens.color.accent
+            font.family: Tokens.font.data
             font.pixelSize: 9
-            font.weight: Appearance.font.weightSemi
+            font.weight: Tokens.font.dataWeight
             font.letterSpacing: 9 * 0.14
             renderType: Text.NativeRendering
         }
@@ -53,7 +53,7 @@ DropdownFrame {
                 anchors.centerIn: parent
                 name: Notifications.dnd ? "notifications_off" : "notifications"
                 size: 16
-                color: Notifications.dnd ? Theme.accent : (bellHover.hovered ? Theme.text : Theme.dim)
+                color: Notifications.dnd ? Tokens.color.accent : (bellHover.hovered ? Tokens.color.text : Tokens.color.dim)
             }
             HoverHandler {
                 id: bellHover
@@ -66,8 +66,8 @@ DropdownFrame {
     }
 
     component Small: Text {
-        color: Theme.dim
-        font.family: Appearance.font.data
+        color: Tokens.color.dim
+        font.family: Tokens.font.data
         font.pixelSize: 9
         font.letterSpacing: 9 * 0.14
         renderType: Text.NativeRendering
@@ -88,27 +88,22 @@ DropdownFrame {
                 anchors.verticalCenter: parent.verticalCenter
                 width: 6
                 height: 6
-                color: Theme.accent
+                color: Tokens.color.accent
             }
             NrLabel {
                 anchors.left: parent.left
                 anchors.leftMargin: 14
                 anchors.verticalCenter: parent.verticalCenter
-                color: Theme.bright
+                color: Tokens.color.bright
                 text: "UNREAD MESSAGES IN YOUR CHAT APP"
             }
         }
 
         // Empty: a calm ALL CLEAR.
-        Item {
+        UI.EmptyState {
             width: parent.width
-            height: 60
             visible: Notifications.history.length === 0
-            Small {
-                anchors.centerIn: parent
-                text: "ALL CLEAR"
-                font.pixelSize: 10
-            }
+            text: "ALL CLEAR"
         }
 
         Flickable {
@@ -140,78 +135,35 @@ DropdownFrame {
 
                         width: parent.width
 
-                        // The app's row: the latest notification.
-                        Item {
+                        // The app's row: a TwoLineRow -- app and count on the meta
+                        // line, the time on the right, the latest text below.
+                        UI.TwoLineRow {
                             width: parent.width
-                            height: 44
-
-                            Rectangle {
-                                anchors.fill: parent
-                                color: rowHover.hovered ? Theme.cell : "transparent"
-                            }
-                            Rectangle {
-                                width: 2
-                                height: parent.height
-                                color: Theme.accent
-                                visible: group.unread > 0
-                            }
-
-                            Row {
-                                x: 10
-                                y: 7
-                                spacing: 6
-                                Small {
-                                    text: group.modelData.app.toUpperCase()
-                                }
-                                Small {
-                                    text: `${group.modelData.entries.length}`
-                                    color: group.unread > 0 ? Theme.accent : Theme.dim
-                                }
-                            }
-                            Small {
-                                anchors.right: chevron.left
-                                anchors.rightMargin: 4
-                                y: 7
-                                text: Fmt.age(group.latest.time, root.now)
-                            }
-                            Text {
-                                x: 10
-                                y: 22
-                                width: parent.width - 10 - 34
-                                elide: Text.ElideRight
-                                text: group.latest.body ? `${group.latest.summary} · ${group.latest.body.replace(/\s+/g, " ")}` : group.latest.summary
-                                textFormat: Text.PlainText
-                                color: group.latest.seen ? Theme.text : Theme.bright
-                                font.family: Appearance.font.data
-                                font.pixelSize: 11
-                                renderType: Text.NativeRendering
-                            }
-                            HoverHandler {
-                                id: rowHover
-                                cursorShape: Qt.PointingHandCursor
-                            }
-                            TapHandler {
-                                onTapped: {
-                                    ShellState.closeDropdown("a notification opened");
-                                    Notifications.open(group.latest);
-                                }
+                            meta: group.modelData.app.toUpperCase()
+                            count: `${group.modelData.entries.length}`
+                            metaRight: Fmt.age(group.latest.time, root.now)
+                            text: group.latest.body ? `${group.latest.summary} · ${group.latest.body.replace(/\s+/g, " ")}` : group.latest.summary
+                            unread: group.unread > 0
+                            trailing: group.modelData.entries.length > 1 ? Tokens.measure.muteButtonWidth : 0
+                            onClicked: {
+                                ShellState.closeDropdown("a notification opened");
+                                Notifications.open(group.latest);
                             }
 
                             // The rest of this app's notifications.
                             Item {
-                                id: chevron
-
                                 anchors.right: parent.right
+                                anchors.rightMargin: Tokens.space.s4
                                 anchors.verticalCenter: parent.verticalCenter
-                                width: 24
-                                height: 24
+                                width: Tokens.measure.muteButtonWidth
+                                height: Tokens.measure.muteButtonHeight
                                 visible: group.modelData.entries.length > 1
 
                                 Icon {
                                     anchors.centerIn: parent
                                     name: group.expanded ? "expand_more" : "chevron_right"
-                                    size: 16
-                                    color: chevHover.hovered ? Theme.text : Theme.dim
+                                    size: Tokens.icon.chevron
+                                    color: chevHover.hovered ? Tokens.color.text : Tokens.color.dim
                                 }
                                 HoverHandler {
                                     id: chevHover
@@ -250,8 +202,8 @@ DropdownFrame {
                                     elide: Text.ElideRight
                                     text: older.modelData.body ? `${older.modelData.summary} · ${older.modelData.body.replace(/\s+/g, " ")}` : older.modelData.summary
                                     textFormat: Text.PlainText
-                                    color: older.modelData.seen ? Theme.dim : Theme.text
-                                    font.family: Appearance.font.data
+                                    color: older.modelData.seen ? Tokens.color.dim : Tokens.color.text
+                                    font.family: Tokens.font.data
                                     font.pixelSize: 10
                                     renderType: Text.NativeRendering
                                 }
@@ -290,54 +242,32 @@ DropdownFrame {
 
         Rectangle {
             width: parent.width
-            height: Appearance.metrics.hairline
-            color: Theme.hair
+            height: Tokens.measure.hairline
+            color: Tokens.color.hair
         }
 
-        // Quiet controls: CLEAR ALL, and OPEN COMMS WORKSPACE with a chevron.
+        // Footer: quiet controls, left and right.
         Item {
             width: parent.width
-            height: 22
+            height: Tokens.measure.buttonInline
 
-            Small {
+            UI.Button {
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
+                kind: "quiet"
                 text: "CLEAR ALL"
-                opacity: Notifications.history.length > 0 ? 1 : 0.5
-                color: clearHover.hovered && Notifications.history.length > 0 ? Theme.text : Theme.dim
-                HoverHandler {
-                    id: clearHover
-                    cursorShape: Notifications.history.length > 0 ? Qt.PointingHandCursor : Qt.ArrowCursor
-                }
-                TapHandler {
-                    enabled: Notifications.history.length > 0
-                    onTapped: Notifications.clearHistory()
-                }
+                enabled: Notifications.history.length > 0
+                onClicked: Notifications.clearHistory()
             }
-            Row {
+            UI.Button {
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: 0
-                Small {
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: "OPEN COMMS WORKSPACE"
-                    color: wsHover.hovered ? Theme.text : Theme.dim
-                }
-                Icon {
-                    anchors.verticalCenter: parent.verticalCenter
-                    name: "chevron_right"
-                    size: 16
-                    color: wsHover.hovered ? Theme.text : Theme.dim
-                }
-                HoverHandler {
-                    id: wsHover
-                    cursorShape: Qt.PointingHandCursor
-                }
-                TapHandler {
-                    onTapped: {
-                        ShellState.closeDropdown("OPEN COMMS WORKSPACE");
-                        Hyprland.dispatch(`hl.dsp.workspace.toggle_special("communication")`);
-                    }
+                kind: "quiet"
+                chevron: "right"
+                text: "OPEN COMMS WORKSPACE"
+                onClicked: {
+                    ShellState.closeDropdown("OPEN COMMS WORKSPACE");
+                    Hyprland.dispatch(`hl.dsp.workspace.toggle_special("communication")`);
                 }
             }
         }

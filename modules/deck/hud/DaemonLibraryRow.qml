@@ -17,7 +17,7 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        color: root.on ? Theme.alpha(Theme.accent, 0.06) : "transparent"
+        color: root.on ? Theme.alpha(Tokens.color.accent, 0.06) : "transparent"
     }
 
     Tickbox {
@@ -40,7 +40,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
 
         width: 110
-        color: root.on ? Theme.bright : (root.available ? Theme.text : Theme.mute)
+        color: root.on ? Tokens.color.bright : (root.available ? Tokens.color.text : Tokens.color.mute)
         text: root.entry.name
     }
 
@@ -50,7 +50,7 @@ Item {
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
 
-        color: root.available ? Theme.dim : Theme.mute
+        color: root.available ? Tokens.color.dim : Tokens.color.mute
         elide: Text.ElideRight
         font.capitalization: Font.MixedCase
         text: root.entry.description

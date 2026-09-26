@@ -75,8 +75,9 @@ Variants {
 
         Behavior on margins.top {
             NumberAnimation {
-                duration: Appearance.duration.panel
-                easing.type: Easing.OutCubic
+                duration: Tokens.motion.panels
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Tokens.motion.easeIn
             }
         }
 
@@ -87,8 +88,9 @@ Variants {
             property: "reveal"
             from: 0
             to: 1
-            duration: Appearance.duration.enter
-            easing.type: Easing.OutCubic
+            duration: Tokens.motion.panels
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: Tokens.motion.easeIn
         }
 
         NotificationCard {

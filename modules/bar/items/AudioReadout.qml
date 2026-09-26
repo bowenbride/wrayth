@@ -1,88 +1,60 @@
 import QtQuick
 import Quickshell
 import qs.components
+import qs.components.ui
 import qs.config
 import qs.services
 
-// AUDIO: a speaker and the output's short code (SPKR, HEAD, HDMI, DP, USB,
-// or a Bluetooth model code), and a MIC tag while the microphone is muted. Styled
-// like the Bluetooth readout. **Fixed width**: the name sits in a fixed slot
-// and the MIC tag's room is always reserved, fading in and out in it, so
-// neither a new device nor muting the microphone moves anything on the bar.
-// Clicking it opens the AUDIO dropdown.
-Row {
+// AUDIO (DESIGN.md): `volume_up` (16 px, `dim`), the output's code as a bar
+// Value in `signal` (SPKR, HEAD, HDMI, DP, USB, or a Bluetooth model code of
+// at most five characters), and the MIC Tag while the microphone is muted.
+// Width = icon + the widest code among the outputs there are + the tag's
+// slot; nothing else is reserved. Clicking opens the AUDIO dropdown.
+Item {
     id: root
 
-    spacing: 7
+    // DESIGN.md: the width fits exactly what is showing -- the icon, the
+    // current code, and the MIC tag only while it is shown. Nothing is
+    // reserved; a device switch or a mute resizes the readout, eased on the
+    // movement timing, and the readouts to its left shift with it.
+    implicitWidth: content.implicitWidth
+    implicitHeight: content.implicitHeight
+    width: implicitWidth
+    clip: true
 
-    // The speaker (Material Symbols Sharp), dim; crossed out while muted.
-    Icon {
-        anchors.verticalCenter: parent.verticalCenter
-        name: Audio.muted ? "volume_off" : "volume_up"
-        size: 15
-        color: Theme.dim
-    }
-
-    // A short fixed code for the output (Audio.code), 10 px in the data
-    // colour, in a slot as wide as the longest code (five characters), so
-    // switching device never moves the bar.
-    Text {
-        anchors.verticalCenter: parent.verticalCenter
-        width: codeWidth.width
-        text: Audio.code
-        textFormat: Text.PlainText
-        color: Audio.sink && !Audio.muted ? Theme.signal : Theme.dim
-        font.family: Appearance.font.data
-        font.pixelSize: 10
-        font.weight: Appearance.font.weightSemi
-        font.letterSpacing: 10 * 0.1
-        renderType: Text.NativeRendering
-
-        TextMetrics {
-            id: codeWidth
-            font: parent.font
-            text: "WWWWW"
-        }
-        Behavior on color {
-            ColorAnimation {
-                duration: Appearance.duration.state
-                easing.type: Easing.OutCubic
-            }
+    Behavior on implicitWidth {
+        NumberAnimation {
+            duration: Tokens.motion.movement
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: Tokens.motion.easeIn
         }
     }
 
-    // A 1 px accent frame around `MIC`: small, and unmistakable. Only while
-    // the microphone is muted: the readout's own width is the icon and the
-    // longest code, nothing reserved beside them.
-    Rectangle {
-        visible: Audio.micMuted
-        anchors.verticalCenter: parent.verticalCenter
-        width: micLabel.implicitWidth + 8
-        height: micLabel.implicitHeight + 4
-        color: "transparent"
-        border.width: Appearance.metrics.hairline
-        border.color: Theme.accent
-        opacity: Audio.micMuted ? 1 : 0
+    Row {
+        id: content
 
-        Behavior on opacity {
-            NumberAnimation {
-                duration: Appearance.duration.state
-                easing.type: Audio.micMuted ? Easing.OutCubic : Easing.InCubic
-            }
+        anchors.verticalCenter: parent.verticalCenter
+        spacing: Tokens.space.s6
+
+        Icon {
+            anchors.verticalCenter: parent.verticalCenter
+            name: "volume_up"
+            size: Tokens.icon.bar
+            color: Tokens.color.dim
         }
 
-        // MIC: 8 px, 0.1em, accent, in a 1 px accent frame.
-        Text {
-            id: micLabel
+        Value {
+            anchors.verticalCenter: parent.verticalCenter
+            bar: true
+            live: true
+            text: Audio.barCode
+        }
 
-            anchors.centerIn: parent
+        // The MIC tag, in the row only while the mic is muted.
+        Tag {
+            anchors.verticalCenter: parent.verticalCenter
+            visible: Audio.barMicMuted
             text: "MIC"
-            color: Theme.accent
-            font.family: Appearance.font.data
-            font.pixelSize: 8
-            font.weight: Appearance.font.weightSemi
-            font.letterSpacing: 8 * 0.1
-            renderType: Text.NativeRendering
         }
     }
 
@@ -90,8 +62,6 @@ Row {
         cursorShape: Qt.PointingHandCursor
     }
 
-    // Registered with ShellState so `dropdown open audio` can hang the panel
-    // where a click would have, on this readout's own screen.
     readonly property string dropdownName: "audio"
     readonly property string screenName: QsWindow.window?.screen?.name ?? ""
 

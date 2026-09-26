@@ -19,7 +19,7 @@ Variants {
         readonly property bool occupied: Desktop.occupiedOn(modelData)
 
         screen: modelData
-        color: Theme.deep
+        color: Tokens.color.deep
 
         WlrLayershell.layer: WlrLayer.Background
         WlrLayershell.namespace: "wrayth-background"

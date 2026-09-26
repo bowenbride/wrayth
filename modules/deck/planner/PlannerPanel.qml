@@ -14,7 +14,7 @@ ChamferPanel {
     readonly property real padding: 14
 
     chamfer: Appearance.chamfer.panel
-    fillColor: Theme.panel
+    fillColor: Tokens.color.panel
 
     // The task index being edited in place, or -1. A separate flag for the
     // new-gig editor at the foot. While either is up, dragging is suspended.
@@ -126,8 +126,8 @@ ChamferPanel {
                     id: taggedTitle
 
                     anchors.verticalCenter: parent.verticalCenter
-                    color: Theme.bright
-                    text: `QUEUE${Appearance.separator}DAILY GIGS`
+                    color: Tokens.color.bright
+                    text: "DAILY GIGS"
                 }
 
                 KanaTag {
@@ -141,7 +141,7 @@ ChamferPanel {
         NrLabel {
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            color: Planner.done === Planner.total && Planner.total > 0 ? Theme.signal : Theme.dim
+            color: Planner.done === Planner.total && Planner.total > 0 ? Tokens.color.signal : Tokens.color.dim
             text: `${Planner.done}/${Planner.total} CLEARED`
         }
     }
@@ -162,7 +162,7 @@ ChamferPanel {
         segmentWidth: (width - (segments - 1) * spacing) / segments
         segmentHeight: 4
         value: Planner.total > 0 ? Planner.done / Planner.total : 0
-        litColor: Theme.signal
+        litColor: Tokens.color.signal
     }
 
     // --- The gigs ------------------------------------------------------------
@@ -185,15 +185,17 @@ ChamferPanel {
         moveDisplaced: Transition {
             NumberAnimation {
                 properties: "x,y"
-                duration: Appearance.duration.move
-                easing.type: Easing.OutCubic
+                duration: Tokens.motion.movement
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Tokens.motion.easeIn
             }
         }
         displaced: Transition {
             NumberAnimation {
                 properties: "x,y"
-                duration: Appearance.duration.move
-                easing.type: Easing.OutCubic
+                duration: Tokens.motion.movement
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Tokens.motion.easeIn
             }
         }
     }
@@ -208,20 +210,21 @@ ChamferPanel {
 
         Behavior on opacity {
             NumberAnimation {
-                duration: Appearance.duration.state
-                easing.type: Easing.OutCubic
+                duration: Tokens.motion.feedback
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Tokens.motion.easeIn
             }
         }
 
         NrLabel {
             anchors.horizontalCenter: parent.horizontalCenter
-            color: Theme.dim
+            color: Tokens.color.dim
             text: "NO GIGS QUEUED"
         }
 
         NrLabel {
             anchors.horizontalCenter: parent.horizontalCenter
-            color: Theme.mute
+            color: Tokens.color.mute
             text: "+ ADD GIG BELOW TO QUEUE YOUR FIRST"
         }
     }

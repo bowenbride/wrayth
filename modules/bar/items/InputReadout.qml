@@ -1,6 +1,6 @@
 import QtQuick
 import Quickshell
-import qs.components
+import qs.components.ui
 import qs.config
 import qs.services
 
@@ -10,19 +10,16 @@ import qs.services
 Item {
     id: root
 
-    implicitWidth: Math.max(34, label.implicitWidth)
+    // DESIGN.md: EN, あ or ア as a bar Value, in a 34 px minimum slot.
+    implicitWidth: Math.max(Tokens.measure.inputSlot, label.implicitWidth)
     implicitHeight: label.implicitHeight
 
-    Text {
+    Value {
         id: label
 
         anchors.centerIn: parent
+        bar: true
         text: InputModes.glyph
-        color: Theme.text
-        font.family: Appearance.font.data
-        font.pixelSize: 11
-        font.weight: Appearance.font.weightSemi
-        renderType: Text.NativeRendering
     }
 
     HoverHandler {

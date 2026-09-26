@@ -1,5 +1,6 @@
 import QtQuick
 import qs.components
+import qs.components.ui as UI
 import qs.config
 import qs.services
 
@@ -36,10 +37,19 @@ Item {
         spacing: 14
 
         // --- Back -----------------------------------------------------------
-        // Quiet, as every BACK inside a dropdown is.
-        QuietBack {
-            label: "UPLINK"
-            onActivated: root.back()
+        // The sub-view's title row: the quiet BackControl, then its Title.
+        Row {
+            spacing: Tokens.space.s8
+            height: Tokens.measure.toggleHeight
+            UI.BackControl {
+                anchors.verticalCenter: parent.verticalCenter
+                destination: "UPLINK"
+                onActivated: root.back()
+            }
+            UI.Title {
+                anchors.verticalCenter: parent.verticalCenter
+                text: "SETTINGS"
+            }
         }
 
         // --- The connected network ------------------------------------------
@@ -51,15 +61,15 @@ Item {
                 width: parent.width
                 renderType: Text.NativeRendering
                 text: Wifi.connected ? Demo.ssid(Wifi.activeSsid) : "NOT CONNECTED"
-                color: Wifi.connected ? Theme.bright : Theme.dim
-                font.family: Appearance.font.display
+                color: Wifi.connected ? Tokens.color.bright : Tokens.color.dim
+                font.family: Tokens.font.display
                 font.pixelSize: 16
-                font.weight: Appearance.font.weightBold
+                font.weight: Tokens.font.displayWeight
                 elide: Text.ElideRight
             }
 
             NrLabel {
-                color: Wifi.connected ? Theme.accent : Theme.dim
+                color: Wifi.connected ? Tokens.color.accent : Tokens.color.dim
                 text: Wifi.connected ? "LINKED" : "NO UPLINK"
             }
         }
@@ -81,7 +91,7 @@ Item {
                 NrLabel {
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
-                    color: Theme.text
+                    color: Tokens.color.text
                     text: `${root.connectedSignal}%`
                 }
             }
@@ -97,7 +107,7 @@ Item {
                 NrLabel {
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
-                    color: Theme.text
+                    color: Tokens.color.text
                     text: Wifi.activeSecurity || "--"
                 }
             }
@@ -113,7 +123,7 @@ Item {
                 NrLabel {
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
-                    color: Theme.text
+                    color: Tokens.color.text
                     text: Wifi.band || "--"
                 }
             }
@@ -121,8 +131,8 @@ Item {
 
         Rectangle {
             width: parent.width
-            height: Appearance.metrics.hairline
-            color: Theme.hair
+            height: Tokens.measure.hairline
+            color: Tokens.color.hair
         }
 
         // --- The three switches ---------------------------------------------
@@ -136,7 +146,7 @@ Item {
                 NrLabel {
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
-                    color: Theme.text
+                    color: Tokens.color.text
                     text: "AUTO-CONNECT"
                 }
                 ToggleButton {
@@ -154,7 +164,7 @@ Item {
                 NrLabel {
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
-                    color: Theme.text
+                    color: Tokens.color.text
                     text: "METERED"
                 }
                 ToggleButton {
@@ -172,7 +182,7 @@ Item {
                 NrLabel {
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
-                    color: Theme.text
+                    color: Tokens.color.text
                     text: "RANDOM MAC"
                 }
                 ToggleButton {
@@ -187,14 +197,14 @@ Item {
 
         Rectangle {
             width: parent.width
-            height: Appearance.metrics.hairline
-            color: Theme.hair
+            height: Tokens.measure.hairline
+            color: Tokens.color.hair
         }
 
         // --- Saved networks --------------------------------------------------
-        NrLabel {
-            color: Theme.bright
-            text: `SAVED NETWORKS${Appearance.separator}${Wifi.savedNames.length}`
+        UI.SectionLabel {
+            topPadding: 0
+            text: `SAVED NETWORKS · ${Wifi.savedNames.length}`
         }
 
         Column {
@@ -218,7 +228,7 @@ Item {
                         anchors.right: forget.left
                         anchors.rightMargin: 10
                         anchors.verticalCenter: parent.verticalCenter
-                        color: Theme.text
+                        color: Tokens.color.text
                         elide: Text.ElideRight
                         text: Demo.ssid(saved.modelData)
                     }
@@ -238,13 +248,14 @@ Item {
                         width: forgetReserve.implicitWidth
                         horizontalAlignment: Text.AlignRight
 
-                        color: saved.confirming || forgetHover.hovered ? Theme.alert : Theme.dim
+                        color: saved.confirming || forgetHover.hovered ? Tokens.color.alert : Tokens.color.dim
                         text: saved.confirming ? "CONFIRM?" : "FORGET"
 
                         Behavior on color {
                             ColorAnimation {
-                                duration: Appearance.duration.state
-                                easing.type: Easing.OutCubic
+                                duration: Tokens.motion.feedback
+                                easing.type: Easing.BezierSpline
+                                easing.bezierCurve: Tokens.motion.easeIn
                             }
                         }
 
@@ -277,7 +288,7 @@ Item {
 
             NrLabel {
                 visible: Wifi.savedNames.length === 0
-                color: Theme.mute
+                color: Tokens.color.mute
                 text: "NONE SAVED"
             }
         }

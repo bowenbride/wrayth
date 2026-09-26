@@ -38,12 +38,13 @@ Row {
 
             Rectangle {
                 anchors.fill: parent
-                color: button.active ? Theme.alpha(Theme.accent, 0.15) : "transparent"
+                color: button.active ? Theme.alpha(Tokens.color.accent, 0.15) : "transparent"
 
                 Behavior on color {
                     ColorAnimation {
-                        duration: Appearance.duration.state
-                        easing.type: Easing.OutCubic
+                        duration: Tokens.motion.feedback
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: Tokens.motion.easeIn
                     }
                 }
             }
@@ -65,14 +66,15 @@ Row {
                 centred: true
 
                 text: button.modelData.label
-                color: button.active ? Theme.accent : Theme.dim
+                color: button.active ? Tokens.color.accent : Tokens.color.dim
                 pixelSize: size
                 font.features: Appearance.tabularFigures
 
                 Behavior on color {
                     ColorAnimation {
-                        duration: Appearance.duration.state
-                        easing.type: Easing.OutCubic
+                        duration: Tokens.motion.feedback
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: Tokens.motion.easeIn
                     }
                 }
             }

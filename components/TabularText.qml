@@ -8,7 +8,7 @@ Item {
     id: root
 
     property string text: ""
-    property color color: Theme.text
+    property color color: Tokens.color.text
     property font font
 
 

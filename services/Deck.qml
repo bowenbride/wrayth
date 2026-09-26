@@ -33,9 +33,37 @@ Singleton {
 
     // Hyprland is configured in Lua here, so a dispatch is a Lua expression
     // returning a dispatcher, not the classic `dispatcher args` string.
+    // **Opening is one entrance (DESIGN.md).** Toggling the special
+    // workspace straight from a key starts Hyprland's fade of the terminal at
+    // once, while the panels' surface still has to be mapped and drawn --
+    // measured, the panels arrived 200-270 ms behind. So the shell opens the
+    // deck: it maps the panels first (`preparing`, the screen it opens on),
+    // and switches the special workspace on their first frame (DeckOverlay
+    // calls `reveal`), so Hyprland starts both fades together, on the same
+    // curve. Closing needs no such care: both fade out from the same moment.
+    property string preparing: ""
     function toggle(): void {
-        Hyprland.dispatch(`hl.dsp.workspace.toggle_special("${workspace}")`);
+        if (visible || preparing !== "") {
+            preparing = "";
+            setOpen(false);
+            return;
+        }
+        preparing = ShellState.focusedScreen;
+        revealLimit.restart();
     }
+    function reveal(): void {
+        if (preparing === "")
+            return;
+        revealLimit.stop();
+        setOpen(true);
+    }
+    // Never left waiting: if no frame comes, open anyway.
+    Timer {
+        id: revealLimit
+        interval: 600
+        onTriggered: root.reveal()
+    }
+    onMonitorNameChanged: if (monitorName !== "") preparing = ""
 
     // **Idempotent, and decided by Hyprland at the moment it runs.** `visible`
     // above reads a cached monitor object that is refreshed asynchronously, so

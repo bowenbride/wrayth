@@ -17,14 +17,15 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        color: root.selected ? Theme.alpha(Theme.accent, 0.12) : hover.hovered ? Theme.alpha(Theme.hair, 0.3) : "transparent"
-        border.width: Appearance.metrics.hairline
-        border.color: root.selected ? Theme.accent : "transparent"
+        color: root.selected ? Tokens.color.accentTint : hover.hovered ? Theme.alpha(Tokens.color.hair, 0.3) : "transparent"
+        border.width: Tokens.measure.hairline
+        border.color: root.selected ? Tokens.color.accent : "transparent"
 
         Behavior on color {
             ColorAnimation {
-                duration: Appearance.duration.state
-                easing.type: Easing.OutCubic
+                duration: Tokens.motion.feedback
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Tokens.motion.easeIn
             }
         }
     }
@@ -38,8 +39,8 @@ Item {
         width: 30
         height: 22
         color: root.value
-        border.width: Appearance.metrics.hairline
-        border.color: Theme.hair
+        border.width: Tokens.measure.hairline
+        border.color: Tokens.color.hair
     }
 
     NrLabel {
@@ -49,7 +50,7 @@ Item {
         anchors.leftMargin: 12
         anchors.verticalCenter: parent.verticalCenter
         width: 66
-        color: root.selected ? Theme.accent : Theme.bright
+        color: root.selected ? Tokens.color.accent : Tokens.color.bright
         text: root.tokenKey
     }
 
@@ -59,7 +60,7 @@ Item {
         anchors.right: hex.left
         anchors.rightMargin: 8
         anchors.verticalCenter: parent.verticalCenter
-        color: Theme.text
+        color: Tokens.color.text
         pixelSize: 10
         elide: Text.ElideRight
         text: root.role
@@ -73,10 +74,10 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
 
         text: root.value.toUpperCase()
-        color: Theme.text
-        font.family: Appearance.font.data
+        color: Tokens.color.text
+        font.family: Tokens.font.data
         font.pixelSize: 11
-        font.weight: Appearance.font.weightSemi
+        font.weight: Tokens.font.dataWeight
         renderType: Text.NativeRendering
     }
 

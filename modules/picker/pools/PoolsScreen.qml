@@ -212,7 +212,8 @@ Item {
             from: 0
             to: 1
             duration: 170
-            easing.type: Easing.OutCubic
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: Tokens.motion.easeIn
         }
 
         // The travel. **Ease in and out**, so it leaves and lands slowly and
@@ -233,7 +234,8 @@ Item {
             property: "dragLift"
             to: 0
             duration: 200
-            easing.type: Easing.InCubic
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: Tokens.motion.easeOut
         }
 
         ScriptAction {
@@ -480,8 +482,8 @@ Item {
         height: 840
 
         chamfer: Appearance.chamfer.panel
-        fillColor: Theme.panel2
-        borderColor: Theme.hair
+        fillColor: Tokens.color.panel2
+        borderColor: Tokens.color.hair
 
         // --- Header -----------------------------------------------------------
         Item {
@@ -511,8 +513,10 @@ Item {
                         id: poolsTitle
 
                         anchors.fill: parent
-                        text: `WALLPAPER${Appearance.separator}POOLS`
-                        pixelSize: 22
+                        text: "WALLPAPERS"
+                        // The full-screen view title role (DESIGN.md): 22 px, 0.12em.
+                        pixelSize: Tokens.type.viewTitle.size
+                        tracking: Tokens.type.viewTitle.tracking
                     }
                 }
 
@@ -526,7 +530,7 @@ Item {
             NrLabel {
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
-                color: Theme.dim
+                color: Tokens.color.dim
                 tracked: false
                 text: Wallpapers.folder ? Paths.display(Wallpapers.folder) : "NO FOLDER SET"
             }
@@ -548,8 +552,8 @@ Item {
                 id: libraryTitle
 
                 anchors.top: parent.top
-                color: Theme.text
-                text: `LIBRARY${Appearance.separator}${Wallpapers.library.length} FILES`
+                color: Tokens.color.text
+                text: `LIBRARY · ${Wallpapers.library.length} FILES`
             }
 
             Flickable {
@@ -581,9 +585,9 @@ Item {
 
                         Rectangle {
                             anchors.fill: parent
-                            color: Theme.alpha(Theme.accent, addHover.hovered ? 0.16 : 0.07)
-                            border.width: Appearance.metrics.hairline
-                            border.color: Theme.accent
+                            color: Theme.alpha(Tokens.color.accent, addHover.hovered ? 0.16 : 0.07)
+                            border.width: Tokens.measure.hairline
+                            border.color: Tokens.color.accent
                         }
 
                         Column {
@@ -593,8 +597,8 @@ Item {
                             Text {
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 text: "+"
-                                color: Theme.accent
-                                font.family: Appearance.font.display
+                                color: Tokens.color.accent
+                                font.family: Tokens.font.display
                                 font.pixelSize: 24
                                 font.weight: Appearance.font.weightBold
                                 renderType: Text.NativeRendering
@@ -603,7 +607,7 @@ Item {
                             NrLabel {
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 centred: true
-                                color: Theme.accent
+                                color: Tokens.color.accent
                                 text: "ADD FILES"
                             }
                         }
@@ -663,8 +667,8 @@ Item {
                 id: rowsTitle
 
                 anchors.top: parent.top
-                color: Theme.text
-                text: `PROFILES${Appearance.separator}${Profiles.names.length}`
+                color: Tokens.color.text
+                text: `PROFILES · ${Profiles.names.length}`
             }
 
             Flickable {
@@ -762,7 +766,7 @@ Item {
                 // through the buttons; the header's folder path is untracked
                 // for the same reason. Tracking is for labels.
                 tracked: false
-                color: Theme.dim
+                color: Tokens.color.dim
                 // **Every control is named exactly as it appears.** The
                 // legend used to describe two marks -- a star and a cross --
                 // that said nothing about themselves; now it names the words
@@ -856,16 +860,17 @@ Item {
 
         Behavior on opacity {
             NumberAnimation {
-                duration: root.dragFile !== "" ? Appearance.duration.state : Appearance.duration.exit
-                easing.type: root.dragFile !== "" ? Easing.OutCubic : Easing.InCubic
+                duration: root.dragFile !== "" ? Tokens.motion.feedback : Tokens.motion.panels
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: root.dragFile !== "" ? Tokens.motion.easeIn : Tokens.motion.easeOut
             }
         }
 
         Rectangle {
             anchors.fill: parent
-            color: Theme.deep
-            border.width: Appearance.metrics.hairline
-            border.color: Theme.accent
+            color: Tokens.color.deep
+            border.width: Tokens.measure.hairline
+            border.color: Tokens.color.accent
         }
 
         Image {
@@ -903,8 +908,8 @@ Item {
         height: 190
 
         chamfer: Appearance.chamfer.panel
-        fillColor: Qt.rgba(Theme.ground.r, Theme.ground.g, Theme.ground.b, 0.97)
-        borderColor: Theme.alert
+        fillColor: Qt.rgba(Tokens.color.ground.r, Tokens.color.ground.g, Tokens.color.ground.b, 0.97)
+        borderColor: Tokens.color.alert
 
         Column {
             anchors.centerIn: parent
@@ -914,8 +919,8 @@ Item {
             Text {
                 width: parent.width
                 text: "DELETE FROM DISK?"
-                color: Theme.alert
-                font.family: Appearance.font.display
+                color: Tokens.color.alert
+                font.family: Tokens.font.display
                 font.pixelSize: 18
                 font.weight: Appearance.font.weightBold
                 horizontalAlignment: Text.AlignHCenter
@@ -925,8 +930,8 @@ Item {
             Text {
                 width: parent.width
                 text: `${root.confirmingDelete} is removed from your wallpapers folder. Every pool holding it loses it.`
-                color: Theme.dim
-                font.family: Appearance.font.data
+                color: Tokens.color.dim
+                font.family: Tokens.font.data
                 font.pixelSize: 10
                 horizontalAlignment: Text.AlignHCenter
                 wrapMode: Text.Wrap
@@ -940,7 +945,7 @@ Item {
                 ActionButton {
                     text: "DELETE"
                     accented: true
-                    textColor: Theme.alert
+                    textColor: Tokens.color.alert
                     onClicked: {
                         const file = root.confirmingDelete;
                         Wallpapers.deleteFile(file);

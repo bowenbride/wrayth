@@ -102,6 +102,12 @@ Singleton {
         root.history = root.history.map(e => e.seen ? e : Object.assign({}, e, { seen: true }));
     }
 
+    // Every card on screen dismissed, critical ones included.
+    function dismissAll(): void {
+        for (const n of (server.trackedNotifications?.values ?? []).slice())
+            n.dismiss();
+    }
+
     function clearHistory(): void {
         root.history = [];
     }

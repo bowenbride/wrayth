@@ -47,14 +47,15 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        color: Theme.deep
-        border.width: Appearance.metrics.hairline
-        border.color: root.starred ? root.tone : root.focused ? Theme.accent : Theme.hair
+        color: Tokens.color.deep
+        border.width: Tokens.measure.hairline
+        border.color: root.starred ? root.tone : root.focused ? Tokens.color.accent : Tokens.color.hair
 
         Behavior on border.color {
             ColorAnimation {
-                duration: Appearance.duration.state
-                easing.type: Easing.OutCubic
+                duration: Tokens.motion.feedback
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Tokens.motion.easeIn
             }
         }
     }
@@ -62,7 +63,8 @@ Item {
     Image {
         anchors.fill: parent
         anchors.margins: 1
-        source: Wallpapers.imageOf(root.item.file)
+        // A video shows its first-frame still.
+        source: Wallpapers.stillOf(Wallpapers.imageOf(root.item.file))
         fillMode: Image.PreserveAspectCrop
         sourceSize: Qt.size(220, 120)
         asynchronous: true
@@ -73,8 +75,9 @@ Item {
 
         Behavior on opacity {
             NumberAnimation {
-                duration: Appearance.duration.state
-                easing.type: Easing.OutCubic
+                duration: Tokens.motion.feedback
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Tokens.motion.easeIn
             }
         }
     }
@@ -88,9 +91,9 @@ Item {
         anchors.margins: 4
         width: 18
         height: 18
-        color: root.item.on ? Theme.accent : Qt.rgba(0, 0, 0, 0.82)
-        border.width: Appearance.metrics.hairline
-        border.color: root.item.on ? Theme.accent : Theme.dim
+        color: root.item.on ? Tokens.color.accent : Qt.rgba(0, 0, 0, 0.82)
+        border.width: Tokens.measure.hairline
+        border.color: root.item.on ? Tokens.color.accent : Tokens.color.dim
 
         Glyph {
             anchors.centerIn: parent
@@ -103,11 +106,12 @@ Item {
 
             Behavior on opacity {
                 NumberAnimation {
-                    duration: Appearance.duration.state
-                    easing.type: root.item.on ? Easing.OutCubic : Easing.InCubic
+                    duration: Tokens.motion.feedback
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: root.item.on ? Tokens.motion.easeIn : Tokens.motion.easeOut
                 }
             }
-            color: Theme.ground
+            color: Tokens.color.ground
             pixelSize: 12
             weight: Appearance.font.weightBold
         }
@@ -145,8 +149,9 @@ Item {
 
         Behavior on opacity {
             NumberAnimation {
-                duration: Appearance.duration.state
-                easing.type: root.starred || root.revealed ? Easing.OutCubic : Easing.InCubic
+                duration: Tokens.motion.feedback
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: root.starred || root.revealed ? Tokens.motion.easeIn : Tokens.motion.easeOut
             }
         }
 
@@ -182,8 +187,9 @@ Item {
 
         Behavior on opacity {
             NumberAnimation {
-                duration: Appearance.duration.state
-                easing.type: root.revealed ? Easing.OutCubic : Easing.InCubic
+                duration: Tokens.motion.feedback
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: root.revealed ? Tokens.motion.easeIn : Tokens.motion.easeOut
             }
         }
 
@@ -196,12 +202,13 @@ Item {
 
         MinusGlyph {
             anchors.fill: parent
-            color: minusHover.hovered ? Theme.accent : Theme.dim
+            color: minusHover.hovered ? Tokens.color.accent : Tokens.color.dim
 
             Behavior on color {
                 ColorAnimation {
-                    duration: Appearance.duration.state
-                    easing.type: Easing.OutCubic
+                    duration: Tokens.motion.feedback
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: Tokens.motion.easeIn
                 }
             }
         }

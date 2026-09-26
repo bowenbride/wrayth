@@ -38,7 +38,7 @@ Item {
         id: pressFill
 
         anchors.fill: parent
-        color: Theme.alpha(Theme.accent, root.flashOpacity)
+        color: Theme.alpha(Tokens.color.accent, root.flashOpacity)
         opacity: 0
     }
 
@@ -49,15 +49,16 @@ Item {
         property: "opacity"
         from: 1
         to: 0
-        duration: Appearance.duration.state
-        easing.type: Easing.OutCubic
+        duration: Tokens.motion.feedback
+        easing.type: Easing.BezierSpline
+        easing.bezierCurve: Tokens.motion.easeIn
     }
 
     Rectangle {
         id: okFill
 
         anchors.fill: parent
-        color: Theme.alpha(Theme.signal, root.flashOpacity)
+        color: Theme.alpha(Tokens.color.signal, root.flashOpacity)
         opacity: 0
     }
 
@@ -71,8 +72,9 @@ Item {
         // The spec's "about 260 ms", on the scale: 250 is the panel figure and
         // a success flash is the one state feedback that is deliberately
         // longer than 120, because it marks a moment rather than a press.
-        duration: Appearance.duration.panel
-        easing.type: Easing.OutCubic
+        duration: Tokens.motion.panels
+        easing.type: Easing.BezierSpline
+        easing.bezierCurve: Tokens.motion.easeIn
     }
 
     onSucceededChanged: if (succeeded) okFlash.restart()
@@ -118,7 +120,7 @@ Item {
 
             width: Math.max(24, sweepTrack.width * 0.35)
             height: parent.height
-            color: Theme.accent
+            color: Tokens.color.accent
         }
 
         NumberAnimation {

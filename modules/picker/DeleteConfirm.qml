@@ -14,8 +14,8 @@ ChamferPanel {
     signal cancelled
 
     chamfer: Appearance.chamfer.panel
-    fillColor: Qt.rgba(Theme.ground.r, Theme.ground.g, Theme.ground.b, 0.96)
-    borderColor: Theme.alert
+    fillColor: Qt.rgba(Tokens.color.ground.r, Tokens.color.ground.g, Tokens.color.ground.b, 0.96)
+    borderColor: Tokens.color.alert
 
     // Nothing behind this panel is clickable while it is up.
     MouseArea {
@@ -33,8 +33,8 @@ ChamferPanel {
             width: parent.width
 
             text: `DELETE ${root.name.toUpperCase()}?`
-            color: Theme.alert
-            font.family: Appearance.font.display
+            color: Tokens.color.alert
+            font.family: Tokens.font.display
             font.pixelSize: 15
             font.weight: Appearance.font.weightBold
             horizontalAlignment: Text.AlignHCenter
@@ -49,8 +49,8 @@ ChamferPanel {
             // file in the user's own library, and the pools screen is the only
             // place in the shell that deletes one.
             text: "The profile is removed. Its wallpaper stays in your library."
-            color: Theme.dim
-            font.family: Appearance.font.data
+            color: Tokens.color.dim
+            font.family: Tokens.font.data
             font.pixelSize: 10
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.Wrap
@@ -64,7 +64,7 @@ ChamferPanel {
             ActionButton {
                 text: "DELETE"
                 accented: true
-                textColor: Theme.alert
+                textColor: Tokens.color.alert
                 onClicked: root.confirmed()
             }
 

@@ -139,7 +139,7 @@ Singleton {
     //   panel     a panel, an overlay or a section appearing or leaving
     //   wallpaper a wallpaper cross-fade
     //
-    // Entry is `Easing.OutCubic` and exit `Easing.InCubic`, everywhere.
+    // Entry and exit curves are Tokens.motion.easeIn and easeOut (bezier), everywhere.
     // `enter` and `exit` below are the lengths that go with them: appearing is
     // a `panel` fade with an 8 px rise, leaving is quicker, because a thing on
     // its way out has nothing left to say.
@@ -166,5 +166,7 @@ Singleton {
     // layout change: the space is already reserved, so nothing around it moves.
     readonly property int enterRise: 8
 
-    readonly property string separator: " // "
+    // Parallel items are set apart by ·; the // mark is rationed to four
+    // places (the ID block, IDLE, DAEMONS // LOADED, OPERATOR // USERNAME).
+    readonly property string separator: " · "
 }

@@ -35,8 +35,9 @@ Item {
 
     Behavior on lift {
         NumberAnimation {
-            duration: Appearance.duration.state
-            easing.type: Easing.OutCubic
+            duration: Tokens.motion.feedback
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: Tokens.motion.easeIn
         }
     }
 
@@ -44,8 +45,8 @@ Item {
         anchors.fill: parent
 
         chamfer: Appearance.chamfer.panel
-        fillColor: root.selected ? Theme.ground : Theme.panel2
-        borderColor: root.selected ? Theme.accent : Theme.hair
+        fillColor: root.selected ? Tokens.color.ground : Tokens.color.panel2
+        borderColor: root.selected ? Tokens.color.accent : Tokens.color.hair
 
         Item {
             id: thumb
@@ -72,8 +73,8 @@ Item {
                     readonly property real bottom: thumb.height - root.inset
 
                     fillColor: "transparent"
-                    strokeColor: root.selected || hover.hovered ? Theme.accent : Theme.hair
-                    strokeWidth: Appearance.metrics.hairline
+                    strokeColor: root.selected || hover.hovered ? Tokens.color.accent : Tokens.color.hair
+                    strokeWidth: Tokens.measure.hairline
                     strokeStyle: ShapePath.DashLine
                     dashPattern: [4, 4]
 
@@ -107,8 +108,8 @@ Item {
                 anchors.centerIn: parent
 
                 text: "+"
-                color: root.selected || hover.hovered ? Theme.accent : Theme.dim
-                font.family: Appearance.font.display
+                color: root.selected || hover.hovered ? Tokens.color.accent : Tokens.color.dim
+                font.family: Tokens.font.display
                 font.pixelSize: 34
                 font.weight: Appearance.font.weightBold
                 renderType: Text.NativeRendering
@@ -122,7 +123,7 @@ Item {
             anchors.left: thumb.left
             anchors.right: thumb.right
             height: 2
-            color: Theme.accent
+            color: Tokens.color.accent
             opacity: root.selected ? 1 : 0.45
         }
 
@@ -137,8 +138,8 @@ Item {
 
             Text {
                 text: "NEW CUSTOM"
-                color: root.selected ? Theme.accent : Theme.text
-                font.family: Appearance.font.display
+                color: root.selected ? Tokens.color.accent : Tokens.color.text
+                font.family: Tokens.font.display
                 font.pixelSize: 14
                 font.weight: Appearance.font.weightBold
                 renderType: Text.NativeRendering
@@ -148,8 +149,8 @@ Item {
                 width: parent.width
 
                 text: "Nine colours of your own. The rest of the palette follows."
-                color: Theme.text
-                font.family: Appearance.font.data
+                color: Tokens.color.text
+                font.family: Tokens.font.data
                 font.pixelSize: 10
                 wrapMode: Text.Wrap
                 renderType: Text.NativeRendering

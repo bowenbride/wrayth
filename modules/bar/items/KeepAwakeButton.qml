@@ -1,5 +1,6 @@
 import QtQuick
 import qs.components
+import qs.components.ui
 import qs.config
 import qs.services
 
@@ -10,62 +11,51 @@ Rectangle {
 
     readonly property bool held: Idle.hold
 
-    implicitWidth: row.implicitWidth + 18
-    implicitHeight: Appearance.metrics.idleButtonHeight
+    // IDLE (DESIGN.md): IDLE // AUTO or HOLD in a 1 px `hair` frame -- the one
+    // framed readout, because it is a toggle. AUTO and HOLD share one slot.
+    implicitWidth: row.implicitWidth + 2 * Tokens.measure.chipPadding
+    implicitHeight: Tokens.measure.buttonInline
 
-    color: held ? Theme.alpha(Theme.accent, 0.12) : "transparent"
-    border.width: Appearance.metrics.hairline
-    border.color: held ? Theme.accent : Theme.hair
-
-    Behavior on color {
-        ColorAnimation {
-            duration: Appearance.duration.state
-            easing.type: Easing.OutCubic
-        }
-    }
-    Behavior on border.color {
-        ColorAnimation {
-            duration: Appearance.duration.state
-            easing.type: Easing.OutCubic
-        }
-    }
+    color: "transparent"
+    border.width: Tokens.measure.hairline
+    border.color: Tokens.color.hair
 
     Row {
         id: row
 
         anchors.centerIn: parent
-        spacing: 5
+        spacing: Tokens.space.s6
 
-        NrLabel {
+        Label {
             anchors.verticalCenter: parent.verticalCenter
+            bar: true
             text: "IDLE"
         }
-
-        NrLabel {
+        Label {
             anchors.verticalCenter: parent.verticalCenter
+            bar: true
             text: "//"
-            color: Theme.mute
+            color: Tokens.color.hair
         }
+        Value {
+            id: value
 
-        // Fixed slot so AUTO and HOLD are the same width.
-        Item {
             anchors.verticalCenter: parent.verticalCenter
-            implicitWidth: Appearance.slot.idleValue
-            implicitHeight: value.implicitHeight
-
-            Text {
-                renderType: Text.NativeRendering
-                id: value
-
-                anchors.centerIn: parent
-
-                text: root.held ? "HOLD" : "AUTO"
-                color: root.held ? Theme.accent : Theme.text
-                font.family: Appearance.font.data
-                font.pixelSize: Appearance.size.label
-                font.weight: Appearance.font.weightSemi
-                font.letterSpacing: Appearance.tracking(Appearance.size.label)
-                font.capitalization: Font.AllUppercase
+            bar: true
+            width: widest.width
+            text: root.held ? "HOLD" : "AUTO"
+            color: root.held ? Tokens.color.accent : Tokens.color.text
+            Behavior on color {
+                ColorAnimation {
+                    duration: Tokens.motion.feedback
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: Tokens.motion.easeIn
+                }
+            }
+            TextMetrics {
+                id: widest
+                font: value.font
+                text: "HOLD"
             }
         }
     }

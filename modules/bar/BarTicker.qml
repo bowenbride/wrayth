@@ -30,7 +30,8 @@ Item {
         if (track && track.trackTitle)
             segments.unshift(`NOW PLAYING ${track.trackTitle.toUpperCase()}${track.trackArtist ? ` BY ${track.trackArtist.toUpperCase()}` : ""}`);
         // Leading and trailing separators so the loop reads continuously.
-        return `// ${segments.join(" // ")} `;
+        // DESIGN.md: parallel items on one line are separated by `·`.
+        return `· ${segments.join(" · ")} `;
     }
 
     // The same hairline that separates the readouts, closing off both ends of

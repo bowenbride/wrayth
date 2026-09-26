@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Wayland
 import qs.components
+import qs.components.ui as UI
 import qs.config
 import qs.services
 
@@ -63,8 +64,8 @@ Variants {
             width: 680
             height: header.height + search.height + (modes.active ? modes.implicitHeight : list.height) + footer.height + 2
 
-            chamfer: Appearance.chamfer.panel
-            fillColor: Theme.panel2
+            chamfer: Tokens.chamfer.centred
+            fillColor: Tokens.color.panel2
 
             // Swallows clicks so they do not reach the dismiss layer behind.
             MouseArea {
@@ -80,41 +81,33 @@ Variants {
                 anchors.right: parent.right
                 height: 52
 
+                // The centred-panel header: Title + JapaneseLabel, a hint on the right.
+                // Split and slice still find it (DESIGN.md); no scramble.
                 GlitchFx {
                     group: "overlay"
-                    id: title
-
                     anchors.left: parent.left
-                    anchors.leftMargin: 16
+                    anchors.leftMargin: Tokens.space.s16
                     anchors.verticalCenter: parent.verticalCenter
                     fills: true
-                    textual: true
                     width: execTitle.implicitWidth
                     height: execTitle.implicitHeight
-                    scrambleItems: [execTitle]
-
-                    GlitchText {
+                    UI.Title {
                         id: execTitle
-
-                        anchors.fill: parent
                         text: "EXEC"
-                        pixelSize: 20
+                        japanese: "実行"
                     }
                 }
 
-                KanaTag {
-                    anchors.left: title.right
-                    anchors.leftMargin: 10
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: "実行"
-                    title: execTitle
-                }
-
-                NrLabel {
+                Text {
                     anchors.right: parent.right
-                    anchors.rightMargin: 16
+                    anchors.rightMargin: Tokens.space.s16
                     anchors.verticalCenter: parent.verticalCenter
                     text: modes.active ? "" : `${Launcher.count} MATCHES`
+                    color: Tokens.color.dim
+                    font.family: Tokens.type.hint.family
+                    font.pixelSize: Tokens.type.hint.size
+                    font.letterSpacing: Tokens.type.hint.size * Tokens.type.hint.tracking
+                    renderType: Text.NativeRendering
                 }
             }
 
@@ -131,8 +124,8 @@ Variants {
                     anchors.left: parent.left
                     anchors.right: parent.right
                     anchors.top: parent.top
-                    height: Appearance.metrics.hairline
-                    color: Theme.hair
+                    height: Tokens.measure.hairline
+                    color: Tokens.color.hair
                 }
 
                 Text {
@@ -143,8 +136,8 @@ Variants {
                     anchors.leftMargin: 16
                     anchors.verticalCenter: parent.verticalCenter
                     text: ">"
-                    color: Theme.accent
-                    font.family: Appearance.font.data
+                    color: Tokens.color.accent
+                    font.family: Tokens.font.data
                     font.pixelSize: Appearance.size.body
                     font.weight: Appearance.font.weightBold
                 }
@@ -157,10 +150,10 @@ Variants {
                     anchors.rightMargin: 16
                     anchors.verticalCenter: parent.verticalCenter
                     text: modes.modeName
-                    color: Theme.signal
-                    font.family: Appearance.font.data
+                    color: Tokens.color.signal
+                    font.family: Tokens.font.data
                     font.pixelSize: 9
-                    font.weight: Appearance.font.weightSemi
+                    font.weight: Tokens.font.dataWeight
                     font.letterSpacing: 9 * 0.14
                     renderType: Text.NativeRendering
                 }
@@ -174,16 +167,16 @@ Variants {
                     anchors.rightMargin: 12
                     anchors.verticalCenter: parent.verticalCenter
 
-                    color: Theme.bright
-                    selectionColor: Theme.alpha(Theme.accent, 0.35)
-                    selectedTextColor: Theme.bright
-                    font.family: Appearance.font.data
+                    color: Tokens.color.bright
+                    selectionColor: Theme.alpha(Tokens.color.accent, 0.35)
+                    selectedTextColor: Tokens.color.bright
+                    font.family: Tokens.font.data
                     font.pixelSize: Appearance.size.body
                     renderType: Text.NativeRendering
 
                     cursorDelegate: Rectangle {
                         width: 2
-                        color: Theme.accent
+                        color: Tokens.color.accent
                     }
 
                     onTextChanged: Launcher.query = text
@@ -275,8 +268,8 @@ Variants {
                     anchors.left: parent.left
                     anchors.right: parent.right
                     anchors.top: parent.top
-                    height: Appearance.metrics.hairline
-                    color: Theme.hair
+                    height: Tokens.measure.hairline
+                    color: Tokens.color.hair
                 }
 
                 // Keys in keycaps. The row's own spacing supplies the air the
@@ -295,36 +288,36 @@ Variants {
                     Keycap {
                         anchors.verticalCenter: parent.verticalCenter
                         key: "↑↓"
-                        color: Theme.mute
+                        color: Tokens.color.mute
                     }
 
                     NrLabel {
                         anchors.verticalCenter: parent.verticalCenter
-                        color: Theme.mute
+                        color: Tokens.color.mute
                         text: "SELECT"
                     }
 
                     Keycap {
                         anchors.verticalCenter: parent.verticalCenter
                         key: "ENTER"
-                        color: Theme.mute
+                        color: Tokens.color.mute
                     }
 
                     NrLabel {
                         anchors.verticalCenter: parent.verticalCenter
-                        color: Theme.mute
+                        color: Tokens.color.mute
                         text: "EXEC"
                     }
 
                     Keycap {
                         anchors.verticalCenter: parent.verticalCenter
                         key: "ESC"
-                        color: Theme.mute
+                        color: Tokens.color.mute
                     }
 
                     NrLabel {
                         anchors.verticalCenter: parent.verticalCenter
-                        color: Theme.mute
+                        color: Tokens.color.mute
                         text: "ABORT"
                     }
                 }
@@ -335,8 +328,8 @@ Variants {
                     anchors.rightMargin: 16
                     anchors.verticalCenter: parent.verticalCenter
                     text: "= CALCULATE · : EMOJI · > RUN A COMMAND"
-                    color: Theme.dim
-                    font.family: Appearance.font.data
+                    color: Tokens.color.dim
+                    font.family: Tokens.font.data
                     font.pixelSize: 9
                     font.letterSpacing: 9 * 0.12
                     renderType: Text.NativeRendering

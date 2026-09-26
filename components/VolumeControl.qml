@@ -15,7 +15,7 @@ Item {
 
     property real value: 0
     property bool muted: false
-    property color litColor: Theme.signal
+    property color litColor: Tokens.color.signal
     property bool usable: true
     property real segmentHeight: 8
 
@@ -50,8 +50,8 @@ Item {
             segmentHeight: root.segmentHeight
             value: root.value
             // The data colour lit, the alert colour lit while muted.
-            litColor: root.muted ? Theme.alert : root.litColor
-            unlitColor: Theme.track
+            litColor: root.muted ? Tokens.color.alert : root.litColor
+            unlitColor: Tokens.color.track
             animate: false
             opacity: root.usable ? 1 : 0.4
         }
@@ -86,9 +86,9 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         width: 36
         horizontalAlignment: Text.AlignRight
-        color: root.muted ? Theme.alert : Theme.text
+        color: root.muted ? Tokens.color.alert : Tokens.color.text
         text: `${Math.round(root.value * 100)}%`
-        font.family: Appearance.font.data
+        font.family: Tokens.font.data
         font.pixelSize: 10
         renderType: Text.NativeRendering
     }

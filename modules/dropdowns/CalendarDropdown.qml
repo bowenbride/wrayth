@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import qs.components
+import qs.components.ui as UI
 import qs.config
 import qs.services
 
@@ -12,8 +13,7 @@ DropdownFrame {
 
     title: "CALENDAR"
     katakana: "暦"
-    // Read by Dropdowns: this dropdown is 340 px wide.
-    readonly property int panelWidth: 340
+    panelWidth: Tokens.measure.dropdownSmall
 
     readonly property var monthNames: ["JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"]
     readonly property var dayNames: ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"]
@@ -75,68 +75,6 @@ DropdownFrame {
         return n < 10 ? `0${n}` : `${n}`;
     }
 
-    // A 22 x 22 month button: hairline, a drawn chevron.
-    component MonthButton: Rectangle {
-        id: btn
-
-        property string direction: "right"
-        signal activated
-
-        width: 22
-        height: 22
-        color: tap.pressed ? Theme.alpha(Theme.accent, 0.35) : (hover.hovered ? Theme.cell : "transparent")
-        border.width: Appearance.metrics.hairline
-        border.color: hover.hovered ? Theme.dim : Theme.hair
-
-        Behavior on color {
-            ColorAnimation {
-                duration: Appearance.duration.state
-                easing.type: Easing.OutCubic
-            }
-        }
-
-        ChevronGlyph {
-            anchors.centerIn: parent
-            direction: btn.direction
-            color: hover.hovered ? Theme.bright : Theme.text
-        }
-        HoverHandler {
-            id: hover
-            cursorShape: Qt.PointingHandCursor
-        }
-        TapHandler {
-            id: tap
-            onTapped: btn.activated()
-        }
-    }
-
-    headerRight: Row {
-        spacing: 6
-
-        MonthButton {
-            direction: "left"
-            onActivated: root.shift(-1)
-        }
-        // The month and year in a fixed 132 px slot, so the arrows never move.
-        Text {
-            width: 132
-            height: 22
-            horizontalAlignment: Text.AlignHCenter
-            verticalAlignment: Text.AlignVCenter
-            text: `${root.monthNames[root.month]} ${root.year}`
-            color: Theme.bright
-            font.family: Appearance.font.data
-            font.pixelSize: 11
-            font.weight: Appearance.font.weightSemi
-            font.letterSpacing: 11 * 0.1
-            renderType: Text.NativeRendering
-        }
-        MonthButton {
-            direction: "right"
-            onActivated: root.shift(1)
-        }
-    }
-
     Column {
         width: parent.width
         spacing: 6
@@ -151,6 +89,34 @@ DropdownFrame {
                     root.shift(acc > 0 ? -1 : 1);
                     acc = 0;
                 }
+            }
+        }
+
+        // The month, between quiet chevron buttons (one header control at
+        // most, so navigation sits in the body).
+        Item {
+            width: parent.width
+            height: Tokens.measure.buttonInline
+
+            UI.Button {
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+                kind: "quiet"
+                chevron: "left"
+                text: ""
+                onClicked: root.shift(-1)
+            }
+            UI.Value {
+                anchors.centerIn: parent
+                text: `${root.monthNames[root.month]} ${root.year}`
+            }
+            UI.Button {
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                kind: "quiet"
+                chevron: "right"
+                text: ""
+                onClicked: root.shift(1)
             }
         }
 
@@ -173,8 +139,8 @@ DropdownFrame {
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
                     text: modelData
-                    color: Theme.dim
-                    font.family: Appearance.font.data
+                    color: Tokens.color.dim
+                    font.family: Tokens.font.data
                     font.pixelSize: 9
                     font.letterSpacing: 9 * 0.12
                     renderType: Text.NativeRendering
@@ -193,63 +159,48 @@ DropdownFrame {
 
                     width: grid.cell
                     height: grid.cell
-                    color: isToday ? Theme.alpha(Theme.accent, 0.12) : "transparent"
+                    color: isToday ? Tokens.color.accentTint : "transparent"
                     border.width: isToday ? 1 : 0
-                    border.color: Theme.accent
+                    border.color: Tokens.color.accent
 
                     Text {
                         anchors.centerIn: parent
                         text: `${cellItem.modelData.getDate()}`
-                        color: cellItem.isToday ? Theme.accent : (cellItem.inMonth ? Theme.text : Theme.mute)
-                        font.family: Appearance.font.data
+                        color: cellItem.isToday ? Tokens.color.accent : (cellItem.inMonth ? Tokens.color.text : Tokens.color.mute)
+                        font.family: Tokens.font.data
                         font.pixelSize: 11
-                        font.weight: cellItem.isToday ? Appearance.font.weightSemi : Appearance.font.weightRegular
-                        font.features: Appearance.tabularFigures
+                        font.weight: cellItem.isToday ? Tokens.font.dataWeight : Tokens.font.dataWeight
+                        font.features: ({ "tnum": 1 })
                         renderType: Text.NativeRendering
                     }
                 }
             }
         }
 
-        Rectangle {
-            width: parent.width
-            height: Appearance.metrics.hairline
-            color: Theme.hair
-        }
+        UI.Rule {}
 
-        // FRIDAY 09.25.26 · WEEK 39, and TODAY.
+        // The full date and week (a hint line), and TODAY (a quiet button).
         Item {
             width: parent.width
-            height: 16
+            height: Tokens.measure.buttonInline
 
             Text {
+                readonly property var role: Tokens.type.hint
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
                 text: `${root.dayNames[root.today.getDay()]} ${root.pad2(root.today.getMonth() + 1)}.${root.pad2(root.today.getDate())}.${root.pad2(root.today.getFullYear() % 100)} · WEEK ${root.isoWeek(root.today)}`
-                color: Theme.dim
-                font.family: Appearance.font.data
-                font.pixelSize: 9
-                font.letterSpacing: 9 * 0.12
+                color: Tokens.color.dim
+                font.family: role.family
+                font.pixelSize: role.size
+                font.letterSpacing: role.size * role.tracking
                 renderType: Text.NativeRendering
             }
-            Text {
+            UI.Button {
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
+                kind: "quiet"
                 text: "TODAY"
-                font.underline: true
-                color: todayHover.hovered ? Theme.text : Theme.dim
-                font.family: Appearance.font.data
-                font.pixelSize: 9
-                font.letterSpacing: 9 * 0.12
-                renderType: Text.NativeRendering
-
-                HoverHandler {
-                    id: todayHover
-                    cursorShape: Qt.PointingHandCursor
-                }
-                TapHandler {
-                    onTapped: root.goToday()
-                }
+                onClicked: root.goToday()
             }
         }
     }

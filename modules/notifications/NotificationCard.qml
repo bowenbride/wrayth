@@ -17,10 +17,10 @@ ChamferPanel {
 
     readonly property color tone: {
         if (critical)
-            return Theme.accent;
+            return Tokens.color.accent;
         if (low)
-            return Theme.mute;
-        return Theme.signal;
+            return Tokens.color.mute;
+        return Tokens.color.signal;
     }
 
     // The shell's own summary of what was held while you played.
@@ -59,80 +59,64 @@ ChamferPanel {
     // The first action the notification offers, if any.
     readonly property var action: (notification?.actions ?? []).find(a => a.identifier !== "") ?? (notification?.actions ?? [])[0] ?? null
 
-    readonly property real padding: 14
+    // DESIGN.md notification card: 12 x 14 px padding.
+    readonly property real padding: Tokens.measure.dropdownPadding
+    readonly property real vpadding: Tokens.space.s12
+    // The category on the header line: CAPTURED for the shell's own
+    // screenshots and recordings, else the level's word.
+    readonly property string category: (shot !== "" || video !== "") ? "CAPTURED" : tabText
 
     signal dismissed
 
-    chamfer: Appearance.chamfer.panel
-    fillColor: Theme.panel2
-    borderColor: critical ? Theme.accent : Theme.hair
+    chamfer: 0
+    chamferTopLeft: 0
+    chamferTopRight: Tokens.chamfer.cardTopRight
+    chamferBottomRight: 0
+    chamferBottomLeft: Tokens.chamfer.cardBottomLeft
+    fillColor: Tokens.color.panel2
+    borderColor: critical ? Tokens.color.accent : Tokens.color.hair
 
-    implicitHeight: strip.height + body.implicitHeight + padding + 2
+    implicitHeight: strip.height + body.implicitHeight + 2 * vpadding + Tokens.space.s8
 
-    // --- Header strip ------------------------------------------------------
+    // --- Header line: category on the left, source on the right, 10 px -----
     Item {
         id: strip
 
+        readonly property var role: Tokens.type.secondaryBody
         anchors.top: parent.top
+        anchors.topMargin: root.vpadding
         anchors.left: parent.left
         anchors.right: parent.right
-        height: 26
+        anchors.leftMargin: root.padding
+        anchors.rightMargin: root.padding
+        height: categoryText.implicitHeight
 
-        SlantBlock {
-            id: tab
-
-            width: tabLabel.implicitWidth + 26
-            height: parent.height
-            fillColor: root.tone
-
-            NrLabel {
-                id: tabLabel
-
-                anchors.left: parent.left
-                anchors.leftMargin: 10
-                anchors.verticalCenter: parent.verticalCenter
-                color: Theme.ground
-                text: root.tabText
-            }
+        Text {
+            id: categoryText
+            text: root.category
+            // Critical in accent, low urgency quieter in dim, the rest signal.
+            color: root.critical ? Tokens.color.accent : (root.low ? Tokens.color.dim : Tokens.color.signal)
+            font.family: strip.role.family
+            font.pixelSize: strip.role.size
+            font.letterSpacing: strip.role.size * Tokens.type.hint.tracking
+            renderType: Text.NativeRendering
         }
-
-        // The app name is a label like any other: uppercase and tracked. Only
-        // the sender's own name in the body and the message text are rendered
-        // exactly as received.
-        NrLabel {
-            id: from
-
-            anchors.left: tab.right
-            anchors.leftMargin: 8
-            anchors.right: kana.left
-            anchors.rightMargin: 8
-            anchors.verticalCenter: parent.verticalCenter
-            elide: Text.ElideRight
-            text: root.summaryCard ? "WRAYTH" : `FROM${Appearance.separator}${root.notification?.appName || "UNKNOWN"}`
-        }
-
-        KanaTag {
-            id: kana
-            anchors.right: age.left
-            anchors.rightMargin: 8
-            anchors.verticalCenter: parent.verticalCenter
-            color: root.tone
-            text: root.katakana
-            title: from
-        }
-
-        NrLabel {
-            id: age
-
+        Text {
             anchors.right: parent.right
-            anchors.rightMargin: root.padding
-            anchors.verticalCenter: parent.verticalCenter
-            color: Theme.mute
-            text: "NOW"
+            anchors.left: categoryText.right
+            anchors.leftMargin: Tokens.space.s12
+            horizontalAlignment: Text.AlignRight
+            elide: Text.ElideRight
+            text: root.summaryCard ? "WRAYTH" : (root.notification?.appName || "UNKNOWN").toUpperCase()
+            textFormat: Text.PlainText
+            color: Tokens.color.dim
+            font.family: strip.role.family
+            font.pixelSize: strip.role.size
+            font.letterSpacing: strip.role.size * Tokens.type.hint.tracking
+            renderType: Text.NativeRendering
         }
     }
 
-    // --- Body --------------------------------------------------------------
     Column {
         id: body
 
@@ -141,30 +125,31 @@ ChamferPanel {
         anchors.right: parent.right
         anchors.leftMargin: root.padding
         anchors.rightMargin: root.padding
-        anchors.topMargin: root.padding * 0.7
-        spacing: 6
+        anchors.topMargin: Tokens.space.s8
+        spacing: Tokens.space.s6
 
         Text {
             renderType: Text.NativeRendering
             width: parent.width
 
+            // Title: 12 px, bright.
             text: root.notification?.summary ?? ""
             textFormat: Text.PlainText
-            color: Theme.bright
+            color: Tokens.color.bright
             elide: Text.ElideRight
-            font.family: Appearance.font.data
-            font.pixelSize: root.summaryCard ? 12 : Appearance.size.body
-            font.weight: Appearance.font.weightSemi
+            font.family: Tokens.font.data
+            font.pixelSize: Tokens.type.rowName.size
         }
 
         Text {
             width: parent.width
             visible: text !== ""
 
+            // Body: 10 px, dim. Plain text only.
             text: root.notification?.body ?? ""
-            color: root.summaryCard ? Theme.dim : Theme.text
-            font.family: Appearance.font.data
-            font.pixelSize: root.summaryCard ? 10 : 12
+            color: Tokens.color.dim
+            font.family: Tokens.font.data
+            font.pixelSize: Tokens.type.secondaryBody.size
             wrapMode: Text.Wrap
             maximumLineCount: 4
             elide: Text.ElideRight
@@ -189,49 +174,53 @@ ChamferPanel {
 
         // The meta line and the buttons share one row rather than stacking:
         // the card is wide and they were each using a line of their own.
+        // A critical card never times out: it says so, in accent (a state
+        // with a meaning, kept through the style pass).
+        Text {
+            visible: root.critical
+            text: "PERSISTENT · ACK REQUIRED"
+            color: Tokens.color.accent
+            font.family: Tokens.type.hint.family
+            font.pixelSize: Tokens.type.hint.size
+            font.letterSpacing: Tokens.type.hint.size * Tokens.type.hint.tracking
+            renderType: Text.NativeRendering
+        }
+
+        // Actions: equal-width secondary buttons, 24 px tall.
         Item {
             width: parent.width
-            height: Math.max(buttons.implicitHeight, meta.implicitHeight)
-
-            NrLabel {
-                id: meta
-
-                anchors.left: parent.left
-                anchors.right: buttons.left
-                anchors.rightMargin: 10
-                anchors.verticalCenter: parent.verticalCenter
-                elide: Text.ElideRight
-                color: root.critical ? Theme.accent : Theme.mute
-                // Counts down with the bar rather than beside it. The figure
-                // is derived from the bar's *animated* width, not from a timer
-                // of its own, so the two can never drift apart and there is
-                // only one thing keeping time -- the same rule the spectrum's
-                // bars follow.
-                text: root.shot !== "" ? `${root.remainingSeconds}S` : (root.critical ? `PERSISTENT${Appearance.separator}ACK REQUIRED` : `AUTO CLEAR${Appearance.separator}${root.remainingSeconds}S`)
-            }
+            height: 24
 
             Row {
                 id: buttons
 
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                spacing: 8
+                // The width each visible button gets.
+                readonly property int shown: children.filter(c => c.visible).length
+                readonly property real each: (width - Math.max(0, shown - 1) * spacing) / Math.max(1, shown)
+
+                anchors.fill: parent
+                spacing: Tokens.space.s8
 
                 ActionButton {
+                    width: buttons.each
+                    height: 24
                     visible: root.shot !== ""
                     text: "OPEN"
-                    accented: true
                     onClicked: {
                         Screenshot.open(root.shot);
                         root.dismissed();
                     }
                 }
                 ActionButton {
+                    width: buttons.each
+                    height: 24
                     visible: root.shot !== ""
                     text: "COPY"
                     onClicked: Screenshot.copy(root.shot)
                 }
                 ActionButton {
+                    width: buttons.each
+                    height: 24
                     visible: root.shot !== ""
                     text: root.deleteArmed ? "CONFIRM" : "DELETE"
                     alsoText: ["CONFIRM", "DELETE"]
@@ -248,9 +237,10 @@ ChamferPanel {
                 }
 
                 ActionButton {
+                    width: buttons.each
+                    height: 24
                     visible: root.action !== null && root.shot === "" && root.video === ""
                     text: "VIEW"
-                    accented: true
                     // The app opens or raises its own window in answer, so
                     // the deck is closed first or a new one lands in it.
                     onClicked: {
@@ -261,15 +251,18 @@ ChamferPanel {
                 }
 
                 ActionButton {
+                    width: buttons.each
+                    height: 24
                     visible: root.video !== ""
                     text: "OPEN"
-                    accented: true
                     onClicked: {
                         Recorder.open(root.video);
                         root.dismissed();
                     }
                 }
                 ActionButton {
+                    width: buttons.each
+                    height: 24
                     visible: root.video !== ""
                     text: root.deleteArmed ? "CONFIRM" : "DELETE"
                     alsoText: ["CONFIRM", "DELETE"]
@@ -286,9 +279,10 @@ ChamferPanel {
                 }
 
                 ActionButton {
+                    width: buttons.each
+                    height: 24
                     visible: root.shot === "" && root.video === ""
                     text: "DISMISS"
-                    textColor: Theme.dim
                     onClicked: root.dismissed()
                 }
             }

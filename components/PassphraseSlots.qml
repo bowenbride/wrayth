@@ -22,20 +22,22 @@ Row {
 
             width: root.slotWidth
             height: root.slotHeight
-            color: lit ? Theme.alpha(Theme.accent, 0.18) : "transparent"
-            border.width: Appearance.metrics.hairline
-            border.color: lit ? Theme.accent : Theme.hair
+            color: lit ? Theme.alpha(Tokens.color.accent, 0.18) : "transparent"
+            border.width: Tokens.measure.hairline
+            border.color: lit ? Tokens.color.accent : Tokens.color.hair
 
             Behavior on color {
                 ColorAnimation {
-                    duration: Appearance.duration.state
-                    easing.type: Easing.OutCubic
+                    duration: Tokens.motion.feedback
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: Tokens.motion.easeIn
                 }
             }
             Behavior on border.color {
                 ColorAnimation {
-                    duration: Appearance.duration.state
-                    easing.type: Easing.OutCubic
+                    duration: Tokens.motion.feedback
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: Tokens.motion.easeIn
                 }
             }
         }

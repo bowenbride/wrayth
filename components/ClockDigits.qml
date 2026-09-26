@@ -22,13 +22,13 @@ Item {
 
     property string text: ""
     property real pixelSize: 168
-    property color color: Theme.bright
+    property color color: Tokens.color.bright
     property int weight: Appearance.font.weightBold
     // The even clear space between one digit's ink and the next's.
     property real gap: 12
 
     readonly property font glyphFont: Qt.font({
-        family: Appearance.font.display,
+        family: Tokens.font.display,
         pixelSize: root.pixelSize,
         weight: root.weight
     })

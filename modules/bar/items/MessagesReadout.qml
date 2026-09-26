@@ -20,12 +20,13 @@ Item {
         id: glyph
 
         anchors.centerIn: parent
-        color: root.unread ? Theme.bright : Theme.dim
+        color: root.unread ? Tokens.color.bright : Tokens.color.dim
 
         Behavior on color {
             ColorAnimation {
-                duration: Appearance.duration.state
-                easing.type: Easing.OutCubic
+                duration: Tokens.motion.feedback
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Tokens.motion.easeIn
             }
         }
     }
@@ -43,13 +44,13 @@ Item {
         visible: root.unread
         width: 9
         height: 9
-        color: Theme.barBg
+        color: Tokens.color.barBg
 
         Rectangle {
             anchors.centerIn: parent
             width: 6
             height: 6
-            color: Theme.accent
+            color: Tokens.color.accent
         }
     }
 

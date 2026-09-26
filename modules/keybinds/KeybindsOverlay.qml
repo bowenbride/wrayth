@@ -181,9 +181,11 @@ Variants {
         readonly property real gap: 24
         readonly property real columnWidth: Math.floor((span - gap * (groups.length - 1)) / groups.length)
 
+        // The full-screen header row: BackControl, title, search.
         BackButton {
+            id: back
             x: overlay.originX
-            y: 72
+            y: 118 + Math.round((40 - height) / 2)
             onActivated: ShellState.keybindsOpen = false
         }
 
@@ -198,6 +200,7 @@ Variants {
 
             Row {
                 anchors.left: parent.left
+                anchors.leftMargin: back.width + Tokens.space.s16
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: 12
 
@@ -206,7 +209,9 @@ Variants {
 
                     anchors.verticalCenter: parent.verticalCenter
                     text: "KEYBINDS"
-                    pixelSize: 22
+                    // The full-screen view title role (DESIGN.md): 22 px, 0.12em.
+                    pixelSize: Tokens.type.viewTitle.size
+                    tracking: Tokens.type.viewTitle.tracking
                 }
                 KanaTag {
                     anchors.verticalCenter: parent.verticalCenter
@@ -240,7 +245,7 @@ Variants {
 
             component Label: Text {
                 anchors.verticalCenter: parent.verticalCenter
-                font.family: Appearance.font.data
+                font.family: Tokens.font.data
                 font.pixelSize: 10
                 font.letterSpacing: 10 * 0.12
                 renderType: Text.NativeRendering
@@ -253,17 +258,17 @@ Variants {
 
                 Label {
                     visible: overlay.capturing === "" && !overlay.pending
-                    color: Keybinds.busy ? Theme.accent : Theme.dim
+                    color: Keybinds.busy ? Tokens.color.accent : Tokens.color.dim
                     text: Keybinds.busy ? "APPLYING" : "CLICK A KEY TO CHANGE IT · CHANGES APPLY AT ONCE"
                 }
                 Label {
                     visible: overlay.capturing !== ""
-                    color: Theme.accent
+                    color: Tokens.color.accent
                     text: "PRESS THE NEW KEYS · ESCAPE CANCELS · DELETE REMOVES THE KEY"
                 }
                 Label {
                     visible: !!overlay.pending
-                    color: Theme.alert
+                    color: Tokens.color.alert
                     text: {
                         const p = overlay.pending;
                         if (!p)
@@ -334,10 +339,10 @@ Variants {
                         anchors.left: parent.left
                         anchors.top: parent.top
                         text: group.modelData
-                        color: Theme.signal
-                        font.family: Appearance.font.data
+                        color: Tokens.color.signal
+                        font.family: Tokens.font.data
                         font.pixelSize: 10
-                        font.weight: Appearance.font.weightSemi
+                        font.weight: Tokens.font.dataWeight
                         font.letterSpacing: 10 * 0.16
                         renderType: Text.NativeRendering
                     }
@@ -345,8 +350,8 @@ Variants {
                         anchors.right: parent.right
                         anchors.verticalCenter: groupTitle.verticalCenter
                         text: `${group.rows.length}`
-                        color: Theme.dim
-                        font.family: Appearance.font.data
+                        color: Tokens.color.dim
+                        font.family: Tokens.font.data
                         font.pixelSize: 10
                         renderType: Text.NativeRendering
                     }
@@ -356,8 +361,8 @@ Variants {
                         anchors.top: groupTitle.bottom
                         anchors.topMargin: 6
                         width: parent.width
-                        height: Appearance.metrics.hairline
-                        color: Theme.hair
+                        height: Tokens.measure.hairline
+                        color: Tokens.color.hair
                     }
 
                     // **Built eight rows a frame**, so a long list is never one stall.
@@ -421,12 +426,13 @@ Variants {
 
                                         Rectangle {
                                             anchors.fill: parent
-                                            color: row.capturing || row.asking ? Theme.alpha(Theme.accent, 0.10)
+                                            color: row.capturing || row.asking ? Theme.alpha(Tokens.color.accent, 0.10)
                                                 : (hover.hovered && row.modelData.ours ? Theme.cell : "transparent")
                                             Behavior on color {
                                                 ColorAnimation {
-                                                    duration: Appearance.duration.state
-                                                    easing.type: Easing.OutCubic
+                                                    duration: Tokens.motion.feedback
+                                                    easing.type: Easing.BezierSpline
+                                                    easing.bezierCurve: Tokens.motion.easeIn
                                                 }
                                             }
                                         }
@@ -440,8 +446,8 @@ Variants {
                                             elide: Text.ElideRight
                                             text: row.modelData.label
                                             textFormat: Text.PlainText
-                                            color: row.modelData.ours ? Theme.text : Theme.dim
-                                            font.family: Appearance.font.data
+                                            color: row.modelData.ours ? Tokens.color.text : Tokens.color.dim
+                                            font.family: Tokens.font.data
                                             font.pixelSize: 11
                                             renderType: Text.NativeRendering
                                         }
@@ -458,8 +464,8 @@ Variants {
                                                 visible: row.capturing
                                                 anchors.verticalCenter: parent.verticalCenter
                                                 text: "PRESS KEYS"
-                                                color: Theme.accent
-                                                font.family: Appearance.font.data
+                                                color: Tokens.color.accent
+                                                font.family: Tokens.font.data
                                                 font.pixelSize: 9
                                                 font.letterSpacing: 9 * 0.12
                                                 renderType: Text.NativeRendering
@@ -468,8 +474,8 @@ Variants {
                                                 visible: !row.capturing && !row.asking && row.modelData.changed
                                                 anchors.verticalCenter: parent.verticalCenter
                                                 text: "RESET"
-                                                color: Theme.accent
-                                                font.family: Appearance.font.data
+                                                color: Tokens.color.accent
+                                                font.family: Tokens.font.data
                                                 font.pixelSize: 9
                                                 font.letterSpacing: 9 * 0.12
                                                 font.underline: true
@@ -486,8 +492,8 @@ Variants {
                                                 visible: !row.capturing && row.modelData.keys === ""
                                                 anchors.verticalCenter: parent.verticalCenter
                                                 text: "NO KEY"
-                                                color: Theme.mute
-                                                font.family: Appearance.font.data
+                                                color: Tokens.color.mute
+                                                font.family: Tokens.font.data
                                                 font.pixelSize: 9
                                                 renderType: Text.NativeRendering
                                             }
@@ -498,14 +504,14 @@ Variants {
 
                                                 Rectangle {
                                                     required property string modelData
-                                                    readonly property color tone: row.asking ? Theme.alert : row.modelData.changed ? Theme.accent : Theme.bright
+                                                    readonly property color tone: row.asking ? Tokens.color.alert : row.modelData.changed ? Tokens.color.accent : Tokens.color.bright
 
                                                     anchors.verticalCenter: parent.verticalCenter
                                                     width: Math.max(18, capText.implicitWidth + 10)
                                                     height: 18
-                                                    color: Theme.alpha(Theme.ground, 0.7)
+                                                    color: Theme.alpha(Tokens.color.ground, 0.7)
                                                     border.width: 1
-                                                    border.color: row.asking ? Theme.alert : row.modelData.changed ? Theme.accent : Theme.hair
+                                                    border.color: row.asking ? Tokens.color.alert : row.modelData.changed ? Tokens.color.accent : Tokens.color.hair
 
                                                     Text {
                                                         id: capText
@@ -513,9 +519,9 @@ Variants {
                                                         anchors.centerIn: parent
                                                         text: parent.modelData
                                                         color: parent.tone
-                                                        font.family: Appearance.font.data
+                                                        font.family: Tokens.font.data
                                                         font.pixelSize: 9
-                                                        font.weight: Appearance.font.weightSemi
+                                                        font.weight: Tokens.font.dataWeight
                                                         renderType: Text.NativeRendering
                                                     }
                                                 }
@@ -545,8 +551,8 @@ Variants {
             anchors.rightMargin: 14
             anchors.verticalCenter: openFile.verticalCenter
             text: "~/.config/wrayth/keybinds.lua · UPDATES NEVER CHANGE IT"
-            color: Theme.dim
-            font.family: Appearance.font.data
+            color: Tokens.color.dim
+            font.family: Tokens.font.data
             font.pixelSize: 9
             font.letterSpacing: 9 * 0.1
             renderType: Text.NativeRendering

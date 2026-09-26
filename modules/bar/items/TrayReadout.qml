@@ -19,14 +19,14 @@ Row {
 
     Item {
         anchors.verticalCenter: parent.verticalCenter
-        implicitWidth: 16
-        implicitHeight: 16
+        implicitWidth: Tokens.icon.bar
+        implicitHeight: Tokens.icon.bar
 
         Icon {
             anchors.fill: parent
             name: "inbox"
-            size: 16
-            color: Theme.dim
+            size: Tokens.icon.bar
+            color: Tokens.color.dim
         }
         Rectangle {
             visible: root.attention
@@ -34,9 +34,9 @@ Row {
             anchors.top: parent.top
             anchors.rightMargin: -2
             anchors.topMargin: -2
-            width: 5
-            height: 5
-            color: Theme.accent
+            width: Tokens.measure.statusDot
+            height: Tokens.measure.statusDot
+            color: Tokens.color.accent
         }
     }
 

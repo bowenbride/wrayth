@@ -52,6 +52,8 @@ WRAYTH_REPO="https://github.com/bowenbride/wrayth.git"
 CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}"
 BIN="$HOME/.local/bin"
 FONTDIR="$HOME/.local/share/fonts/chakra-petch"
+ICONFONTDIR="$HOME/.local/share/fonts/material-symbols-sharp"
+ICONFONT="MaterialSymbolsSharp[FILL,GRAD,opsz,wght].ttf"
 QS_TARGET="$CONFIG/quickshell/wrayth"
 HYPR_DIR="$CONFIG/hypr"
 HYPR_LUA="$HYPR_DIR/hyprland.lua"
@@ -385,6 +387,12 @@ uninstall() {
         command -v fc-cache >/dev/null 2>&1 && fc-cache -f "$HOME/.local/share/fonts" >/dev/null 2>&1
         did rm "Chakra Petch font"
     fi
+    if [ -d "$ICONFONTDIR" ]; then
+        rm -f "$ICONFONTDIR/$ICONFONT" "$ICONFONTDIR/LICENSE"
+        rmdir "$ICONFONTDIR" 2>/dev/null || true
+        command -v fc-cache >/dev/null 2>&1 && fc-cache -f "$HOME/.local/share/fonts" >/dev/null 2>&1
+        did rm "Material Symbols Sharp icon font"
+    fi
 
     step "Your backups"
     local restorable=()
@@ -655,6 +663,16 @@ else
     cp -f "$SRC/assets/fonts/chakra-petch/"ChakraPetch-*.ttf "$SRC/assets/fonts/chakra-petch/OFL.txt" "$FONTDIR/"
     fc-cache -f "$HOME/.local/share/fonts" >/dev/null 2>&1
     did copy "Chakra Petch font"
+fi
+# The icon font (Material Symbols Sharp, Apache 2.0, with its licence): every
+# icon in the shell is a glyph from it.
+mkdir -p "$ICONFONTDIR"
+if cmp -s "$SRC/assets/fonts/material-symbols-sharp/$ICONFONT" "$ICONFONTDIR/$ICONFONT" 2>/dev/null; then
+    ok "Material Symbols Sharp icon font"
+else
+    cp -f "$SRC/assets/fonts/material-symbols-sharp/$ICONFONT" "$SRC/assets/fonts/material-symbols-sharp/LICENSE" "$ICONFONTDIR/"
+    fc-cache -f "$HOME/.local/share/fonts" >/dev/null 2>&1
+    did copy "Material Symbols Sharp icon font"
 fi
 # The preset wallpapers, into the library folder the shell adopts on its first
 # start. Never over a file already there -- and an update adds only presets

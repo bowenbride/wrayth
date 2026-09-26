@@ -19,7 +19,7 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        color: Theme.alpha(Theme.deep, 0.6)
+        color: Theme.alpha(Tokens.color.deep, 0.6)
     }
 
     Rectangle {
@@ -28,12 +28,13 @@ Item {
         width: parent.width
         height: Math.max(24, root.view.height * root.fraction)
         y: root.view.height > 0 ? (root.view.height - height) * Math.max(0, Math.min(1, root.view.contentY / Math.max(1, root.span - root.view.height))) : 0
-        color: hover.hovered || drag.drag.active ? Theme.accent : Theme.dim
+        color: hover.hovered || drag.drag.active ? Tokens.color.accent : Tokens.color.dim
 
         Behavior on color {
             ColorAnimation {
-                duration: Appearance.duration.state
-                easing.type: Easing.OutCubic
+                duration: Tokens.motion.feedback
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Tokens.motion.easeIn
             }
         }
     }

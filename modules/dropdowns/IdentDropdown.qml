@@ -41,11 +41,11 @@ ChamferPanel {
     // re-evaluating when `complete` changed -- the fill and the label followed
     // it, the border did not -- and an explicit property makes the dependency
     // unambiguous.
-    readonly property color applyBorder: complete ? Theme.accent : Theme.alpha(Theme.hair, 0.55)
-    readonly property color applyFill: complete ? Theme.alpha(Theme.accent, 0.12) : "transparent"
+    readonly property color applyBorder: complete ? Tokens.color.accent : Theme.alpha(Tokens.color.hair, 0.55)
+    readonly property color applyFill: complete ? Tokens.color.accentTint : "transparent"
 
-    chamfer: Appearance.chamfer.panel
-    fillColor: Theme.panel2
+    chamfer: Tokens.chamfer.dropdown
+    fillColor: Tokens.color.panel2
 
     implicitHeight: body.y + body.implicitHeight + padding
 
@@ -185,16 +185,16 @@ ChamferPanel {
                     chamfer: 0
                     chamferTopRight: index === 1 ? editor.innerChamfer : 0
                     chamferBottomLeft: 0
-                    fillColor: slot.active ? Theme.alpha(Theme.accent, 0.12) : "transparent"
-                    borderColor: slot.active ? Theme.accent : Theme.hair
+                    fillColor: slot.active ? Tokens.color.accentTint : "transparent"
+                    borderColor: slot.active ? Tokens.color.accent : Tokens.color.hair
 
                     Text {
                         anchors.centerIn: parent
                         text: slot.glyph
-                        color: slot.active ? Theme.accent : (slot.filled ? Theme.text : Theme.mute)
-                        font.family: Appearance.font.display
+                        color: slot.active ? Tokens.color.accent : (slot.filled ? Tokens.color.text : Tokens.color.mute)
+                        font.family: Tokens.font.display
                         font.pixelSize: 24
-                        font.weight: Appearance.font.weightBold
+                        font.weight: Tokens.font.displayWeight
                         renderType: Text.NativeRendering
                     }
 
@@ -221,7 +221,7 @@ ChamferPanel {
             NrLabel {
                 anchors.centerIn: parent
                 centred: true
-                color: editor.complete ? Theme.accent : Theme.mute
+                color: editor.complete ? Tokens.color.accent : Tokens.color.mute
                 text: "APPLY"
             }
 

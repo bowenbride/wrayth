@@ -55,7 +55,7 @@ Item {
         // not applied says so on its own as well as through the button.
         // `editing`, not `activeFocus`: the wrapper is an Item whose own
         // activeFocus is always false, so the focused frame never showed.
-        frameColor: field.editing ? Theme.accent : root.dirty ? Theme.alpha(Theme.accent, 0.7) : Theme.hair
+        frameColor: field.editing ? Tokens.color.accent : root.dirty ? Theme.alpha(Tokens.color.accent, 0.7) : Tokens.color.hair
 
         onAccepted: root.accepted()
         // **Escape keeps the text.** It only gives the keyboard back.

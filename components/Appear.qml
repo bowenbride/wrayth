@@ -43,13 +43,14 @@ Item {
     Behavior on opacity {
         NumberAnimation {
             // REDUCED motion (SYSTEM page): a quick fade and nothing moving.
-            duration: SystemSettings.reducedMotion ? Appearance.duration.state : (root.shown ? Appearance.duration.enter : Appearance.duration.exit)
-            easing.type: root.shown ? Easing.OutCubic : Easing.InCubic
+            duration: SystemSettings.reducedMotion ? Tokens.motion.feedback : (root.shown ? Tokens.motion.panels : Tokens.motion.panels)
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: root.shown ? Tokens.motion.easeIn : Tokens.motion.easeOut
         }
     }
 
     // --- The rise ------------------------------------------------------------
-    readonly property real startRise: SystemSettings.reducedMotion ? 0 : Appearance.enterRise
+    readonly property real startRise: SystemSettings.reducedMotion ? 0 : Tokens.motion.rise
     property real rise: startRise
     // Nothing animates until the first frame has been laid out, or an item
     // that is shown from the start slides up on every config reload.
@@ -62,8 +63,9 @@ Item {
         enabled: root.ready && root.visible
 
         NumberAnimation {
-            duration: Appearance.duration.enter
-            easing.type: Easing.OutCubic
+            duration: Tokens.motion.panels
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: Tokens.motion.easeIn
         }
     }
 

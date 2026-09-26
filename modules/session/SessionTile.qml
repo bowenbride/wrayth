@@ -33,12 +33,12 @@ ChamferPanel {
     chamfer: Appearance.chamfer.panel
     fillColor: {
         if (armed)
-            return Theme.alpha(Theme.accent, 0.2);
+            return Theme.alpha(Tokens.color.accent, 0.2);
         if (selected)
-            return Theme.alpha(Theme.accent, 0.08);
-        return Theme.panel;
+            return Tokens.color.accentFaint;
+        return Tokens.color.panel;
     }
-    borderColor: selected || armed ? Theme.accent : Theme.hair
+    borderColor: selected || armed ? Tokens.color.accent : Tokens.color.hair
 
     // The dim of every other tile while one is armed. A whole-tile opacity,
     // animated on the shared scale, so the layout never moves.
@@ -46,15 +46,17 @@ ChamferPanel {
 
     Behavior on opacity {
         NumberAnimation {
-            duration: Appearance.duration.state
-            easing.type: Easing.OutCubic
+            duration: Tokens.motion.feedback
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: Tokens.motion.easeIn
         }
     }
 
     Behavior on fillColor {
         ColorAnimation {
-            duration: Appearance.duration.state
-            easing.type: Easing.OutCubic
+            duration: Tokens.motion.feedback
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: Tokens.motion.easeIn
         }
     }
 
@@ -66,15 +68,15 @@ ChamferPanel {
         y: 12
         width: 20
         height: 20
-        color: root.selected || root.armed ? Theme.accent : "transparent"
-        border.width: Appearance.metrics.hairline
-        border.color: root.selected || root.armed ? Theme.accent : Theme.hair
+        color: root.selected || root.armed ? Tokens.color.accent : "transparent"
+        border.width: Tokens.measure.hairline
+        border.color: root.selected || root.armed ? Tokens.color.accent : Tokens.color.hair
 
         Text {
             anchors.centerIn: parent
             text: root.tile.key
-            color: root.selected || root.armed ? Theme.ground : Theme.dim
-            font.family: Appearance.font.data
+            color: root.selected || root.armed ? Tokens.color.ground : Tokens.color.dim
+            font.family: Tokens.font.data
             font.pixelSize: 11
             font.weight: Appearance.font.weightBold
             renderType: Text.NativeRendering
@@ -90,15 +92,16 @@ ChamferPanel {
             anchors.horizontalCenter: parent.horizontalCenter
 
             text: root.working ? root.verb : (root.armed ? "CONFIRM" : root.tile.label)
-            color: root.selected || root.armed ? Theme.bright : Theme.text
-            font.family: Appearance.font.display
+            color: root.selected || root.armed ? Tokens.color.bright : Tokens.color.text
+            font.family: Tokens.font.display
             font.pixelSize: 17
             font.weight: Appearance.font.weightBold
 
             Behavior on color {
                 ColorAnimation {
-                    duration: Appearance.duration.state
-                    easing.type: Easing.OutCubic
+                    duration: Tokens.motion.feedback
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: Tokens.motion.easeIn
                 }
             }
         }
@@ -110,18 +113,19 @@ ChamferPanel {
             anchors.horizontalCenter: parent.horizontalCenter
 
             text: root.armed ? `${root.tile.label}, ENTER` : root.tile.katakana
-            color: root.armed ? Theme.accent : Theme.signal
-            font.family: root.armed ? Appearance.font.data : Appearance.font.accent
+            color: root.armed ? Tokens.color.accent : Tokens.color.signal
+            font.family: root.armed ? Tokens.font.data : Appearance.font.accent
             font.pixelSize: root.armed ? Appearance.size.label : Appearance.size.katakana
-            font.weight: root.armed ? Appearance.font.weightSemi : Appearance.font.weightMedium
+            font.weight: root.armed ? Tokens.font.dataWeight : Appearance.font.weightMedium
             font.letterSpacing: root.armed ? Appearance.tracking(Appearance.size.label) : 0
             font.capitalization: root.armed ? Font.AllUppercase : Font.MixedCase
             renderType: Text.NativeRendering
 
             Behavior on color {
                 ColorAnimation {
-                    duration: Appearance.duration.state
-                    easing.type: Easing.OutCubic
+                    duration: Tokens.motion.feedback
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: Tokens.motion.easeIn
                 }
             }
         }
@@ -136,7 +140,7 @@ ChamferPanel {
         anchors.left: parent.left
         anchors.leftMargin: 1
         height: 2
-        color: Theme.accent
+        color: Tokens.color.accent
         visible: root.armed
 
         width: root.armed ? root.width - 2 : 0

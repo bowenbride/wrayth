@@ -27,6 +27,12 @@ Singleton {
     // Bluetooth device's model code (XM4 from WH-1000XM4). Never more than
     // five characters, so the readout's slot is fixed.
     readonly property string code: codeOf(sink, activePort)
+    // What the bar's readout shows: the real code and mic state, or simulated
+    // ones for tests (`audio simulate`), so a test never changes a device.
+    property string simCode: ""
+    property int simMic: -1
+    readonly property string barCode: simCode !== "" ? simCode : code
+    readonly property bool barMicMuted: simMic >= 0 ? simMic === 1 : micMuted
     function codeOf(node: var, port: string): string {
         if (!node)
             return "NONE";

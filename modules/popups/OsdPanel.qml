@@ -1,28 +1,29 @@
 import QtQuick
 import qs.components
+import qs.components.ui as UI
 import qs.config
 import qs.services
 import qs.utils
 
-// The volume / brightness readout: a title row and a 20-segment bar --
-// one segment per 5% step, so a single key press fills or empties exactly one.
+// The on-screen popup (DESIGN.md): volume, brightness, output switching and
+// track changes. 12 px chamfers, `panel2`. One line -- a Label and the name
+// on the left, the Value on the right -- and a SegmentMeter (12 px) below.
+// A track change swaps the meter for the track, title · artist.
 ChamferPanel {
     id: root
 
     required property bool volume
-    // The track, briefly, on a media key: the panel keeps its size and swaps
-    // its meter for the title.
     property bool media: false
     readonly property var player: Media.player
 
     readonly property bool muted: volume && !media && Audio.muted
     readonly property real level: volume ? Audio.volume : Brightness.value
 
-    readonly property real padding: 14
+    readonly property real padding: Tokens.measure.dropdownPadding
 
-    chamfer: Appearance.chamfer.panel
-    fillColor: Theme.panel2
-    borderColor: root.muted ? Theme.accent : Theme.hair
+    chamfer: Tokens.chamfer.dropdown
+    fillColor: Tokens.color.panel2
+    borderColor: Tokens.color.hair
 
     Item {
         id: line
@@ -31,85 +32,72 @@ ChamferPanel {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.margins: root.padding
-        height: 18
+        height: value.implicitHeight
 
         Row {
             anchors.left: parent.left
+            anchors.right: value.left
+            anchors.rightMargin: Tokens.space.s8
             anchors.verticalCenter: parent.verticalCenter
-            spacing: 8
+            spacing: Tokens.space.s8
+            clip: true
 
+            UI.Label {
+                anchors.verticalCenter: parent.verticalCenter
+                text: root.media ? (root.player?.isPlaying ? "PLAYING" : "PAUSED") : (root.volume ? "VOLUME" : "BRIGHTNESS")
+            }
             Text {
-                id: osdTitle
-
+                readonly property var role: Tokens.type.rowName
                 anchors.verticalCenter: parent.verticalCenter
-                text: root.media ? (root.player?.isPlaying ? "PLAY" : "PAUSED") : (root.volume ? "VOL" : "BRI")
-                color: Theme.bright
-                font.family: Appearance.font.display
-                font.pixelSize: 14
-                font.weight: Appearance.font.weightBold
-                renderType: Text.NativeRendering
-            }
-
-            NrLabel {
-                anchors.verticalCenter: parent.verticalCenter
+                width: Math.min(implicitWidth, parent.width - x)
+                elide: Text.ElideRight
                 text: root.media ? Media.appOf(root.player).toUpperCase() : (root.volume ? Audio.deviceName : Brightness.outputName)
-            }
-
-            KanaTag {
-                anchors.verticalCenter: parent.verticalCenter
-                text: root.media ? "再生" : (root.volume ? "音量" : "輝度")
-                title: osdTitle
+                textFormat: Text.PlainText
+                color: Tokens.color.text
+                font.family: role.family
+                font.pixelSize: role.size
+                renderType: Text.NativeRendering
             }
         }
 
-        Text {
-            renderType: Text.NativeRendering
+        UI.Value {
+            id: value
+
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-
             opacity: root.media ? 0 : 1
+            // Muted is a warning state: alert, never the accent.
             text: root.muted ? "MUTED" : Fmt.percent(root.level * 100)
-            color: root.muted ? Theme.accent : Theme.bright
-            font.family: Appearance.font.data
-            font.pixelSize: Appearance.size.body
-            font.weight: Appearance.font.weightSemi
+            color: root.muted ? Tokens.color.alert : Tokens.color.text
         }
     }
 
-    SegmentMeter {
-        id: bar
-
+    UI.SegmentMeter {
         anchors.top: line.bottom
-        anchors.topMargin: 8
+        anchors.topMargin: Tokens.space.s10
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.leftMargin: root.padding
         anchors.rightMargin: root.padding
-
-        // 20, not 25: both keys step 5%, and 100 / 5 is 20. At 25 a press moved
-        // 1.25 segments and the bar stuttered against the number beside it.
-        // The popup keeps its width; the segments widen to fill it.
-        segments: 20
-        spacing: 3
-        segmentWidth: (width - (segments - 1) * spacing) / segments
-        segmentHeight: 10
+        large: true
         value: root.level
-        litColor: root.muted ? Theme.mute : Theme.accent
-        animate: false
+        muted: root.muted
         opacity: root.media ? 0 : 1
 
         Behavior on opacity {
             NumberAnimation {
-                duration: Appearance.duration.state
-                easing.type: Easing.OutCubic
+                duration: Tokens.motion.feedback
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Tokens.motion.easeIn
             }
         }
     }
 
-    // In media mode: the track and who it is by, where the meter was.
+    // A track change: the track where the meter was.
     Text {
+        readonly property var role: Tokens.type.body
         anchors.top: line.bottom
-        anchors.topMargin: 6
+        anchors.topMargin: Tokens.space.s8
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.leftMargin: root.padding
@@ -117,20 +105,18 @@ ChamferPanel {
         opacity: root.media ? 1 : 0
         elide: Text.ElideRight
         textFormat: Text.PlainText
-        text: [root.player?.trackTitle, root.player?.trackArtist].filter(t => t).join(" / ") || "NOTHING PLAYING"
-        color: Theme.bright
-        font.family: Appearance.font.data
-        font.pixelSize: Appearance.size.body
-        font.weight: Appearance.font.weightSemi
+        text: [root.player?.trackTitle, root.player?.trackArtist].filter(t => t).join(" · ") || "NOTHING PLAYING"
+        color: Tokens.color.bright
+        font.family: role.family
+        font.pixelSize: role.size
         renderType: Text.NativeRendering
 
         Behavior on opacity {
             NumberAnimation {
-                duration: Appearance.duration.state
-                easing.type: Easing.OutCubic
+                duration: Tokens.motion.feedback
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Tokens.motion.easeIn
             }
         }
     }
-
-    // The spec's "slight glow" on the bar.
 }

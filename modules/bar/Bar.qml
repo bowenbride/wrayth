@@ -74,7 +74,7 @@ Variants {
 
         Rectangle {
             anchors.fill: parent
-            color: Theme.barBg
+            color: Tokens.color.barBg
         }
 
         // Clicking bare bar dismisses an open dropdown. The bar sits inside the
@@ -105,8 +105,8 @@ Variants {
             anchors.bottom: parent.bottom
             anchors.left: parent.left
             anchors.right: parent.right
-            height: Appearance.metrics.hairline
-            color: Theme.hair
+            height: Tokens.measure.hairline
+            color: Tokens.color.hair
         }
 
         // --- The bar's bottom line -----------------------------------------
@@ -148,8 +148,9 @@ Variants {
             // The line grows or retracts to the new slot rather than jumping.
             Behavior on width {
                 NumberAnimation {
-                    duration: Appearance.duration.move
-                    easing.type: Easing.OutCubic
+                    duration: Tokens.motion.movement
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: Tokens.motion.easeIn
                 }
             }
 
@@ -157,7 +158,7 @@ Variants {
                 id: accentLine
 
                 anchors.fill: parent
-                color: Theme.accent
+                color: Tokens.color.accent
             }
 
         }
@@ -171,8 +172,8 @@ Variants {
             anchors.left: parent.left
             anchors.leftMargin: line.width
             width: Math.max(0, bar.indicatorEnd - line.width)
-            height: Appearance.metrics.hairline
-            color: Theme.hair
+            height: Tokens.measure.hairline
+            color: Tokens.color.hair
         }
 
         // --- Left ----------------------------------------------------------

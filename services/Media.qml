@@ -2,6 +2,7 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
+import Quickshell.Io
 import Quickshell.Hyprland
 import Quickshell.Services.Mpris
 import Quickshell.Services.Pipewire
@@ -19,7 +20,29 @@ import qs.services
 Singleton {
     id: root
 
-    readonly property var players: (Mpris.players?.values ?? []).filter(p => p && p.identity !== undefined)
+    // Media players. **Not bridges**: mpris-proxy (BlueZ's bridge for a
+    // headset's play/pause buttons) registers an MPRIS name too, but plays
+    // nothing; it is never a source. Told apart by the process owning the
+    // name, asked of D-Bus whenever the player list changes.
+    readonly property var allPlayers: (Mpris.players?.values ?? []).filter(p => p && p.identity !== undefined)
+    readonly property var players: allPlayers.filter(p => ownerComm[p.dbusName] !== "mpris-proxy" && !/mpris-proxy/i.test(`${p.identity} ${p.dbusName}`))
+    property var ownerComm: ({})
+    onAllPlayersChanged: if (!ownerRead.running) ownerRead.running = true
+    Process {
+        id: ownerRead
+        command: ["sh", "-c", 'for n in $(busctl --user list 2>/dev/null | awk \'/^org\\.mpris\\.MediaPlayer2\\./ {print $1}\'); do printf "%s %s\\n" "$n" "$(busctl --user status "$n" 2>/dev/null | sed -n "s/^Comm=//p")"; done']
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const out = {};
+                for (const line of text.split("\n")) {
+                    const [name, comm] = line.trim().split(" ");
+                    if (name)
+                        out[name] = comm ?? "";
+                }
+                root.ownerComm = out;
+            }
+        }
+    }
 
     // A source: { key, kind: "media" | "call", player | node, app }.
     readonly property var sources: {

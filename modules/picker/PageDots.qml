@@ -28,12 +28,13 @@ Row {
 
             Rectangle {
                 anchors.fill: parent
-                color: parent.index === root.current ? Theme.accent : Theme.hair
+                color: parent.index === root.current ? Tokens.color.accent : Tokens.color.hair
 
                 Behavior on color {
                     ColorAnimation {
-                        duration: Appearance.duration.state
-                        easing.type: Easing.OutCubic
+                        duration: Tokens.motion.feedback
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: Tokens.motion.easeIn
                     }
                 }
             }

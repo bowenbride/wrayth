@@ -13,7 +13,7 @@ import qs.config
 Item {
     id: root
 
-    property color stripeColor: Theme.accent
+    property color stripeColor: Tokens.color.accent
     property int period: 12
     property int stripeWidth: 6
 

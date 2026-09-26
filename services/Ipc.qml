@@ -259,8 +259,10 @@ Scope {
     IpcHandler {
         target: "deck"
 
+        // Through Deck.toggle when closed, so it opens as one entrance too.
         function open(): string {
-            Deck.setOpen(true);
+            if (!Deck.visible && Deck.preparing === "")
+                Deck.toggle();
             return "open";
         }
 
@@ -290,6 +292,13 @@ Scope {
 
         function next(): string {
             return Audio.cycleOutput();
+        }
+        // The bar readout only, for tests: a code and the mic state (1 muted,
+        // 0 live), nothing changed on any device. `simulate "" -1` ends it.
+        function simulate(code: string, mic: int): string {
+            Audio.simCode = code;
+            Audio.simMic = mic;
+            return `${Audio.barCode} ${Audio.barMicMuted ? "MIC MUTED" : "MIC LIVE"}`;
         }
         function output(): string {
             return Audio.sink ? `${Audio.sink.name} ${Math.round(Audio.volume * 100)}${Audio.muted ? " muted" : ""}` : "none";
@@ -604,6 +613,10 @@ Scope {
             Notifications.sendDemo(summary, body, app, urgency);
             return summary;
         }
+        // Dismisses every card on screen, critical ones included.
+        function dismissAll(): void {
+            Notifications.dismissAll();
+        }
         // Forgets the COMMS history (what CLEAR ALL does).
         function clear(): string {
             const n = Notifications.history.length;
@@ -865,6 +878,15 @@ Scope {
         function lock(): void {
             ShellState.locked = true;
         }
+        // A preview of the lockscreen's look, in an ordinary window: it does
+        // not lock, takes no keyboard and cannot authenticate. Ten seconds,
+        // or a click, or `endPreview`.
+        function preview(): void {
+            ShellState.lockPreviewOpen = true;
+        }
+        function endPreview(): void {
+            ShellState.lockPreviewOpen = false;
+        }
         function isLocked(): bool {
             return ShellState.locked;
         }
@@ -970,10 +992,12 @@ Scope {
         target: "overview"
 
         function toggle(): void {
-            ShellState.openExclusive(ShellState.overviewOpen ? "" : "overview");
+            if (SystemSettings.overview)
+                ShellState.openExclusive(ShellState.overviewOpen ? "" : "overview");
         }
         function open(): void {
-            ShellState.openExclusive("overview");
+            if (SystemSettings.overview)
+                ShellState.openExclusive("overview");
         }
         function close(): void {
             ShellState.overviewOpen = false;
@@ -1051,6 +1075,19 @@ Scope {
         }
         function forget(): void {
             Weather.forget();
+        }
+    }
+
+    // The SYSTEM page's WINDOWS chips: `optional switcher true`,
+    // `optional overview false`.
+    IpcHandler {
+        target: "system"
+
+        function optional(which: string, on: bool): string {
+            if (which !== "switcher" && which !== "overview")
+                return "switcher or overview";
+            SystemSettings.setOptional(which, on);
+            return `${which} ${on ? "on" : "off"}`;
         }
     }
 }

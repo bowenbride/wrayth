@@ -66,10 +66,10 @@ Text {
         font: root.font
     }
 
-    color: Theme.dim
-    font.family: Appearance.font.data
+    color: Tokens.color.dim
+    font.family: Tokens.font.data
     font.pixelSize: pixelSize
-    font.weight: Appearance.font.weightSemi
+    font.weight: Tokens.font.dataWeight
     font.letterSpacing: tracked ? Appearance.tracking(pixelSize) : 0
     font.capitalization: Font.AllUppercase
     renderType: Text.NativeRendering

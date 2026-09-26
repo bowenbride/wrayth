@@ -218,8 +218,9 @@ Scope {
             target: root
             property: "fade"
             to: 0
-            duration: Appearance.duration.exit
-            easing.type: Easing.InCubic
+            duration: Tokens.motion.panels
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: Tokens.motion.easeOut
         }
 
         ScriptAction {

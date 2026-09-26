@@ -18,10 +18,10 @@ Item {
     id: root
 
     property string text: ""
-    property color color: Theme.text
+    property color color: Tokens.color.text
     property real pixelSize: 12
-    property string family: Appearance.font.data
-    property int weight: Appearance.font.weightRegular
+    property string family: Tokens.font.data
+    property int weight: Tokens.font.dataWeight
 
     implicitWidth: metrics.tightBoundingRect.width
     implicitHeight: metrics.tightBoundingRect.height

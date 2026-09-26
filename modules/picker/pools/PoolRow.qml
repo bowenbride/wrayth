@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import qs.components
+import qs.components.ui as UI
 import qs.config
 import qs.services
 
@@ -49,14 +50,15 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        color: root.highlighted ? Theme.alpha(Theme.accent, 0.12) : Theme.alpha(Theme.hair, 0.16)
-        border.width: Appearance.metrics.hairline
-        border.color: root.highlighted ? Theme.accent : Theme.hair
+        color: root.highlighted ? Tokens.color.accentTint : Theme.alpha(Tokens.color.hair, 0.16)
+        border.width: Tokens.measure.hairline
+        border.color: root.highlighted ? Tokens.color.accent : Tokens.color.hair
 
         Behavior on color {
             ColorAnimation {
-                duration: Appearance.duration.state
-                easing.type: Easing.OutCubic
+                duration: Tokens.motion.feedback
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Tokens.motion.easeIn
             }
         }
     }
@@ -84,8 +86,8 @@ Item {
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 text: root.name.toUpperCase()
-                color: Theme.bright
-                font.family: Appearance.font.display
+                color: Tokens.color.bright
+                font.family: Tokens.font.display
                 font.pixelSize: 13
                 font.weight: Appearance.font.weightBold
                 renderType: Text.NativeRendering
@@ -94,7 +96,7 @@ Item {
 
         NrLabel {
             pixelSize: 10
-            color: Theme.dim
+            color: Tokens.color.dim
             text: root.custom ? "CUSTOM" : "PRESET"
         }
 
@@ -109,13 +111,14 @@ Item {
 
             Behavior on opacity {
                 NumberAnimation {
-                    duration: root.missingOwn ? Appearance.duration.enter : Appearance.duration.exit
-                    easing.type: root.missingOwn ? Easing.OutCubic : Easing.InCubic
+                    duration: root.missingOwn ? Tokens.motion.panels : Tokens.motion.panels
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: root.missingOwn ? Tokens.motion.easeIn : Tokens.motion.easeOut
                 }
             }
             color: "transparent"
-            border.width: Appearance.metrics.hairline
-            border.color: root.canRestore ? Theme.accent : Theme.hair
+            border.width: Tokens.measure.hairline
+            border.color: root.canRestore ? Tokens.color.accent : Tokens.color.hair
 
             NrLabel {
                 anchors.fill: parent
@@ -125,7 +128,7 @@ Item {
                 pixelSize: 10
                 horizontalAlignment: Text.AlignHCenter
                 elide: Text.ElideRight
-                color: root.canRestore ? Theme.accent : Theme.mute
+                color: root.canRestore ? Tokens.color.accent : Tokens.color.mute
                 text: root.canRestore ? `RESTORE ${Wallpapers.generatedName(root.name)}` : "NO BASE LEFT TO RESTORE FROM"
             }
 
@@ -180,7 +183,7 @@ Item {
             visible: (root.pool.items ?? []).length === 0
             height: 60
             pixelSize: 10
-            color: Theme.dim
+            color: Tokens.color.dim
             text: "EMPTY    FALLS BACK TO ITS OWN WALLPAPER"
         }
     }
@@ -200,7 +203,7 @@ Item {
 
             NrLabel {
                 anchors.verticalCenter: parent.verticalCenter
-                color: Theme.dim
+                color: Tokens.color.dim
                 text: "MODE"
             }
 
@@ -217,9 +220,9 @@ Item {
 
                     width: label.implicitWidth + 14
                     height: 20
-                    color: current ? Theme.alpha(Theme.accent, 0.18) : "transparent"
-                    border.width: Appearance.metrics.hairline
-                    border.color: current ? Theme.accent : usable ? Theme.hair : Theme.alpha(Theme.hair, 0.5)
+                    color: current ? Theme.alpha(Tokens.color.accent, 0.18) : "transparent"
+                    border.width: Tokens.measure.hairline
+                    border.color: current ? Tokens.color.accent : usable ? Tokens.color.hair : Theme.alpha(Tokens.color.hair, 0.5)
 
                     NrLabel {
                         id: label
@@ -227,7 +230,7 @@ Item {
                         anchors.centerIn: parent
                         centred: true
                         pixelSize: 10
-                        color: parent.current ? Theme.accent : parent.usable ? Theme.text : Theme.mute
+                        color: parent.current ? Tokens.color.accent : parent.usable ? Tokens.color.text : Tokens.color.mute
                         text: parent.modelData
                     }
 
@@ -252,7 +255,7 @@ Item {
 
             NrLabel {
                 anchors.verticalCenter: parent.verticalCenter
-                color: Theme.dim
+                color: Tokens.color.dim
                 text: "EVERY"
             }
 
@@ -271,14 +274,14 @@ Item {
 
             NrLabel {
                 anchors.verticalCenter: parent.verticalCenter
-                color: Theme.dim
+                color: Tokens.color.dim
                 pixelSize: 10
                 text: "MIN"
             }
 
             NrLabel {
                 anchors.verticalCenter: parent.verticalCenter
-                color: Theme.dim
+                color: Tokens.color.dim
                 text: "FADE"
             }
 
@@ -299,7 +302,7 @@ Item {
 
             NrLabel {
                 anchors.verticalCenter: parent.verticalCenter
-                color: Theme.dim
+                color: Tokens.color.dim
                 pixelSize: 10
                 text: "SEC"
             }
@@ -311,36 +314,18 @@ Item {
 
             NrLabel {
                 anchors.verticalCenter: parent.verticalCenter
-                color: Theme.dim
+                color: Tokens.color.dim
                 text: "SCREENS"
             }
             Repeater {
                 model: [["same", "SAME ON ALL"], ["per", "PER SCREEN"]]
 
-                Rectangle {
+                UI.Chip {
                     required property var modelData
-                    readonly property bool current: (root.pool.screens ?? "same") === modelData[0]
-
-                    width: screensLabel.implicitWidth + 14
-                    height: 20
-                    color: current ? Theme.alpha(Theme.accent, 0.18) : "transparent"
-                    border.width: Appearance.metrics.hairline
-                    border.color: current ? Theme.accent : Theme.hair
-
-                    NrLabel {
-                        id: screensLabel
-                        anchors.centerIn: parent
-                        centred: true
-                        pixelSize: 10
-                        color: parent.current ? Theme.accent : Theme.text
-                        text: parent.modelData[1]
-                    }
-                    HoverHandler {
-                        cursorShape: Qt.PointingHandCursor
-                    }
-                    TapHandler {
-                        onTapped: root.screensRequested(parent.modelData[0])
-                    }
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: modelData[1]
+                    selected: (root.pool.screens ?? "same") === modelData[0]
+                    onClicked: root.screensRequested(modelData[0])
                 }
             }
         }
@@ -362,9 +347,9 @@ Item {
 
                     width: 88
                     height: 58
-                    color: Theme.alpha(Theme.ground, 0.6)
+                    color: Theme.alpha(Tokens.color.ground, 0.6)
                     border.width: 1
-                    border.color: screenHover.hovered ? Theme.accent : Theme.hair
+                    border.color: screenHover.hovered ? Tokens.color.accent : Tokens.color.hair
                     clip: true
 
                     Image {
@@ -380,11 +365,11 @@ Item {
                         anchors.right: parent.right
                         anchors.bottom: parent.bottom
                         height: 16
-                        color: Theme.alpha(Theme.ground, 0.85)
+                        color: Theme.alpha(Tokens.color.ground, 0.85)
                         NrLabel {
                             anchors.centerIn: parent
                             pixelSize: 8
-                            color: Theme.text
+                            color: Tokens.color.text
                             text: `${screenTile.modelData.name} ${screenTile.modelData.width * (screenTile.modelData.devicePixelRatio ?? 1)}x${screenTile.modelData.height * (screenTile.modelData.devicePixelRatio ?? 1)}`
                         }
                     }

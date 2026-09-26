@@ -14,7 +14,7 @@ ChamferPanel {
     chamfer: Appearance.chamfer.panel
     chamferTopLeft: chamfer
     chamferBottomLeft: 0
-    fillColor: Theme.panel
+    fillColor: Tokens.color.panel
 
     Item {
         id: header
@@ -48,7 +48,7 @@ ChamferPanel {
                 id: vulnTitle
 
                 anchors.verticalCenter: parent.verticalCenter
-                color: Theme.bright
+                color: Tokens.color.bright
                 text: "VULN WATCH"
             }
 
@@ -104,10 +104,10 @@ ChamferPanel {
             // letter contains no bad news, and a big confident zero here is
             // the most reassuring thing on the deck.
             text: Vuln.available ? Vuln.count : "--"
-            color: Vuln.available ? Theme.accent : Theme.mute
-            font.family: Appearance.font.display
+            color: Vuln.available ? Tokens.color.accent : Tokens.color.mute
+            font.family: Tokens.font.display
             font.pixelSize: 44
-            font.weight: Appearance.font.weightBold
+            font.weight: Tokens.font.displayWeight
         }
 
         TextMetrics {
@@ -127,7 +127,7 @@ ChamferPanel {
 
             NrLabel {
                 width: parent.width
-                color: Theme.text
+                color: Tokens.color.text
                 text: "PACKAGES AFFECTED"
             }
 
@@ -138,14 +138,14 @@ ChamferPanel {
                 NrLabel {
                     anchors.verticalCenter: parent.verticalCenter
                     width: Math.min(implicitWidth, parent.width - sweep.width - 8)
-                    color: Theme.mute
+                    color: Tokens.color.mute
                     elide: Text.ElideRight
                     // The daemon name keeps its own case, as in the HUD.
                     font.capitalization: Font.MixedCase
                     text: {
                         if (!Vuln.available)
-                            return `arch-audit${Appearance.separator}NOT INSTALLED`;
-                        return Vuln.synced ? `arch-audit${Appearance.separator}SYNCED ${Vuln.syncedMinutes} MIN AGO` : `arch-audit${Appearance.separator}SYNCING`;
+                            return "arch-audit · NOT INSTALLED";
+                        return Vuln.synced ? `arch-audit · SYNCED ${Vuln.syncedMinutes} MIN AGO` : "arch-audit · SYNCING";
                     }
                 }
 
@@ -241,7 +241,7 @@ ChamferPanel {
             width: severities.cellWidth
             label: "HIGH"
             count: Vuln.high
-            tone: Theme.accent
+            tone: Tokens.color.accent
             filled: true
         }
 
@@ -249,14 +249,14 @@ ChamferPanel {
             width: severities.cellWidth
             label: "MED"
             count: Vuln.medium
-            tone: Theme.alert
+            tone: Tokens.color.alert
         }
 
         SeverityCell {
             width: severities.cellWidth
             label: "LOW"
             count: Vuln.low
-            tone: Theme.dim
+            tone: Tokens.color.dim
         }
     }
 
@@ -358,8 +358,8 @@ ChamferPanel {
                                 anchors.left: parent.left
                                 anchors.verticalCenter: parent.verticalCenter
                                 anchors.verticalCenterOffset: 2
-                                color: section.modelData.title === "FIX READY" ? Theme.signal : Theme.mute
-                                text: `${section.modelData.title}${Appearance.separator}${section.modelData.entries.length}`
+                                color: section.modelData.title === "FIX READY" ? Tokens.color.signal : Tokens.color.mute
+                                text: `${section.modelData.title} · ${section.modelData.entries.length}`
                             }
 
                             // The hairline that separates a section from the
@@ -368,8 +368,8 @@ ChamferPanel {
                                 anchors.bottom: parent.bottom
                                 anchors.left: parent.left
                                 anchors.right: parent.right
-                                height: Appearance.metrics.hairline
-                                color: Theme.hair
+                                height: Tokens.measure.hairline
+                                color: Tokens.color.hair
                             }
                         }
 
@@ -438,12 +438,12 @@ ChamferPanel {
             anchors.bottom: parent.bottom
             height: list.rowHeight
             visible: list.below > 0
-            color: Theme.panel
+            color: Tokens.color.panel
 
             NrLabel {
                 anchors.fill: parent
                 verticalAlignment: Text.AlignVCenter
-                color: Theme.mute
+                color: Tokens.color.mute
                 text: `+${list.below} MORE`
             }
         }
@@ -462,23 +462,24 @@ ChamferPanel {
 
         visible: opacity > 0
         opacity: root.tagText !== "" ? 1 : 0
-        color: Theme.panelHex
+        color: Tokens.color.panelHex
 
         Behavior on opacity {
             NumberAnimation {
-                duration: root.tagText !== "" ? Appearance.duration.enter : Appearance.duration.exit
-                easing.type: root.tagText !== "" ? Easing.OutCubic : Easing.InCubic
+                duration: root.tagText !== "" ? Tokens.motion.panels : Tokens.motion.panels
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: root.tagText !== "" ? Tokens.motion.easeIn : Tokens.motion.easeOut
             }
         }
-        border.width: Appearance.metrics.hairline
-        border.color: Theme.hair
+        border.width: Tokens.measure.hairline
+        border.color: Tokens.color.hair
 
         NrLabel {
             id: tagLabel
 
             anchors.centerIn: parent
             centred: true
-            color: Theme.mute
+            color: Tokens.color.mute
             text: root.tagText
         }
     }

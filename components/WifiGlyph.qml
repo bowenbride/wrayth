@@ -30,8 +30,8 @@ Item {
     // 0..1, as NetworkManager reports it.
     property real strength: 0
     property bool active: false
-    property color litColor: Theme.signal
-    property color unlitColor: Theme.dim
+    property color litColor: Tokens.color.signal
+    property color unlitColor: Tokens.color.dim
 
     // The layout slot. The drawing is wider; see above.
     implicitWidth: 13

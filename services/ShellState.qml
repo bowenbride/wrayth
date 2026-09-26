@@ -64,6 +64,8 @@ Singleton {
     property bool overviewOpen: false
     property bool switcherOpen: false
     property bool recordOpen: false
+    // The lockscreen preview (modules/lock/LockPreview.qml): display only.
+    property bool lockPreviewOpen: false
     readonly property bool anyOverlay: launcherOpen || powerOpen || pickerOpen || captureOpen || keybindsOpen || clipboardOpen || overviewOpen || switcherOpen || recordOpen || Daemons.libraryOpen
     // Which of the picker's three screens is up: "grid", "editor" or "pools".
     // It lives here rather than on the overlay so the IPC can drive it -- the

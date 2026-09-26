@@ -7,6 +7,6 @@ Icon {
     property string kind: "play"
 
     name: ({ previous: "skip_previous", next: "skip_next", play: "play_arrow", pause: "pause" })[kind] ?? "play_arrow"
-    color: Theme.text
+    color: Tokens.color.text
     size: 16
 }

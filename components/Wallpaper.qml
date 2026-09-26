@@ -34,15 +34,17 @@ Item {
     // quiet as windows come and go.
     Behavior on blurRadius {
         NumberAnimation {
-            duration: Appearance.duration.panel
-            easing.type: Easing.OutCubic
+            duration: Tokens.motion.panels
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: Tokens.motion.easeIn
         }
     }
 
     Behavior on dim {
         NumberAnimation {
-            duration: Appearance.duration.panel
-            easing.type: Easing.OutCubic
+            duration: Tokens.motion.panels
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: Tokens.motion.easeIn
         }
     }
 
@@ -132,7 +134,8 @@ Item {
         property: "mix"
         to: 1
         duration: root.fadeDuration
-        easing.type: Easing.OutCubic
+        easing.type: Easing.BezierSpline
+        easing.bezierCurve: Tokens.motion.easeIn
     }
 
     Rectangle {

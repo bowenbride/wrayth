@@ -61,7 +61,7 @@ Item {
 
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
-            color: Theme.dim
+            color: Tokens.color.dim
             text: root.spaces.pageLabel
         }
     }
@@ -84,12 +84,13 @@ Item {
 
                 width: root.pipSize
                 height: root.pipSize
-                color: lit ? Theme.accent : Theme.hair
+                color: lit ? Tokens.color.accent : Tokens.color.hair
 
                 Behavior on color {
                     ColorAnimation {
-                        duration: Appearance.duration.state
-                        easing.type: Easing.OutCubic
+                        duration: Tokens.motion.feedback
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: Tokens.motion.easeIn
                     }
                 }
             }

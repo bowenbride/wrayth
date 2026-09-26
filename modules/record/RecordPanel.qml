@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Wayland
 import qs.components
+import qs.components.ui as UI
 import qs.config
 import qs.services
 
@@ -44,6 +45,7 @@ Variants {
             onClicked: ShellState.recordOpen = false
         }
 
+        // A label column (70 px) and Chips, one row per choice.
         component ChipRow: Row {
             id: chipRow
 
@@ -52,63 +54,37 @@ Variants {
             property var current
             signal chosen(var value)
 
-            Text {
+            spacing: 0
+
+            UI.Label {
                 width: 70
-                height: 24
+                height: Tokens.measure.chip
                 verticalAlignment: Text.AlignVCenter
                 text: chipRow.label
-                color: Theme.dim
-                font.family: Appearance.font.data
-                font.pixelSize: 9
-                font.letterSpacing: 9 * 0.14
-                renderType: Text.NativeRendering
             }
             Row {
-                spacing: 6
+                spacing: Tokens.space.s6
                 Repeater {
                     model: chipRow.options
-                    Rectangle {
-                        id: chip
-
+                    UI.Chip {
                         required property var modelData
-                        readonly property bool selected: chipRow.current === modelData[0]
-
-                        width: chipText.implicitWidth + 20
-                        height: 24
-                        color: selected ? Theme.alpha(Theme.accent, 0.12) : (chipHover.hovered ? Theme.cell : "transparent")
-                        border.width: 1
-                        border.color: selected ? Theme.accent : Theme.hair
-                        Text {
-                            id: chipText
-                            anchors.centerIn: parent
-                            text: chip.modelData[1]
-                            color: chip.selected ? Theme.accent : Theme.text
-                            font.family: Appearance.font.data
-                            font.pixelSize: 9
-                            font.weight: Appearance.font.weightSemi
-                            font.letterSpacing: 9 * 0.12
-                            renderType: Text.NativeRendering
-                        }
-                        HoverHandler {
-                            id: chipHover
-                            cursorShape: Qt.PointingHandCursor
-                        }
-                        TapHandler {
-                            onTapped: chipRow.chosen(chip.modelData[0])
-                        }
+                        text: modelData[1]
+                        selected: chipRow.current === modelData[0]
+                        onClicked: chipRow.chosen(modelData[0])
                     }
                 }
             }
         }
 
+        // The centred-panel template (DESIGN.md): 16 px chamfers, panel2.
         ChamferPanel {
             id: panel
 
             anchors.centerIn: parent
-            width: 400
-            height: body.implicitHeight + 28
-            chamfer: Appearance.chamfer.panel
-            fillColor: Theme.panel2
+            width: Tokens.measure.dropdownStandard
+            height: body.implicitHeight + 2 * Tokens.space.s16
+            chamfer: Tokens.chamfer.centred
+            fillColor: Tokens.color.panel2
 
             MouseArea {
                 anchors.fill: parent
@@ -117,46 +93,34 @@ Variants {
             Column {
                 id: body
 
-                x: 14
-                y: 14
-                width: parent.width - 28
-                spacing: 12
+                x: Tokens.space.s16
+                y: Tokens.space.s16
+                width: parent.width - 2 * Tokens.space.s16
+                spacing: Tokens.space.s12
 
+                // Header: Title + JapaneseLabel, a hint line on the right.
                 Item {
                     width: parent.width
-                    height: 22
-                    Row {
+                    height: Tokens.measure.toggleHeight
+                    UI.Title {
+                        anchors.left: parent.left
                         anchors.verticalCenter: parent.verticalCenter
-                        spacing: 8
-                        NrLabel {
-                            id: recTitle
-                            anchors.verticalCenter: parent.verticalCenter
-                            color: Theme.bright
-                            text: "RECORD"
-                        }
-                        KanaTag {
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: "録画"
-                            title: recTitle
-                        }
+                        text: "RECORD"
+                        japanese: "録画"
                     }
                     Text {
+                        readonly property var role: Tokens.type.hint
                         anchors.right: parent.right
                         anchors.verticalCenter: parent.verticalCenter
-                        visible: !Recorder.available
-                        text: "WF-RECORDER NOT INSTALLED"
-                        color: Theme.alert
-                        font.family: Appearance.font.data
-                        font.pixelSize: 9
-                        font.letterSpacing: 9 * 0.12
+                        text: Recorder.available ? "ENTER STARTS · ESC CLOSES" : "INSTALL WF-RECORDER"
+                        color: Recorder.available ? Tokens.color.dim : Tokens.color.alert
+                        font.family: role.family
+                        font.pixelSize: role.size
+                        font.letterSpacing: role.size * role.tracking
                         renderType: Text.NativeRendering
                     }
                 }
-                Rectangle {
-                    width: parent.width
-                    height: Appearance.metrics.hairline
-                    color: Theme.hair
-                }
+                UI.Rule {}
 
                 ChipRow {
                     label: "CAPTURE"
@@ -178,24 +142,25 @@ Variants {
                 }
 
                 Text {
+                    readonly property var role: Tokens.type.hint
                     width: parent.width
                     elide: Text.ElideRight
                     text: "SAVED TO ~/VIDEOS/RECORDINGS · STOP WITH THE REC CHIP"
-                    color: Theme.dim
-                    font.family: Appearance.font.data
-                    font.pixelSize: 9
-                    font.letterSpacing: 9 * 0.08
+                    color: Tokens.color.dim
+                    font.family: role.family
+                    font.pixelSize: role.size
+                    font.letterSpacing: role.size * role.tracking
                     renderType: Text.NativeRendering
                 }
 
-                // On the panel's bottom edge: the bottom-left cut.
-                ActionButton {
+                // The view's primary action, full width, in the panel's
+                // bottom-left corner: its chamfer echoes it.
+                UI.Button {
                     width: parent.width
-                    height: 30
+                    kind: "primary"
                     text: "START RECORDING"
-                    accented: true
-                    usable: Recorder.available
-                    cutBottomLeft: 8
+                    enabled: Recorder.available
+                    cutBottomLeft: Tokens.chamfer.footerButton
                     onClicked: Recorder.start()
                 }
             }

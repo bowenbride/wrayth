@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import qs.components
+import qs.components.ui
 import qs.config
 import qs.services
 import qs.utils
@@ -8,7 +9,7 @@ import qs.utils
 Row {
     id: root
 
-    spacing: 7
+    spacing: Tokens.space.s8
 
     // The icon stands in for the word `NET`, so it takes that word's grey by
     // default; only the bars the signal actually reaches take the data
@@ -20,55 +21,76 @@ Row {
         active: Wifi.radioOn && (Wifi.connected || Wifi.wired)
     }
 
-    // A tunnel is up: a small drawn lock beside the signal.
-    Item {
+    // A VPN is up: a 10 px `lock` icon after the bars, in `signal`.
+    Icon {
         anchors.verticalCenter: parent.verticalCenter
         visible: Radio.tunnelUp
-        width: 8
-        height: 10
-
-        // The shackle and the body.
-        Rectangle {
-            x: 1.5
-            y: 0
-            width: 5
-            height: 6
-            color: "transparent"
-            border.width: 1.2
-            border.color: Theme.signal
-        }
-        Rectangle {
-            y: 4
-            width: 8
-            height: 6
-            color: Theme.signal
-        }
+        name: "lock"
+        size: Tokens.icon.vpnLock
+        color: Tokens.color.signal
     }
 
+    // The live traffic graph (DESIGN.md): part of the readout, never
+    // removed. Upload in accent, download in signal (DESIGN.md).
     Sparkline {
         anchors.verticalCenter: parent.verticalCenter
         visible: Wifi.radioOn || Wifi.wired
-        implicitWidth: 48
-        implicitHeight: 16
-        points: 12
+        implicitWidth: Tokens.measure.netGraphWidth
+        implicitHeight: Tokens.measure.netGraphHeight
+        points: Tokens.measure.netGraphPoints
         downValues: SysInfo.netRxHistory
         upValues: SysInfo.netTxHistory
+        upColor: Tokens.color.accent
+        downColor: Tokens.color.signal
     }
 
-    Slot {
-        anchors.verticalCenter: parent.verticalCenter
+    // Up and down (DESIGN.md): each a fixed 4-character value (Fmt.rate),
+    // right-aligned in a 4-character tabular slot, after its arrow. Upload in
+    // accent, download in signal (DESIGN.md).
+    component Speed: Row {
+        id: speed
+
+        property string arrow: ""
+        property string value: ""
+        property color tone: Tokens.color.text
+
+        spacing: 0
         visible: Wifi.radioOn || Wifi.wired
-        implicitWidth: Appearance.slot.netRate
-        text: `▲${Fmt.rate(SysInfo.netTxRate)}`
-        color: Theme.accent
+
+        Value {
+            anchors.verticalCenter: parent.verticalCenter
+            bar: true
+            text: speed.arrow
+            color: speed.tone
+        }
+        Value {
+            id: figure
+            anchors.verticalCenter: parent.verticalCenter
+            bar: true
+            width: fourChars.advanceWidth
+            horizontalAlignment: Text.AlignRight
+            text: speed.value
+            color: speed.tone
+
+            TextMetrics {
+                id: fourChars
+                font: figure.font
+                text: "0000"
+            }
+        }
     }
 
-    Slot {
+    Speed {
         anchors.verticalCenter: parent.verticalCenter
-        visible: Wifi.radioOn || Wifi.wired
-        implicitWidth: Appearance.slot.netRate
-        text: `▼${Fmt.rate(SysInfo.netRxRate)}`
-        color: Theme.signal
+        arrow: "▲"
+        value: Fmt.rate(SysInfo.netTxRate)
+        tone: Tokens.color.accent
+    }
+    Speed {
+        anchors.verticalCenter: parent.verticalCenter
+        arrow: "▼"
+        value: Fmt.rate(SysInfo.netRxRate)
+        tone: Tokens.color.signal
     }
 
     // Opens the wifi dropdown under this readout. TapHandler rather than a

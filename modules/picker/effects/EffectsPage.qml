@@ -45,9 +45,11 @@ Item {
     // --- Back ---------------------------------------------------------------
     // Top-left of the composition, above the header, at the same coordinates
     // on every view that takes the screen.
+    // The full-screen header row (DESIGN.md): BackControl, title, status.
     BackButton {
+        id: back
         x: root.originX
-        y: 96
+        y: 151 + Math.round((46 - height) / 2)
 
         onActivated: root.finished()
     }
@@ -63,6 +65,7 @@ Item {
 
         Row {
             anchors.left: parent.left
+            anchors.leftMargin: back.width + Tokens.space.s16
             anchors.verticalCenter: parent.verticalCenter
             spacing: 12
 
@@ -80,7 +83,9 @@ Item {
 
                     anchors.fill: parent
                     text: "EFFECTS"
-                    pixelSize: 26
+                    // The full-screen view title role (DESIGN.md): 22 px, 0.12em.
+                    pixelSize: Tokens.type.viewTitle.size
+                    tracking: Tokens.type.viewTitle.tracking
                 }
             }
 
@@ -94,7 +99,7 @@ Item {
         NrLabel {
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            color: Theme.accent
+            color: Tokens.color.accent
             text: "SAVED WITH THE PROFILE SETTINGS    APPLIED LIVE"
         }
     }
@@ -102,7 +107,7 @@ Item {
     NrLabel {
         x: root.originX
         y: 223
-        color: Theme.dim
+        color: Tokens.color.dim
         text: "HOW THE SHELL WEARS ITS AGE    THE SCANLINE OVERLAY AND THE GLITCH SCHEDULE"
     }
 
@@ -112,8 +117,8 @@ Item {
 
         x: root.originX
         y: 262
-        color: Theme.text
-        text: `SCANLINE TREATMENTS${Appearance.separator}${Effects.treatment.name}`
+        color: Tokens.color.text
+        text: `SCANLINE TREATMENTS · ${Effects.treatment.name}`
     }
 
     Row {
@@ -171,7 +176,7 @@ Item {
 
             NrLabel {
                 anchors.verticalCenter: parent.verticalCenter
-                color: Theme.text
+                color: Tokens.color.text
                 text: "EXCLUDE WINDOW CONTENT"
             }
         }
@@ -187,8 +192,9 @@ Item {
 
             Behavior on opacity {
                 NumberAnimation {
-                    duration: Appearance.duration.state
-                    easing.type: Easing.OutCubic
+                    duration: Tokens.motion.feedback
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: Tokens.motion.easeIn
                 }
             }
 
@@ -202,7 +208,7 @@ Item {
 
             NrLabel {
                 anchors.verticalCenter: parent.verticalCenter
-                color: Effects.fullscreenLocked ? Theme.mute : Theme.text
+                color: Effects.fullscreenLocked ? Tokens.color.mute : Tokens.color.text
                 text: "EXCLUDE FULLSCREEN"
             }
         }
@@ -284,8 +290,9 @@ Item {
 
         Behavior on opacity {
             NumberAnimation {
-                duration: Appearance.duration.state
-                easing.type: Easing.OutCubic
+                duration: Tokens.motion.feedback
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Tokens.motion.easeIn
             }
         }
 
@@ -294,7 +301,7 @@ Item {
             // The same slot the GLITCH label above it takes, so the two rows
             // line up at their controls rather than at their words.
             width: glitchChips.labelWidth
-            color: Theme.dim
+            color: Tokens.color.dim
             text: "RANGE"
         }
 
@@ -324,7 +331,7 @@ Item {
 
                 NrLabel {
                     anchors.verticalCenter: parent.verticalCenter
-                    color: Theme.dim
+                    color: Tokens.color.dim
                     text: "FROM"
                 }
 
@@ -339,7 +346,7 @@ Item {
 
                 NrLabel {
                     anchors.verticalCenter: parent.verticalCenter
-                    color: Theme.dim
+                    color: Tokens.color.dim
                     text: "TO"
                 }
 
@@ -354,7 +361,7 @@ Item {
 
                 NrLabel {
                     anchors.verticalCenter: parent.verticalCenter
-                    color: Theme.dim
+                    color: Tokens.color.dim
                     text: "SEC"
                 }
             }
@@ -369,7 +376,7 @@ Item {
 
                 NrLabel {
                     anchors.verticalCenter: parent.verticalCenter
-                    color: Theme.dim
+                    color: Tokens.color.dim
                     text: "EVERY"
                 }
 
@@ -384,7 +391,7 @@ Item {
 
                 NrLabel {
                     anchors.verticalCenter: parent.verticalCenter
-                    color: Theme.dim
+                    color: Tokens.color.dim
                     text: "SEC"
                 }
             }
@@ -403,7 +410,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             // A fixed slot, so a message appearing moves nothing.
             width: 260
-            color: Theme.alert
+            color: Tokens.color.alert
             elide: Text.ElideRight
             text: root.timingError
         }
@@ -486,7 +493,7 @@ Item {
 
             anchors.verticalCenter: parent.verticalCenter
             width: 220
-            color: Theme.alert
+            color: Tokens.color.alert
             elide: Text.ElideRight
         }
     }
@@ -506,15 +513,15 @@ Item {
         spacing: 4
 
         NrLabel {
-            color: Theme.dim
+            color: Tokens.color.dim
             text: "COST"
         }
 
         Text {
             width: parent.width
             text: "The lines are one tiled texture per surface and measured inside the run-to-run spread on a test laptop: 15.6% of a core with them off against 16.1% with them on everything. The rolling band adds a second layer with an animation behind it, and the vignette a third, and both are paid on every surface they are drawn on -- so FINE + ROLLING BAND and FULL CRT cost more than the three above them, and EVERYTHING costs more than PANELS ONLY."
-            color: Theme.text
-            font.family: Appearance.font.data
+            color: Tokens.color.text
+            font.family: Tokens.font.data
             font.pixelSize: 11
             wrapMode: Text.Wrap
             renderType: Text.NativeRendering
@@ -530,12 +537,12 @@ Item {
         Keycap {
             anchors.verticalCenter: parent.verticalCenter
             key: "ESC"
-            color: Theme.mute
+            color: Tokens.color.mute
         }
 
         NrLabel {
             anchors.verticalCenter: parent.verticalCenter
-            color: Theme.mute
+            color: Tokens.color.mute
             text: "BACK TO THE PROFILES    EVERY CHANGE HERE IS ALREADY SAVED"
         }
     }

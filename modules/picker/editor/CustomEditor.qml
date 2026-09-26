@@ -145,8 +145,8 @@ Item {
         height: gutter + header.height + 18 + body + 20 + buttons.height + gutter
 
         chamfer: Appearance.chamfer.panel
-        fillColor: Theme.panel2
-        borderColor: Theme.hair
+        fillColor: Tokens.color.panel2
+        borderColor: Tokens.color.hair
 
         // --- Header -------------------------------------------------------
         Item {
@@ -176,8 +176,10 @@ Item {
                         id: editorTitle
 
                         anchors.fill: parent
-                        text: `CUSTOM${Appearance.separator}EDIT`
-                        pixelSize: 22
+                        text: "CUSTOM"
+                        // The full-screen view title role (DESIGN.md): 22 px, 0.12em.
+                        pixelSize: Tokens.type.viewTitle.size
+                        tracking: Tokens.type.viewTitle.tracking
                     }
                 }
 
@@ -191,8 +193,8 @@ Item {
             NrLabel {
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
-                color: Theme.dim
-                text: root.creating ? "NEW PROFILE" : `EDITING${Appearance.separator}${root.editing.toUpperCase()}`
+                color: Tokens.color.dim
+                text: root.creating ? "NEW PROFILE" : `EDITING ${root.editing.toUpperCase()}`
             }
         }
 
@@ -235,7 +237,7 @@ Item {
             spacing: 8
 
             NrLabel {
-                color: Theme.dim
+                color: Tokens.color.dim
                 text: "START FROM"
             }
 
@@ -253,8 +255,8 @@ Item {
                         width: 78
                         height: 26
                         color: preset.ground
-                        border.width: Appearance.metrics.hairline
-                        border.color: chipHover.hovered ? preset.accent : Theme.hair
+                        border.width: Tokens.measure.hairline
+                        border.color: chipHover.hovered ? preset.accent : Tokens.color.hair
 
                         Row {
                             anchors.centerIn: parent
@@ -319,8 +321,8 @@ Item {
             spacing: 10
 
             NrLabel {
-                color: Theme.dim
-                text: `LIVE PREVIEW${Appearance.separator}NOT APPLIED YET`
+                color: Tokens.color.dim
+                text: "LIVE PREVIEW · NOT APPLIED YET"
             }
 
             LivePreview {
@@ -331,8 +333,8 @@ Item {
             Text {
                 width: parent.width
                 text: "deep, track, mute, cell and the translucent panel fills are derived from these nine."
-                color: Theme.dim
-                font.family: Appearance.font.data
+                color: Tokens.color.dim
+                font.family: Tokens.font.data
                 font.pixelSize: 10
                 wrapMode: Text.Wrap
                 renderType: Text.NativeRendering

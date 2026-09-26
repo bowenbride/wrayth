@@ -9,8 +9,8 @@ Item {
 
     property var downValues: []
     property var upValues: []
-    property color downColor: Theme.signal
-    property color upColor: Theme.accent
+    property color downColor: Tokens.color.signal
+    property color upColor: Tokens.color.accent
     property int points: 12
     property real strokeWidth: 1
 

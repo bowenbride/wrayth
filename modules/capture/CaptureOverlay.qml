@@ -134,7 +134,7 @@ Variants {
             height: overlay.selH + 2
             color: "transparent"
             border.width: 1
-            border.color: Theme.accent
+            border.color: Tokens.color.accent
         }
 
         // The size, in the pixels the image will have.
@@ -147,14 +147,14 @@ Variants {
             y: below ? overlay.selY + overlay.selH + 6 : Math.max(0, overlay.selY - height - 6)
             width: sizeLabel.implicitWidth + 12
             height: sizeLabel.implicitHeight + 6
-            color: Theme.accent
+            color: Tokens.color.accent
 
             NrLabel {
                 id: sizeLabel
 
                 anchors.centerIn: parent
                 centred: true
-                color: Theme.ground
+                color: Tokens.color.ground
                 text: `${Math.round(overlay.selW * overlay.scale)} × ${Math.round(overlay.selH * overlay.scale)}`
             }
         }
@@ -208,7 +208,7 @@ Variants {
             width: bar.implicitWidth + 28
             height: 44
             chamfer: Appearance.chamfer.panel
-            fillColor: Theme.panel2
+            fillColor: Tokens.color.panel2
 
             // Swallows clicks, so they never draw a region under the chips.
             MouseArea {
@@ -225,7 +225,7 @@ Variants {
                     id: captureTitle
 
                     anchors.verticalCenter: parent.verticalCenter
-                    color: Theme.bright
+                    color: Tokens.color.bright
                     text: "CAPTURE"
                 }
                 KanaTag {
@@ -251,14 +251,15 @@ Variants {
                         anchors.verticalCenter: parent.verticalCenter
                         width: chipLabel.implicitWidth + 16
                         height: 22
-                        color: selected ? Theme.alpha(Theme.accent, 0.14) : "transparent"
-                        border.width: Appearance.metrics.hairline
-                        border.color: selected ? Theme.accent : Theme.hair
+                        color: selected ? Theme.alpha(Tokens.color.accent, 0.14) : "transparent"
+                        border.width: Tokens.measure.hairline
+                        border.color: selected ? Tokens.color.accent : Tokens.color.hair
 
                         Behavior on color {
                             ColorAnimation {
-                                duration: Appearance.duration.state
-                                easing.type: Easing.OutCubic
+                                duration: Tokens.motion.feedback
+                                easing.type: Easing.BezierSpline
+                                easing.bezierCurve: Tokens.motion.easeIn
                             }
                         }
 
@@ -267,7 +268,7 @@ Variants {
 
                             anchors.centerIn: parent
                             centred: true
-                            color: chip.selected ? Theme.accent : Theme.text
+                            color: chip.selected ? Tokens.color.accent : Tokens.color.text
                             text: chip.modelData.toUpperCase()
                         }
                         HoverHandler {
@@ -287,31 +288,31 @@ Variants {
                 Keycap {
                     anchors.verticalCenter: parent.verticalCenter
                     key: "TAB"
-                    color: Theme.mute
+                    color: Tokens.color.mute
                 }
                 NrLabel {
                     anchors.verticalCenter: parent.verticalCenter
-                    color: Theme.mute
+                    color: Tokens.color.mute
                     text: "MODE"
                 }
                 Keycap {
                     anchors.verticalCenter: parent.verticalCenter
                     key: "ENTER"
-                    color: Theme.mute
+                    color: Tokens.color.mute
                 }
                 NrLabel {
                     anchors.verticalCenter: parent.verticalCenter
-                    color: Theme.mute
+                    color: Tokens.color.mute
                     text: "CAPTURE"
                 }
                 Keycap {
                     anchors.verticalCenter: parent.verticalCenter
                     key: "ESC"
-                    color: Theme.mute
+                    color: Tokens.color.mute
                 }
                 NrLabel {
                     anchors.verticalCenter: parent.verticalCenter
-                    color: Theme.mute
+                    color: Tokens.color.mute
                     text: "CANCEL"
                 }
             }

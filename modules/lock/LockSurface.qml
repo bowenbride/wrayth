@@ -34,30 +34,19 @@ Item {
             height: 11
         }
 
-        Row {
-            spacing: 10
-
-            NrLabel {
-                anchors.verticalCenter: parent.verticalCenter
-                pixelSize: Appearance.size.katakana
-                color: Theme.bright
-                text: "SESSION SUSPENDED"
-            }
-
-            Text {
-                renderType: Text.NativeRendering
-                anchors.verticalCenter: parent.verticalCenter
-                text: "    ICE ACTIVE"
-                color: Theme.accent
-                font.family: Appearance.font.data
-                font.pixelSize: Appearance.size.katakana
-                font.weight: Appearance.font.weightSemi
-                font.letterSpacing: Appearance.tracking(Appearance.size.katakana)
-            }
+        // The corner status line, in the hint role, parts set apart by ·.
+        Text {
+            readonly property var role: Tokens.type.hint
+            text: "SESSION SUSPENDED · ICE ACTIVE"
+            color: Tokens.color.dim
+            font.family: role.family
+            font.pixelSize: role.size
+            font.letterSpacing: role.size * role.tracking
+            renderType: Text.NativeRendering
         }
 
         KanaTag {
-            text: "セッション停止 // 防壁稼働中"
+            text: "セッション停止 · 防壁稼働中"
         }
     }
 
@@ -77,20 +66,27 @@ Item {
             Row {
                 spacing: 6
                 NrLabel { text: "HOST" }
-                NrLabel { color: Theme.text; text: Demo.host(Machine.hostname) }
+                NrLabel { color: Tokens.color.text; text: Demo.host(Machine.hostname) }
             }
 
             Row {
                 spacing: 6
                 NrLabel { text: "UPLINK" }
-                NrLabel { color: Theme.text; text: SystemStatus.ssid ? Demo.ssid(SystemStatus.ssid).toUpperCase() : "OFFLINE" }
+                NrLabel { color: Tokens.color.text; text: SystemStatus.ssid ? Demo.ssid(SystemStatus.ssid).toUpperCase() : "OFFLINE" }
             }
         }
 
-        NrLabel {
+        // A label and its value: spacing and colour, not //.
+        Row {
             anchors.right: parent.right
-            color: Theme.mute
-            text: `PROFILE${Appearance.separator}${Theme.profile.toUpperCase()}`
+            spacing: Tokens.space.s6
+            NrLabel {
+                text: "PROFILE"
+            }
+            NrLabel {
+                color: Tokens.color.text
+                text: Theme.profile.toUpperCase()
+            }
         }
     }
 
@@ -167,7 +163,7 @@ Item {
                     anchors.bottom: parent.bottom
 
                     text: Fmt.pad2(root.now.getHours())
-                    color: Theme.bright
+                    color: Tokens.color.bright
                     pixelSize: 168
                 }
 
@@ -180,10 +176,10 @@ Item {
                     anchors.bottom: parent.bottom
 
                     text: ":"
-                    color: Theme.bright
-                    font.family: Appearance.font.display
+                    color: Tokens.color.bright
+                    font.family: Tokens.font.display
                     font.pixelSize: 168
-                    font.weight: Appearance.font.weightBold
+                    font.weight: Tokens.font.displayWeight
                 }
 
                 ClockDigits {
@@ -194,7 +190,7 @@ Item {
                     anchors.bottom: parent.bottom
 
                     text: Fmt.pad2(root.now.getMinutes())
-                    color: Theme.bright
+                    color: Tokens.color.bright
                     pixelSize: 168
                 }
 
@@ -207,7 +203,7 @@ Item {
                     anchors.bottomMargin: 34
 
                     text: Fmt.pad2(root.now.getSeconds())
-                    color: Theme.accent
+                    color: Tokens.color.accent
                     pixelSize: 32
                     gap: 2
                 }
@@ -226,19 +222,19 @@ Item {
 
                 NrLabel {
                     anchors.verticalCenter: parent.verticalCenter
-                    color: Theme.dim
+                    color: Tokens.color.dim
                     text: "OPERATOR"
                 }
 
                 NrLabel {
                     anchors.verticalCenter: parent.verticalCenter
-                    color: Theme.hair
+                    color: Tokens.color.hair
                     text: "//"
                 }
 
                 NrLabel {
                     anchors.verticalCenter: parent.verticalCenter
-                    color: Theme.text
+                    color: Tokens.color.text
                     text: Runner.user.toUpperCase()
                 }
             }
@@ -253,14 +249,14 @@ Item {
                 NrLabel {
                     anchors.verticalCenter: parent.verticalCenter
                     pixelSize: Appearance.size.katakana
-                    color: Theme.text
+                    color: Tokens.color.text
                     text: Fmt.dateNumeric(root.now)
                 }
 
                 NrLabel {
                     anchors.verticalCenter: parent.verticalCenter
                     pixelSize: Appearance.size.katakana
-                    color: Theme.dim
+                    color: Tokens.color.dim
                     text: Fmt.dayAbbr(root.now)
                 }
             }
@@ -293,13 +289,13 @@ Item {
 
             NrLabel {
                 anchors.verticalCenter: parent.verticalCenter
-                color: Vuln.count > 0 ? Theme.text : Theme.dim
+                color: Vuln.count > 0 ? Tokens.color.text : Tokens.color.dim
                 text: `VULN ${Vuln.count} AFFECTED`
             }
 
             NrLabel {
                 anchors.verticalCenter: parent.verticalCenter
-                color: SystemStatus.breach ? Theme.accent : Theme.dim
+                color: SystemStatus.breach ? Tokens.color.accent : Tokens.color.dim
                 text: SystemStatus.breach ? `ICE BREACH ${SystemStatus.failedUnits}` : "ICE NOMINAL"
             }
         }

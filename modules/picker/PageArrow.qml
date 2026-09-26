@@ -28,13 +28,14 @@ Item {
         chamfer: 8
         chamferTopRight: root.leading ? 0 : 8
         chamferBottomLeft: root.leading ? 8 : 0
-        fillColor: root.available ? Theme.alpha(Theme.accent, hover.hovered ? 0.18 : 0.08) : "transparent"
-        borderColor: root.available ? Theme.accent : Theme.hair
+        fillColor: root.available ? Theme.alpha(Tokens.color.accent, hover.hovered ? 0.18 : 0.08) : "transparent"
+        borderColor: root.available ? Tokens.color.accent : Tokens.color.hair
 
         Behavior on fillColor {
             ColorAnimation {
-                duration: Appearance.duration.state
-                easing.type: Easing.OutCubic
+                duration: Tokens.motion.feedback
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Tokens.motion.easeIn
             }
         }
     }
@@ -43,16 +44,17 @@ Item {
         anchors.centerIn: parent
 
         text: root.leading ? "<" : ">"
-        color: root.available ? Theme.accent : Theme.dim
-        font.family: Appearance.font.display
+        color: root.available ? Tokens.color.accent : Tokens.color.dim
+        font.family: Tokens.font.display
         font.pixelSize: 16
         font.weight: Appearance.font.weightBold
         renderType: Text.NativeRendering
 
         Behavior on color {
             ColorAnimation {
-                duration: Appearance.duration.state
-                easing.type: Easing.OutCubic
+                duration: Tokens.motion.feedback
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Tokens.motion.easeIn
             }
         }
     }

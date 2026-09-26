@@ -1,5 +1,6 @@
 import QtQuick
 import qs.components
+import qs.components.ui as UI
 import qs.config
 import qs.services
 
@@ -28,14 +29,15 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        color: Theme.deep
-        border.width: Appearance.metrics.hairline
-        border.color: root.revealed ? Theme.accent : Theme.hair
+        color: Tokens.color.deep
+        border.width: Tokens.measure.hairline
+        border.color: root.revealed ? Tokens.color.accent : Tokens.color.hair
 
         Behavior on border.color {
             ColorAnimation {
-                duration: Appearance.duration.state
-                easing.type: Easing.OutCubic
+                duration: Tokens.motion.feedback
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Tokens.motion.easeIn
             }
         }
     }
@@ -43,7 +45,8 @@ Item {
     Image {
         anchors.fill: parent
         anchors.margins: 1
-        source: Wallpapers.imageOf(root.entry.file)
+        // A video shows its first-frame still.
+        source: Wallpapers.stillOf(Wallpapers.imageOf(root.entry.file))
         fillMode: Image.PreserveAspectCrop
         sourceSize: Qt.size(380, 220)
         asynchronous: true
@@ -51,23 +54,31 @@ Item {
         opacity: root.revealed ? 1 : 0.86
     }
 
-    // DEFAULT and GENERATED at the top left; LIVE (a video) at the top right.
+    // DEFAULT and GENERATED at the top left.
     NrLabel {
         anchors.top: parent.top
-        anchors.left: root.entry.tag === "LIVE" ? undefined : parent.left
-        anchors.right: root.entry.tag === "LIVE" ? parent.right : undefined
+        anchors.left: parent.left
         anchors.margins: 5
-        visible: root.entry.tag.length > 0
+        visible: root.entry.tag.length > 0 && root.entry.tag !== "LIVE"
         pixelSize: 10
-        color: Theme.ground
+        color: Tokens.color.ground
         text: root.entry.tag
 
         Rectangle {
             anchors.fill: parent
             anchors.margins: -3
             z: -1
-            color: root.entry.tag === "GENERATED" ? Theme.signal : Theme.accent
+            color: root.entry.tag === "GENERATED" ? Tokens.color.signal : Tokens.color.accent
         }
+    }
+    // A video: the solid LIVE Tag (DESIGN.md), top right.
+    UI.Tag {
+        anchors.top: parent.top
+        anchors.right: parent.right
+        anchors.margins: Tokens.space.s6
+        visible: root.entry.tag === "LIVE"
+        solid: true
+        text: "LIVE"
     }
 
     // Deleting a file from the user's library is the one destructive thing on
@@ -97,21 +108,23 @@ Item {
 
         Behavior on opacity {
             NumberAnimation {
-                duration: root.revealed ? Appearance.duration.state : Appearance.duration.exit
-                easing.type: root.revealed ? Easing.OutCubic : Easing.InCubic
+                duration: root.revealed ? Tokens.motion.feedback : Tokens.motion.panels
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: root.revealed ? Tokens.motion.easeIn : Tokens.motion.easeOut
             }
         }
 
         // Opaque: this sits on a photograph, and the one control on this
         // screen that destroys a file has to be the one you can read.
         color: Qt.rgba(0, 0, 0, closeHover.hovered ? 0.95 : 0.82)
-        border.width: Appearance.metrics.hairline
-        border.color: closeHover.hovered ? Theme.alert : Theme.alpha(Theme.alert, 0.7)
+        border.width: Tokens.measure.hairline
+        border.color: closeHover.hovered ? Tokens.color.alert : Theme.alpha(Tokens.color.alert, 0.7)
 
         Behavior on color {
             ColorAnimation {
-                duration: Appearance.duration.state
-                easing.type: Easing.OutCubic
+                duration: Tokens.motion.feedback
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Tokens.motion.easeIn
             }
         }
 
@@ -121,7 +134,7 @@ Item {
             anchors.centerIn: parent
             centred: true
             pixelSize: 10
-            color: Theme.alert
+            color: Tokens.color.alert
             text: "DELETE"
         }
 
@@ -149,7 +162,7 @@ Item {
             anchors.leftMargin: 6
             anchors.rightMargin: 6
             pixelSize: 10
-            color: Theme.bright
+            color: Tokens.color.bright
             elide: Text.ElideMiddle
             text: root.entry.name
         }

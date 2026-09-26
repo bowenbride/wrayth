@@ -1,5 +1,6 @@
 import QtQuick
 import qs.components
+import qs.components.ui
 import qs.config
 import qs.services
 import qs.modules.bar.items
@@ -8,7 +9,8 @@ import qs.modules.bar.items
 Row {
     id: root
 
-    spacing: Appearance.metrics.dividerGap
+    // The dividers carry the 12 px either side (DESIGN.md, BarDivider).
+    spacing: 0
 
     // Set by the bar when it runs short: see `metrics.tickerMin`.
     property alias btCompact: bt.compact
@@ -33,7 +35,7 @@ Row {
             anchors.fill: parent
         }
     }
-    Divider {
+    BarDivider {
         anchors.verticalCenter: parent.verticalCenter
     }
     GlitchFx {
@@ -51,7 +53,7 @@ Row {
             anchors.fill: parent
         }
     }
-    Divider {
+    BarDivider {
         anchors.verticalCenter: parent.verticalCenter
     }
     GlitchFx {
@@ -69,13 +71,13 @@ Row {
             anchors.fill: parent
         }
     }
-    Divider {
+    BarDivider {
         anchors.verticalCenter: parent.verticalCenter
     }
     AudioReadout {
         anchors.verticalCenter: parent.verticalCenter
     }
-    Divider {
+    BarDivider {
         anchors.verticalCenter: parent.verticalCenter
     }
     BtReadout {
@@ -83,32 +85,19 @@ Row {
 
         anchors.verticalCenter: parent.verticalCenter
     }
-    Divider {
+    BarDivider {
         anchors.verticalCenter: parent.verticalCenter
     }
     PwrReadout {
         anchors.verticalCenter: parent.verticalCenter
     }
-    Divider {
+    BarDivider {
         anchors.verticalCenter: parent.verticalCenter
     }
     KeepAwakeButton {
         anchors.verticalCenter: parent.verticalCenter
     }
-    Divider {
-        anchors.verticalCenter: parent.verticalCenter
-    }
-    TrayReadout {
-        anchors.verticalCenter: parent.verticalCenter
-    }
-    Divider {
-        anchors.verticalCenter: parent.verticalCenter
-    }
-    // The notification centre: always there now, so its divider is too.
-    MessagesReadout {
-        anchors.verticalCenter: parent.verticalCenter
-    }
-    Divider {
+    BarDivider {
         anchors.verticalCenter: parent.verticalCenter
     }
     // The input mode, only with two or more layouts or an input method.
@@ -116,9 +105,22 @@ Row {
         anchors.verticalCenter: parent.verticalCenter
         visible: InputModes.shown
     }
-    Divider {
+    BarDivider {
         anchors.verticalCenter: parent.verticalCenter
         visible: InputModes.shown
+    }
+    TrayReadout {
+        anchors.verticalCenter: parent.verticalCenter
+    }
+    BarDivider {
+        anchors.verticalCenter: parent.verticalCenter
+    }
+    // The notification centre: always there now, so its divider is too.
+    MessagesReadout {
+        anchors.verticalCenter: parent.verticalCenter
+    }
+    BarDivider {
+        anchors.verticalCenter: parent.verticalCenter
     }
     // **The clock is a figure, so it never scrambles.** It may split and slice
     // like anything else, but a time that flickers through junk for 150 ms is

@@ -19,6 +19,8 @@ Singleton {
         advance(-1);
     }
     function advance(by: int): void {
+        if (!SystemSettings.switcher)
+            return;
         if (!ShellState.switcherOpen) {
             Hyprland.refreshToplevels();
             step = by > 0 ? 1 : -1;

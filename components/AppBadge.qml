@@ -20,15 +20,15 @@ Rectangle {
 
     width: size
     height: size
-    color: selected ? Theme.accent : Theme.cell
-    border.width: Appearance.metrics.hairline
-    border.color: selected ? Theme.accent : Theme.hair
+    color: selected ? Tokens.color.accent : Theme.cell
+    border.width: Tokens.measure.hairline
+    border.color: selected ? Tokens.color.accent : Tokens.color.hair
 
     Text {
         anchors.centerIn: parent
         text: root.letters
-        color: root.selected ? Theme.ground : Theme.text
-        font.family: Appearance.font.display
+        color: root.selected ? Tokens.color.ground : Tokens.color.text
+        font.family: Tokens.font.display
         font.pixelSize: root.pixelSize
         font.weight: Appearance.font.weightBold
         renderType: Text.NativeRendering

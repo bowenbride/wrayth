@@ -41,8 +41,9 @@ Item {
 
     Behavior on lift {
         NumberAnimation {
-            duration: Appearance.duration.move
-            easing.type: Easing.OutCubic
+            duration: Tokens.motion.movement
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: Tokens.motion.easeIn
         }
     }
 
@@ -50,8 +51,8 @@ Item {
         anchors.fill: parent
 
         chamfer: Appearance.chamfer.panel
-        fillColor: root.selected ? Theme.ground : Theme.panel2
-        borderColor: root.selected ? Theme.accent : Theme.hair
+        fillColor: root.selected ? Tokens.color.ground : Tokens.color.panel2
+        borderColor: root.selected ? Tokens.color.accent : Tokens.color.hair
         // **A preview shows its own treatment and nothing else.** The panel's
         // own overlay would lay whatever the shell is wearing over all six
         // samples at once, which is the one thing a row of previews may not
@@ -61,8 +62,9 @@ Item {
 
         Behavior on borderColor {
             ColorAnimation {
-                duration: Appearance.duration.state
-                easing.type: Easing.OutCubic
+                duration: Tokens.motion.feedback
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Tokens.motion.easeIn
             }
         }
 
@@ -93,7 +95,7 @@ Item {
 
             Rectangle {
                 anchors.fill: parent
-                color: Theme.ground
+                color: Tokens.color.ground
             }
 
             Wallpaper {
@@ -122,16 +124,16 @@ Item {
 
                 Text {
                     text: "wrayth ~/deck $"
-                    color: Theme.signal
-                    font.family: Appearance.font.data
+                    color: Tokens.color.signal
+                    font.family: Tokens.font.data
                     font.pixelSize: 9
                     renderType: Text.NativeRendering
                 }
 
                 Text {
-                    text: "ICE NOMINAL // 25 SERVICES"
-                    color: Theme.text
-                    font.family: Appearance.font.data
+                    text: "ICE NOMINAL · 25 SERVICES"
+                    color: Tokens.color.text
+                    font.family: Tokens.font.data
                     font.pixelSize: 9
                     renderType: Text.NativeRendering
                 }
@@ -200,13 +202,14 @@ Item {
             anchors.left: sample.left
             anchors.right: sample.right
             height: 2
-            color: root.selected ? Theme.accent : Theme.hair
+            color: root.selected ? Tokens.color.accent : Tokens.color.hair
             opacity: root.selected ? 1 : 0.45
 
             Behavior on opacity {
                 NumberAnimation {
-                    duration: Appearance.duration.state
-                    easing.type: Easing.OutCubic
+                    duration: Tokens.motion.feedback
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: Tokens.motion.easeIn
                 }
             }
         }
@@ -222,7 +225,7 @@ Item {
 
             NrLabel {
                 width: parent.width
-                color: root.selected ? Theme.accent : Theme.bright
+                color: root.selected ? Tokens.color.accent : Tokens.color.bright
                 elide: Text.ElideRight
                 text: root.treatment.name
             }
@@ -230,8 +233,8 @@ Item {
             Text {
                 width: parent.width
                 text: root.treatment.about
-                color: Theme.text
-                font.family: Appearance.font.data
+                color: Tokens.color.text
+                font.family: Tokens.font.data
                 font.pixelSize: 10
                 wrapMode: Text.Wrap
                 maximumLineCount: 2

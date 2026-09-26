@@ -9,7 +9,7 @@ Row {
 
     property string label: ""
     property string value: ""
-    property color valueColor: Theme.signal
+    property color valueColor: Tokens.color.signal
     property bool glow: false
     // Daemon names are programs, not labels: the spec writes them as
     // `SHIELD nftables`, so their case is left alone.
@@ -40,9 +40,9 @@ Row {
         width: root.valueReserve ? reserve.advanceWidth : implicitWidth
         text: root.value
         color: root.valueColor
-        font.family: Appearance.font.data
+        font.family: Tokens.font.data
         font.pixelSize: Appearance.size.body
-        font.weight: Appearance.font.weightSemi
+        font.weight: Tokens.font.dataWeight
     }
 
     TextMetrics {

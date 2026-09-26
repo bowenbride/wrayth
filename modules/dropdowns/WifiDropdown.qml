@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell.Networking
 import qs.components
+import qs.components.ui as UI
 import qs.config
 import qs.services
 
@@ -12,6 +13,8 @@ DropdownFrame {
     // The settings view slides in over the list. Escape and BACK reverse it,
     // and the frame's height eases to whichever view is showing.
     property bool showSettings: false
+    // A sub-view carries its own title row (BackControl + Title).
+    showHeader: !showSettings
     // Read by Dropdowns so Escape goes back a step before it closes.
     readonly property bool canGoBack: showSettings
     function goBack(): void {
@@ -146,22 +149,13 @@ DropdownFrame {
         }
     }
 
-    title: "UPLINK // WLAN"
-    katakana: "無線"
+    title: "UPLINK"
+    katakana: "回線"
 
-    // AIRPLANE beside Wi-Fi's own ON / OFF. Airplane mode turns every radio
-    // off (Radio.qml), so the Wi-Fi toggle waits it out.
+    // One header control (DESIGN.md): Wi-Fi's ON / OFF. Airplane mode is the
+    // quiet `flight` button on the status line; it turns every radio off
+    // (Radio.qml), so this toggle waits it out.
     headerRight: Row {
-        spacing: 6
-
-        ToggleButton {
-            width: 76
-            height: 22
-            on: Radio.airplane
-            onText: "AIRPLANE"
-            offText: "AIRPLANE"
-            onToggled: Radio.setAirplane(!Radio.airplane)
-        }
         ToggleButton {
             height: 22
             on: Networking.wifiEnabled && !Radio.airplane
@@ -188,8 +182,9 @@ DropdownFrame {
 
         Behavior on height {
             NumberAnimation {
-                duration: Appearance.duration.panel
-                easing.type: Easing.OutCubic
+                duration: Tokens.motion.panels
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Tokens.motion.easeIn
             }
         }
 
@@ -227,15 +222,17 @@ DropdownFrame {
 
             Behavior on slide {
                 NumberAnimation {
-                    duration: Appearance.duration.panel
-                    easing.type: Easing.OutCubic
+                    duration: Tokens.motion.panels
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: Tokens.motion.easeIn
                 }
             }
 
             Behavior on opacity {
                 NumberAnimation {
-                    duration: Appearance.duration.panel
-                    easing.type: Easing.OutCubic
+                    duration: Tokens.motion.panels
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: Tokens.motion.easeIn
                 }
             }
 
@@ -245,21 +242,11 @@ DropdownFrame {
                 width: parent.width
                 spacing: root.padding
 
-                // Airplane mode: the list gives way to one dim line.
-                Item {
+                // Airplane mode: the list gives way to one EmptyState line.
+                UI.EmptyState {
                     width: parent.width
-                    height: 60
                     visible: Radio.airplane
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: "AIRPLANE MODE // ALL RADIOS OFF"
-                        color: Theme.dim
-                        font.family: Appearance.font.data
-                        font.pixelSize: 10
-                        font.letterSpacing: 10 * 0.14
-                        renderType: Text.NativeRendering
-                    }
+                    text: "AIRPLANE MODE · ALL RADIOS OFF"
                 }
 
                 // Status line.
@@ -280,20 +267,42 @@ DropdownFrame {
                         }
                         color: {
                             if (Wifi.error)
-                                return Theme.accent;
+                                return Tokens.color.accent;
                             if (Wifi.linking)
-                                return Theme.signal;
-                            return Theme.dim;
+                                return Tokens.color.signal;
+                            return Tokens.color.dim;
                         }
                         elide: Text.ElideRight
                         width: parent.width - 150
                     }
 
                     NrLabel {
+                        anchors.right: airplane.left
+                        anchors.rightMargin: Tokens.space.s8
+                        anchors.verticalCenter: parent.verticalCenter
+                        color: Tokens.color.dim
+                        text: Wifi.band ? `${Machine.wifiInterface} · ${Wifi.band}` : Machine.wifiInterface
+                    }
+                    // Airplane mode: a quiet icon button, `dim`, `accent` while on.
+                    Item {
+                        id: airplane
                         anchors.right: parent.right
                         anchors.verticalCenter: parent.verticalCenter
-                        color: Theme.mute
-                        text: Wifi.band ? `${Machine.wifiInterface} // ${Wifi.band}` : Machine.wifiInterface
+                        width: Tokens.measure.muteButtonWidth
+                        height: Tokens.measure.muteButtonHeight
+                        Icon {
+                            anchors.centerIn: parent
+                            name: "flight"
+                            size: Tokens.icon.inline
+                            color: Radio.airplane ? Tokens.color.accent : (planeHover.hovered ? Tokens.color.text : Tokens.color.dim)
+                        }
+                        HoverHandler {
+                            id: planeHover
+                            cursorShape: Qt.PointingHandCursor
+                        }
+                        TapHandler {
+                            onTapped: Radio.setAirplane(!Radio.airplane)
+                        }
                     }
                 }
 
@@ -320,31 +329,32 @@ DropdownFrame {
                         readonly property bool working: owns && netAction.working
                         readonly property bool failedNow: owns && netAction.failed
 
-                        property real detailRise: Appearance.enterRise
+                        property real detailRise: Tokens.motion.rise
 
                         onExpandedChanged: detailRise = expanded ? 0 : detailRise
 
                         Behavior on detailRise {
                             NumberAnimation {
-                                duration: Appearance.duration.enter
-                                easing.type: Easing.OutCubic
+                                duration: Tokens.motion.panels
+                                easing.type: Easing.BezierSpline
+                                easing.bezierCurve: Tokens.motion.easeIn
                             }
                         }
 
                         width: list.width
-                        height: 34 + (expanded ? expansion.implicitHeight + 14 : 0)
+                        height: Tokens.measure.row + (expanded ? expansion.implicitHeight + 14 : 0)
 
                         Rectangle {
                             anchors.fill: parent
-                            color: netRow.isConnected ? Theme.alpha(Theme.accent, 0.06) : "transparent"
+                            color: netRow.isConnected ? Tokens.color.rowSelected : "transparent"
                         }
 
                         Rectangle {
                             anchors.left: parent.left
                             anchors.top: parent.top
                             width: 2
-                            height: 34
-                            color: Theme.accent
+                            height: Tokens.measure.row
+                            color: Tokens.color.accent
                             visible: netRow.isConnected
                         }
 
@@ -355,7 +365,7 @@ DropdownFrame {
                             anchors.left: parent.left
                             anchors.right: parent.right
                             anchors.leftMargin: 8
-                            height: 34
+                            height: Tokens.measure.row
 
                             transform: [
                                 Matrix4x4 {
@@ -373,35 +383,20 @@ DropdownFrame {
                                 anchors.left: parent.left
                                 anchors.verticalCenter: parent.verticalCenter
                                 strength: netRow.modelData.signal
-                                litColor: netRow.isConnected ? Theme.accent : Theme.signal
+                                litColor: Tokens.color.signal
                             }
 
-                            Item {
+                            // Secured: the font's `lock`, 14 px, dim.
+                            Icon {
                                 id: lock
 
                                 anchors.left: bars.right
-                                anchors.leftMargin: 8
+                                anchors.leftMargin: Tokens.space.s8
                                 anchors.verticalCenter: parent.verticalCenter
-                                width: 7
-                                height: 9
                                 visible: netRow.secured
-
-                                Rectangle {
-                                    anchors.bottom: parent.bottom
-                                    width: parent.width
-                                    height: 5
-                                    color: Theme.mute
-                                }
-
-                                Rectangle {
-                                    anchors.horizontalCenter: parent.horizontalCenter
-                                    anchors.top: parent.top
-                                    width: 5
-                                    height: 5
-                                    color: "transparent"
-                                    border.width: 1
-                                    border.color: Theme.mute
-                                }
+                                name: "lock"
+                                size: Tokens.icon.inline
+                                color: Tokens.color.dim
                             }
 
                             Text {
@@ -413,9 +408,9 @@ DropdownFrame {
 
                                 text: netRow.modelData.label
                                 textFormat: Text.PlainText
-                                color: netRow.isConnected ? Theme.bright : Theme.text
-                                font.family: Appearance.font.data
-                                font.pixelSize: Appearance.size.body
+                                color: netRow.isConnected ? Tokens.color.bright : Tokens.color.text
+                                font.family: Tokens.font.data
+                                font.pixelSize: Tokens.type.rowName.size
                                 elide: Text.ElideRight
                                 maximumLineCount: 1
                                 renderType: Text.NativeRendering
@@ -445,15 +440,15 @@ DropdownFrame {
                                 }
                                 color: {
                                     if (netRow.isConnected)
-                                        return Theme.accent;
+                                        return Tokens.color.accent;
                                     if (netRow.working)
-                                        return Theme.signal;
-                                    return Theme.dim;
+                                        return Tokens.color.signal;
+                                    return Tokens.color.dim;
                                 }
-                                font.family: Appearance.font.data
-                                font.pixelSize: Appearance.size.label
-                                font.weight: Appearance.font.weightSemi
-                                font.letterSpacing: Appearance.tracking(Appearance.size.label)
+                                font.family: Tokens.font.data
+                                font.pixelSize: Tokens.type.rowMeta.size
+                                font.weight: Tokens.font.dataWeight
+                                font.letterSpacing: Tokens.type.rowMeta.size * Tokens.type.rowMeta.tracking
                                 font.capitalization: Font.AllUppercase
                             }
 
@@ -502,15 +497,16 @@ DropdownFrame {
 
                             Behavior on opacity {
                                 NumberAnimation {
-                                    duration: netRow.expanded ? Appearance.duration.enter : Appearance.duration.exit
-                                    easing.type: netRow.expanded ? Easing.OutCubic : Easing.InCubic
+                                    duration: netRow.expanded ? Tokens.motion.panels : Tokens.motion.panels
+                                    easing.type: Easing.BezierSpline
+                                    easing.bezierCurve: netRow.expanded ? Tokens.motion.easeIn : Tokens.motion.easeOut
                                 }
                             }
 
-                            onVisibleChanged: if (!visible) netRow.detailRise = Appearance.enterRise
+                            onVisibleChanged: if (!visible) netRow.detailRise = Tokens.motion.rise
 
                             NrLabel {
-                                color: Theme.mute
+                                color: Tokens.color.mute
                                 text: {
                                     const parts = [`SIGNAL ${Math.round(netRow.modelData.signal)}%`];
                                     parts.push(netRow.secured ? "SECURED" : "OPEN");
@@ -569,41 +565,34 @@ DropdownFrame {
 
                     Rectangle {
                         width: parent.width
-                        height: Appearance.metrics.hairline
-                        color: Theme.hair
+                        height: Tokens.measure.hairline
+                        color: Tokens.color.hair
                     }
-                    Text {
-                        height: 28
-                        verticalAlignment: Text.AlignVCenter
-                        text: "TUNNEL // VPN"
-                        color: Theme.signal
-                        font.family: Appearance.font.data
-                        font.pixelSize: 10
-                        font.weight: Appearance.font.weightSemi
-                        font.letterSpacing: 10 * 0.14
-                        renderType: Text.NativeRendering
+                    UI.SectionLabel {
+                        bottomPadding: Tokens.space.s4
+                        text: "TUNNEL · VPN"
                     }
-                    // None configured: say so, and how to add one.
+                    // None configured: an EmptyState, and how to add one (secondary
+                    // body, sentence case).
                     Column {
                         visible: Radio.vpns.length === 0
                         width: parent.width
-                        spacing: 4
-                        bottomPadding: 6
-                        Text {
+                        spacing: Tokens.space.s4
+                        bottomPadding: Tokens.space.s6
+                        UI.EmptyState {
+                            width: parent.width
+                            implicitHeight: Tokens.measure.row
                             text: "NO VPNS SET UP"
-                            color: Theme.dim
-                            font.family: Appearance.font.data
-                            font.pixelSize: 10
-                            font.letterSpacing: 10 * 0.14
-                            renderType: Text.NativeRendering
                         }
                         Text {
+                            readonly property var role: Tokens.type.secondaryBody
                             width: parent.width
+                            horizontalAlignment: Text.AlignHCenter
                             elide: Text.ElideRight
-                            text: "Add one in NetworkManager: nm-connection-editor, or import a .conf / .ovpn file."
-                            color: Theme.dim
-                            font.family: Appearance.font.data
-                            font.pixelSize: 9
+                            text: "Add one in NetworkManager: nm-connection-editor, or import a .conf or .ovpn file."
+                            color: Tokens.color.dim
+                            font.family: role.family
+                            font.pixelSize: role.size
                             renderType: Text.NativeRendering
                         }
                     }
@@ -616,7 +605,7 @@ DropdownFrame {
                             required property var modelData
 
                             width: parent.width
-                            height: 34
+                            height: Tokens.measure.row
 
                             Row {
                                 anchors.left: parent.left
@@ -633,8 +622,8 @@ DropdownFrame {
                                     elide: Text.ElideRight
                                     text: vpnRow.modelData.name
                                     textFormat: Text.PlainText
-                                    color: vpnRow.modelData.up ? Theme.bright : Theme.text
-                                    font.family: Appearance.font.data
+                                    color: vpnRow.modelData.up ? Tokens.color.bright : Tokens.color.text
+                                    font.family: Tokens.font.data
                                     font.pixelSize: 12
                                     renderType: Text.NativeRendering
                                 }
@@ -643,8 +632,8 @@ DropdownFrame {
 
                                     anchors.verticalCenter: parent.verticalCenter
                                     text: vpnRow.modelData.type
-                                    color: Theme.dim
-                                    font.family: Appearance.font.data
+                                    color: Tokens.color.dim
+                                    font.family: Tokens.font.data
                                     font.pixelSize: 10
                                     font.letterSpacing: 10 * 0.1
                                     renderType: Text.NativeRendering
@@ -711,15 +700,17 @@ DropdownFrame {
 
             Behavior on slide {
                 NumberAnimation {
-                    duration: Appearance.duration.panel
-                    easing.type: Easing.OutCubic
+                    duration: Tokens.motion.panels
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: Tokens.motion.easeIn
                 }
             }
 
             Behavior on opacity {
                 NumberAnimation {
-                    duration: Appearance.duration.panel
-                    easing.type: Easing.OutCubic
+                    duration: Tokens.motion.panels
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: Tokens.motion.easeIn
                 }
             }
         }

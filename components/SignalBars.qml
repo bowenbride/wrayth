@@ -7,8 +7,8 @@ Row {
 
     // 0..100
     property real strength: 0
-    property color litColor: Theme.signal
-    property color unlitColor: Theme.track
+    property color litColor: Tokens.color.signal
+    property color unlitColor: Tokens.color.track
 
     readonly property int lit: Math.min(4, Math.max(0, Math.ceil(strength / 25)))
 

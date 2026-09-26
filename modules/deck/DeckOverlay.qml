@@ -90,7 +90,8 @@ Variants {
         screen: modelData
         color: "transparent"
         // Only on the monitor the deck is showing on.
-        visible: Deck.monitorName === modelData?.name
+        // Also while the shell prepares to open the deck here (Deck.toggle).
+        visible: Deck.monitorName === modelData?.name || Deck.preparing === modelData?.name
 
         WlrLayershell.layer: WlrLayer.Top
         WlrLayershell.namespace: "wrayth-deck"
@@ -212,6 +213,20 @@ Variants {
             function onRawEvent(event: HyprlandEvent): void {
                 if (event.name === "openwindow" && event.data.split(",")[2] === Deck.terminalClass)
                     place.restart();
+            }
+        }
+
+        // The first frame of this surface: the moment to let Hyprland open the
+        // special workspace, so the terminal fades in with the panels.
+        Item {
+            id: frameProbe
+        }
+        Connections {
+            target: frameProbe.Window.window
+            ignoreUnknownSignals: true
+            function onFrameSwapped(): void {
+                if (Deck.preparing === deck.modelData?.name)
+                    Deck.reveal();
             }
         }
 

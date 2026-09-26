@@ -13,8 +13,10 @@ DropdownFrame {
     // and under it the type, pairing and battery (18 px) -- so the battery reads
     // without opening anything. An open row gains its expansion (the quiet
     // FORGET and the full-width UNLINK) and the 14 px under it.
-    readonly property int rowHeight: 34
-    readonly property int secondLineHeight: 18
+    // DESIGN.md Row: one 32 px line -- the type and battery sit after the
+    // name as its meta, the state on the right.
+    readonly property int rowHeight: Tokens.measure.row
+    readonly property int secondLineHeight: 0
     readonly property int collapsedHeight: rowHeight + secondLineHeight
     readonly property int expansionHeight: 14 + 8 + 24
 
@@ -25,6 +27,8 @@ DropdownFrame {
     // The settings view slides in over the list, the same as Wi-Fi's. BACK and
     // Escape reverse it; the frame's height eases to whichever view is showing.
     property bool showSettings: false
+    // A sub-view carries its own title row (BackControl + Title).
+    showHeader: !showSettings
     readonly property bool canGoBack: showSettings
     function goBack(): void {
         root.showSettings = false;
@@ -70,7 +74,7 @@ DropdownFrame {
     readonly property int pairedCount: devices.filter(device => device.paired).length
     readonly property int linkedCount: devices.filter(device => device.connected).length
 
-    title: "LINK // BLUETOOTH"
+    title: "BLUETOOTH"
     katakana: "近距離"
 
     // **No adapter is not the same as an adapter that is off.** With nothing
@@ -127,8 +131,9 @@ DropdownFrame {
 
         Behavior on height {
             NumberAnimation {
-                duration: Appearance.duration.panel
-                easing.type: Easing.OutCubic
+                duration: Tokens.motion.panels
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Tokens.motion.easeIn
             }
         }
 
@@ -149,15 +154,17 @@ DropdownFrame {
 
             Behavior on slide {
                 NumberAnimation {
-                    duration: Appearance.duration.panel
-                    easing.type: Easing.OutCubic
+                    duration: Tokens.motion.panels
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: Tokens.motion.easeIn
                 }
             }
 
             Behavior on opacity {
                 NumberAnimation {
-                    duration: Appearance.duration.panel
-                    easing.type: Easing.OutCubic
+                    duration: Tokens.motion.panels
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: Tokens.motion.easeIn
                 }
             }
 
@@ -177,7 +184,7 @@ DropdownFrame {
             NrLabel {
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
-                text: `${root.pairedCount} PAIRED // ${root.linkedCount} LINKED`
+                text: `${root.pairedCount} PAIRED · ${root.linkedCount} LINKED`
             }
 
             Row {
@@ -248,14 +255,15 @@ DropdownFrame {
 
                 // The 8 px the expansion rises through as it fades in. A
                 // transform, so nothing around it re-lays out.
-                property real detailRise: Appearance.enterRise
+                property real detailRise: Tokens.motion.rise
 
                 onDetailRiseChanged: {}
 
                 Behavior on detailRise {
                     NumberAnimation {
-                        duration: Appearance.duration.enter
-                        easing.type: Easing.OutCubic
+                        duration: Tokens.motion.panels
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: Tokens.motion.easeIn
                     }
                 }
 
@@ -288,7 +296,7 @@ DropdownFrame {
 
                 Rectangle {
                     anchors.fill: parent
-                    color: row.linked ? Theme.alpha(Theme.accent, 0.06) : "transparent"
+                    color: row.linked ? Tokens.color.rowSelected : "transparent"
                 }
 
                 // 2 px accent left edge on the connected device, spanning both
@@ -298,7 +306,7 @@ DropdownFrame {
                     anchors.top: parent.top
                     width: 2
                     height: root.collapsedHeight
-                    color: Theme.accent
+                    color: Tokens.color.accent
                     visible: row.linked
                 }
 
@@ -328,26 +336,45 @@ DropdownFrame {
 
                         anchors.left: parent.left
                         anchors.verticalCenter: parent.verticalCenter
-                        color: row.linked ? Theme.accent : row.paired ? Theme.signal : Theme.mute
+                        color: row.linked ? Tokens.color.text : Tokens.color.dim
                     }
 
-                    Text {
+                    Row {
                         anchors.left: rune.right
-                        anchors.leftMargin: 8
+                        anchors.leftMargin: Tokens.space.s8
                         anchors.right: state.left
-                        anchors.rightMargin: 8
+                        anchors.rightMargin: Tokens.space.s8
                         anchors.verticalCenter: parent.verticalCenter
+                        spacing: Tokens.space.s8
+                        clip: true
 
                         // Masked for a recording; every action on this row
                         // still goes through `modelData.address`.
-                        text: Demo.device(row.modelData.name, row.index)
-                        textFormat: Text.PlainText
-                        color: row.linked ? Theme.bright : Theme.text
-                        font.family: Appearance.font.data
-                        font.pixelSize: Appearance.size.body
-                        elide: Text.ElideRight
-                        maximumLineCount: 1
-                        renderType: Text.NativeRendering
+                        Text {
+                            readonly property var role: Tokens.type.rowName
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: Math.min(implicitWidth, parent.width - meta.implicitWidth - parent.spacing)
+                            text: Demo.device(row.modelData.name, row.index)
+                            textFormat: Text.PlainText
+                            color: row.linked ? Tokens.color.bright : Tokens.color.text
+                            font.family: role.family
+                            font.pixelSize: role.size
+                            elide: Text.ElideRight
+                            maximumLineCount: 1
+                            renderType: Text.NativeRendering
+                        }
+                        // Its type, and the battery when the device reports one.
+                        Text {
+                            id: meta
+                            readonly property var role: Tokens.type.rowAfter
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: row.modelData.batteryAvailable ? `AUDIO · ${Math.round((row.modelData.battery ?? 0) * 100)}%` : "AUDIO"
+                            textFormat: Text.PlainText
+                            color: Tokens.color.dim
+                            font.family: role.family
+                            font.pixelSize: role.size
+                            renderType: Text.NativeRendering
+                        }
                     }
 
                     // **The row states its condition in plain text; the working
@@ -358,6 +385,9 @@ DropdownFrame {
                     NrLabel {
                         id: state
 
+                        // Row status: 9 px, 0.12em.
+                        pixelSize: Tokens.type.rowMeta.size
+                        font.letterSpacing: Tokens.type.rowMeta.size * Tokens.type.rowMeta.tracking
                         anchors.right: parent.right
                         anchors.rightMargin: 8
                         anchors.verticalCenter: parent.verticalCenter
@@ -371,16 +401,17 @@ DropdownFrame {
                         }
                         color: {
                             if (row.linked)
-                                return Theme.accent;
+                                return Tokens.color.accent;
                             if (row.working)
-                                return Theme.signal;
-                            return Theme.dim;
+                                return Tokens.color.signal;
+                            return Tokens.color.dim;
                         }
 
                         Behavior on color {
                             ColorAnimation {
-                                duration: Appearance.duration.state
-                                easing.type: Easing.OutCubic
+                                duration: Tokens.motion.feedback
+                                easing.type: Easing.BezierSpline
+                                easing.bezierCurve: Tokens.motion.easeIn
                             }
                         }
                     }
@@ -424,6 +455,7 @@ DropdownFrame {
                 Item {
                     id: secondLine
 
+                    visible: false
                     anchors.top: line.bottom
                     anchors.left: parent.left
                     anchors.right: parent.right
@@ -438,13 +470,13 @@ DropdownFrame {
 
                         NrLabel {
                             anchors.verticalCenter: parent.verticalCenter
-                            color: Theme.dim
+                            color: Tokens.color.dim
                             text: "AUDIO"
                         }
 
                         NrLabel {
                             anchors.verticalCenter: parent.verticalCenter
-                            color: Theme.text
+                            color: Tokens.color.text
                             text: row.paired ? "PAIRED" : "NOT PAIRED"
                         }
                     }
@@ -471,14 +503,14 @@ DropdownFrame {
                             segmentWidth: 4
                             segmentHeight: 8
                             value: row.modelData.battery
-                            litColor: Theme.signal
+                            litColor: Tokens.color.signal
                         }
 
                         NrLabel {
                             anchors.verticalCenter: parent.verticalCenter
                             width: batReserve.implicitWidth
                             horizontalAlignment: Text.AlignRight
-                            color: Theme.text
+                            color: Tokens.color.text
                             text: row.modelData.batteryAvailable ? Fmt.percent(row.modelData.battery * 100) : "--"
                         }
                     }
@@ -516,12 +548,13 @@ DropdownFrame {
 
                     Behavior on opacity {
                         NumberAnimation {
-                            duration: row.expanded ? Appearance.duration.enter : Appearance.duration.exit
-                            easing.type: row.expanded ? Easing.OutCubic : Easing.InCubic
+                            duration: row.expanded ? Tokens.motion.panels : Tokens.motion.panels
+                            easing.type: Easing.BezierSpline
+                            easing.bezierCurve: row.expanded ? Tokens.motion.easeIn : Tokens.motion.easeOut
                         }
                     }
 
-                    onVisibleChanged: if (!visible) row.detailRise = Appearance.enterRise
+                    onVisibleChanged: if (!visible) row.detailRise = Tokens.motion.rise
 
                     // The quiet way out, on its own line now that the type and
                     // battery live on the always-visible second line above.
@@ -554,20 +587,22 @@ DropdownFrame {
 
                             visible: opacity > 0
                             opacity: row.paired && !row.confirming ? 1 : 0
-                            color: forgetHover.hovered ? Theme.alert : Theme.dim
+                            color: forgetHover.hovered ? Tokens.color.alert : Tokens.color.dim
                             text: forgetAction.working ? "FORGETTING" : "FORGET"
 
                             Behavior on opacity {
                                 NumberAnimation {
-                                    duration: Appearance.duration.state
-                                    easing.type: Easing.OutCubic
+                                    duration: Tokens.motion.feedback
+                                    easing.type: Easing.BezierSpline
+                                    easing.bezierCurve: Tokens.motion.easeIn
                                 }
                             }
 
                             Behavior on color {
                                 ColorAnimation {
-                                    duration: Appearance.duration.state
-                                    easing.type: Easing.OutCubic
+                                    duration: Tokens.motion.feedback
+                                    easing.type: Easing.BezierSpline
+                                    easing.bezierCurve: Tokens.motion.easeIn
                                 }
                             }
 
@@ -602,8 +637,9 @@ DropdownFrame {
 
                             Behavior on opacity {
                                 NumberAnimation {
-                                    duration: Appearance.duration.state
-                                    easing.type: Easing.OutCubic
+                                    duration: Tokens.motion.feedback
+                                    easing.type: Easing.BezierSpline
+                                    easing.bezierCurve: Tokens.motion.easeIn
                                 }
                             }
 
@@ -623,8 +659,9 @@ DropdownFrame {
 
                             Behavior on opacity {
                                 NumberAnimation {
-                                    duration: Appearance.duration.state
-                                    easing.type: Easing.OutCubic
+                                    duration: Tokens.motion.feedback
+                                    easing.type: Easing.BezierSpline
+                                    easing.bezierCurve: Tokens.motion.easeIn
                                 }
                             }
 
@@ -633,7 +670,7 @@ DropdownFrame {
                                 anchors.right: answers.left
                                 anchors.rightMargin: 10
                                 anchors.verticalCenter: parent.verticalCenter
-                                color: Theme.alert
+                                color: Tokens.color.alert
                                 elide: Text.ElideRight
                                 // The device's name is on the line above this
                                 // one; repeating it here cost most of the line
@@ -659,7 +696,7 @@ DropdownFrame {
                                     anchors.verticalCenter: parent.verticalCenter
                                     text: "FORGET"
                                     accented: true
-                                    textColor: Theme.alert
+                                    textColor: Tokens.color.alert
 
                                     onClicked: {
                                         row.confirming = false;
@@ -686,7 +723,7 @@ DropdownFrame {
         NrLabel {
             width: parent.width
             visible: root.devices.length === 0
-            color: Theme.mute
+            color: Tokens.color.mute
             // Short enough to fit the panel. The first draft ran to "TURN
             // DISCOVERY ON TO FIND ONE" and elided at "TO FIN...", which is
             // worse than saying less.
@@ -730,15 +767,17 @@ DropdownFrame {
 
             Behavior on slide {
                 NumberAnimation {
-                    duration: Appearance.duration.panel
-                    easing.type: Easing.OutCubic
+                    duration: Tokens.motion.panels
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: Tokens.motion.easeIn
                 }
             }
 
             Behavior on opacity {
                 NumberAnimation {
-                    duration: Appearance.duration.panel
-                    easing.type: Easing.OutCubic
+                    duration: Tokens.motion.panels
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: Tokens.motion.easeIn
                 }
             }
         }

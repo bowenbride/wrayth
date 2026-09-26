@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell.Bluetooth
 import qs.components
+import qs.components.ui as UI
 import qs.config
 import qs.services
 import qs.utils
@@ -41,10 +42,19 @@ Item {
         spacing: 14
 
         // --- Back -----------------------------------------------------------
-        // Quiet, as every BACK inside a dropdown is.
-        QuietBack {
-            label: "BLUETOOTH"
-            onActivated: root.back()
+        // The sub-view's title row: the quiet BackControl, then its Title.
+        Row {
+            spacing: Tokens.space.s8
+            height: Tokens.measure.toggleHeight
+            UI.BackControl {
+                anchors.verticalCenter: parent.verticalCenter
+                destination: "BLUETOOTH"
+                onActivated: root.back()
+            }
+            UI.Title {
+                anchors.verticalCenter: parent.verticalCenter
+                text: "SETTINGS"
+            }
         }
 
         // --- The adapter ----------------------------------------------------
@@ -56,15 +66,15 @@ Item {
                 width: parent.width
                 renderType: Text.NativeRendering
                 text: root.hasAdapter ? root.adapter.name : "NO ADAPTER"
-                color: root.powered ? Theme.bright : Theme.dim
-                font.family: Appearance.font.display
+                color: root.powered ? Tokens.color.bright : Tokens.color.dim
+                font.family: Tokens.font.display
                 font.pixelSize: 16
-                font.weight: Appearance.font.weightBold
+                font.weight: Tokens.font.displayWeight
                 elide: Text.ElideRight
             }
 
             NrLabel {
-                color: root.powered ? Theme.accent : Theme.dim
+                color: root.powered ? Tokens.color.accent : Tokens.color.dim
                 text: root.powered ? "POWERED" : "OFF"
             }
         }
@@ -80,7 +90,7 @@ Item {
                 NrLabel {
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
-                    color: Theme.text
+                    color: Tokens.color.text
                     text: "DISCOVERABLE"
                 }
                 ToggleButton {
@@ -103,7 +113,7 @@ Item {
                     anchors.right: autoToggle.left
                     anchors.rightMargin: 10
                     anchors.verticalCenter: parent.verticalCenter
-                    color: Theme.text
+                    color: Tokens.color.text
                     elide: Text.ElideRight
                     text: "AUTO-CONNECT KNOWN DEVICES"
                 }
@@ -120,14 +130,14 @@ Item {
 
         Rectangle {
             width: parent.width
-            height: Appearance.metrics.hairline
-            color: Theme.hair
+            height: Tokens.measure.hairline
+            color: Tokens.color.hair
         }
 
         // --- Paired devices --------------------------------------------------
-        NrLabel {
-            color: Theme.bright
-            text: `PAIRED DEVICES${Appearance.separator}${root.pairedDevices.length}`
+        UI.SectionLabel {
+            topPadding: 0
+            text: `PAIRED DEVICES · ${root.pairedDevices.length}`
         }
 
         Column {
@@ -152,7 +162,7 @@ Item {
                         anchors.right: battery.left
                         anchors.rightMargin: 10
                         anchors.verticalCenter: parent.verticalCenter
-                        color: pairedRow.modelData.connected ? Theme.bright : Theme.text
+                        color: pairedRow.modelData.connected ? Tokens.color.bright : Tokens.color.text
                         elide: Text.ElideRight
                         text: Demo.device(pairedRow.modelData.name, pairedRow.index)
                     }
@@ -165,7 +175,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         width: batReserve.implicitWidth
                         horizontalAlignment: Text.AlignRight
-                        color: Theme.dim
+                        color: Tokens.color.dim
                         text: pairedRow.modelData.batteryAvailable ? Fmt.percent(pairedRow.modelData.battery * 100) : "--"
                     }
 
@@ -189,13 +199,14 @@ Item {
                         width: forgetReserve.implicitWidth
                         horizontalAlignment: Text.AlignRight
 
-                        color: pairedRow.confirming || forgetHover.hovered ? Theme.alert : Theme.dim
+                        color: pairedRow.confirming || forgetHover.hovered ? Tokens.color.alert : Tokens.color.dim
                         text: pairedRow.confirming ? "CONFIRM?" : "FORGET"
 
                         Behavior on color {
                             ColorAnimation {
-                                duration: Appearance.duration.state
-                                easing.type: Easing.OutCubic
+                                duration: Tokens.motion.feedback
+                                easing.type: Easing.BezierSpline
+                                easing.bezierCurve: Tokens.motion.easeIn
                             }
                         }
 
@@ -227,15 +238,15 @@ Item {
 
             NrLabel {
                 visible: root.pairedDevices.length === 0
-                color: Theme.mute
+                color: Tokens.color.mute
                 text: "NONE PAIRED"
             }
         }
 
         Rectangle {
             width: parent.width
-            height: Appearance.metrics.hairline
-            color: Theme.hair
+            height: Tokens.measure.hairline
+            color: Tokens.color.hair
         }
 
         // --- Scan for devices ------------------------------------------------
@@ -245,7 +256,7 @@ Item {
             NrLabel {
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
-                color: Theme.text
+                color: Tokens.color.text
                 text: "SCAN FOR DEVICES"
             }
             ToggleButton {
@@ -283,7 +294,7 @@ Item {
                         anchors.right: pairButton.left
                         anchors.rightMargin: 10
                         anchors.verticalCenter: parent.verticalCenter
-                        color: Theme.text
+                        color: Tokens.color.text
                         elide: Text.ElideRight
                         text: Demo.device(nearbyRow.modelData.name, nearbyRow.index)
                     }
@@ -304,7 +315,7 @@ Item {
 
             NrLabel {
                 visible: root.nearbyDevices.length === 0
-                color: Theme.mute
+                color: Tokens.color.mute
                 text: (root.adapter?.discovering ?? false) ? "SCANNING..." : "SCAN TO FIND DEVICES"
             }
         }

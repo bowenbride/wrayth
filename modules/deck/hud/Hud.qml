@@ -28,7 +28,7 @@ ChamferPanel {
     readonly property int detailIndex: Daemons.selected.indexOf(Daemons.expanded)
 
     chamfer: Appearance.chamfer.hud
-    fillColor: Theme.panel
+    fillColor: Tokens.color.panel
 
     CornerBrackets {
         inset: 6
@@ -74,7 +74,9 @@ ChamferPanel {
                 id: diagTitle
 
                 text: "SYS.DIAG"
-                pixelSize: 28
+                // The panel-title role (DESIGN.md): 20 px, 0.10em.
+                pixelSize: Tokens.type.panelTitle.size
+                tracking: Tokens.type.panelTitle.tracking
             }
 
             KanaTag {
@@ -96,13 +98,13 @@ ChamferPanel {
             Row {
                 spacing: 6
                 NrLabel { text: "HOST" }
-                NrLabel { color: Theme.text; text: Demo.host(Machine.hostname) }
+                NrLabel { color: Tokens.color.text; text: Demo.host(Machine.hostname) }
             }
 
             Row {
                 spacing: 6
                 NrLabel { text: "UPLINK" }
-                NrLabel { color: Theme.text; text: SystemStatus.ssid ? Demo.ssid(SystemStatus.ssid).toUpperCase() : "OFFLINE" }
+                NrLabel { color: Tokens.color.text; text: SystemStatus.ssid ? Demo.ssid(SystemStatus.ssid).toUpperCase() : "OFFLINE" }
             }
         }
 
@@ -118,8 +120,8 @@ ChamferPanel {
 
         Rectangle {
             width: parent.width
-            height: Appearance.metrics.hairline
-            color: Theme.hair
+            height: Tokens.measure.hairline
+            color: Tokens.color.hair
         }
 
         // Opens the profile picker. The spec gives the picker no keybind of its
@@ -131,8 +133,8 @@ ChamferPanel {
             NrLabel {
                 id: profile
 
-                text: `PROFILE${Appearance.separator}${Theme.profile.toUpperCase()}`
-                color: hover.hovered ? Theme.bright : Theme.dim
+                text: `PROFILE  ${Theme.profile.toUpperCase()}`
+                color: hover.hovered ? Tokens.color.bright : Tokens.color.dim
             }
 
             HoverHandler {
@@ -148,7 +150,8 @@ ChamferPanel {
 
         // --- CPU -----------------------------------------------------------
         HudSection {
-            label: `CPU${Appearance.separator}${Machine.cpuModel}`
+            label: "CPU"
+            value: Machine.cpuModel
 
             Column {
                 width: parent.width
@@ -209,7 +212,8 @@ ChamferPanel {
         HudSection {
             // Fmt.gib's decimals argument is typed, so leaving it out passes 0
             // rather than the default -- hence the explicit 1.
-            label: `MEM${Appearance.separator}${Fmt.gib(DeckData.memUsedGib, 1)} / ${Fmt.gib(DeckData.memTotalGib, 1)} GB`
+            label: "MEM"
+            value: `${Fmt.gib(DeckData.memUsedGib, 1)} / ${Fmt.gib(DeckData.memTotalGib, 1)} GB`
             trailing: Fmt.percent(DeckData.memPercent)
 
             Column {
@@ -233,7 +237,8 @@ ChamferPanel {
 
         // --- NET -----------------------------------------------------------
         HudSection {
-            label: `NET${Appearance.separator}${Machine.netInterface}`
+            label: "NET"
+            value: Machine.netInterface
 
             Column {
                 width: parent.width
@@ -257,7 +262,7 @@ ChamferPanel {
                         label: "▲ UP"
                         valueReserve: "999.9 KB/s"
                         value: Fmt.rateLong(DeckData.netTxRate)
-                        valueColor: Theme.accent
+                        valueColor: Tokens.color.accent
                     }
 
                     Readout {
@@ -265,7 +270,7 @@ ChamferPanel {
                         label: "▼ DOWN"
                         valueReserve: "999.9 KB/s"
                         value: Fmt.rateLong(DeckData.netRxRate)
-                        valueColor: Theme.signal
+                        valueColor: Tokens.color.signal
                     }
                 }
             }
@@ -277,7 +282,8 @@ ChamferPanel {
         HudSection {
             id: daemonSection
 
-            label: `DAEMONS${Appearance.separator}LOADED`
+            // The one // in the deck (DESIGN.md).
+            label: "DAEMONS // LOADED"
             katakana: "常駐"
             headingClickable: true
             onHeadingClicked: ShellState.openExclusive("daemons")
@@ -290,8 +296,9 @@ ChamferPanel {
 
             Behavior on opacity {
                 NumberAnimation {
-                    duration: root.detailActive ? Appearance.duration.exit : Appearance.duration.enter
-                    easing.type: root.detailActive ? Easing.InCubic : Easing.OutCubic
+                    duration: root.detailActive ? Tokens.motion.panels : Tokens.motion.panels
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: root.detailActive ? Tokens.motion.easeOut : Tokens.motion.easeIn
                 }
             }
 
@@ -329,8 +336,9 @@ ChamferPanel {
 
         Behavior on opacity {
             NumberAnimation {
-                duration: root.detailActive ? Appearance.duration.exit : Appearance.duration.enter
-                easing.type: root.detailActive ? Easing.InCubic : Easing.OutCubic
+                duration: root.detailActive ? Tokens.motion.panels : Tokens.motion.panels
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: root.detailActive ? Tokens.motion.easeOut : Tokens.motion.easeIn
             }
         }
     }
@@ -356,8 +364,9 @@ ChamferPanel {
 
         Behavior on opacity {
             NumberAnimation {
-                duration: root.detailActive ? Appearance.duration.enter : Appearance.duration.exit
-                easing.type: root.detailActive ? Easing.OutCubic : Easing.InCubic
+                duration: root.detailActive ? Tokens.motion.panels : Tokens.motion.panels
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: root.detailActive ? Tokens.motion.easeIn : Tokens.motion.easeOut
             }
         }
 
@@ -368,8 +377,9 @@ ChamferPanel {
 
         Behavior on nameRise {
             NumberAnimation {
-                duration: Appearance.duration.move
-                easing.type: root.detailActive ? Easing.OutCubic : Easing.InCubic
+                duration: Tokens.motion.movement
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: root.detailActive ? Tokens.motion.easeIn : Tokens.motion.easeOut
             }
         }
 
@@ -382,18 +392,19 @@ ChamferPanel {
             anchors.top: parent.top
             renderType: Text.NativeRendering
             text: root.detailEntry.name
-            color: Theme.bright
-            font.family: Appearance.font.display
+            color: Tokens.color.bright
+            font.family: Tokens.font.display
             font.pixelSize: 16
-            font.weight: Appearance.font.weightBold
+            font.weight: Tokens.font.displayWeight
             transformOrigin: Item.Left
 
             scale: root.detailActive ? 1 : 0.7
 
             Behavior on scale {
                 NumberAnimation {
-                    duration: Appearance.duration.move
-                    easing.type: root.detailActive ? Easing.OutCubic : Easing.InCubic
+                    duration: Tokens.motion.movement
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: root.detailActive ? Tokens.motion.easeIn : Tokens.motion.easeOut
                 }
             }
 

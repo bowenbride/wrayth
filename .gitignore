@@ -1,37 +1,17 @@
-# Runtime files -- written by wrayth or the installer, never source.
-# wrayth keeps its settings, state and caches in ~/.config/wrayth,
-# ~/.local/state/wrayth and ~/.cache/wrayth; these cover anything that could
-# ever land inside the checkout instead.
-
-# Generated per profile by wrayth-profile.
+# Generated per profile by wrayth-profile, not source.
 external/wrayth-colors.conf
-*.raw
-
-# Python byte-code from the helpers.
-__pycache__/
-*.pyc
-
-# The installer's and helpers' backups and temporary files.
-*.wrayth-backup-*
-*.wrayth-removed-*
-*.tmp
-*.orig
-*.rej
-
-# Local notes and QA output that belong to a working copy, not the project.
-SPEC.md
-scratchpad/
-*.log
-*.ppm
-*.mkv
 
 # Editor and OS noise.
 *.swp
-*~
 .DS_Store
-.qmlls.ini
-.vscode/
-.idea/
+
+# QA captures. The scripts under scratchpad/qa/ are source; what they capture
+# never is -- every frame is deleted as soon as it has been checked.
+scratchpad/qa/*.ppm
+scratchpad/qa/*.png
+scratchpad/qa/*.log
+scratchpad/qa/*.orig
+scratchpad/qa/*.keep
 
 # Private: the style guide and the instructions for sessions. Never committed,
 # never pushed, never part of the release.

@@ -58,7 +58,7 @@ Singleton {
     // each ship a pre-generated PNG inside the shell (assets/wallpapers/), so a
     // fresh install shows the right image before the user has picked a wallpaper
     // folder or generation has run. Returns "" for a custom profile -- those
-    // render on the solid Theme.deep until they are generated.
+    // render on the solid Tokens.color.deep until they are generated.
     function presetAsset(name: string): url {
         if (Profiles.presetNames.indexOf(name) < 0)
             return "";
@@ -171,7 +171,7 @@ Singleton {
     // When the library file is not available yet (no folder on a fresh install,
     // or the PNG not generated), a preset profile falls back to its bundled
     // wallpaper so first boot is never a flat colour; a custom profile stays
-    // empty and shows the solid Theme.deep.
+    // empty and shows the solid Tokens.color.deep.
     readonly property url displayed: {
         if (!root.dynamic)
             return lockedFile ? Paths.url(lockedFile) : root.presetAsset(Theme.profile);
@@ -184,7 +184,7 @@ Singleton {
     // The pool's own FADE where the user has set one; otherwise the shared
     // scale's wallpaper figure. 1.5 s used to be the default, which is nearly
     // twice what every other cross-fade in the shell runs at.
-    readonly property int fadeDuration: Math.max(120, Math.round((root.poolFor(Theme.profile).fade ?? Appearance.duration.wallpaper / 1000) * 1000))
+    readonly property int fadeDuration: Math.max(120, Math.round((root.poolFor(Theme.profile).fade ?? Tokens.motion.wallpaper / 1000) * 1000))
 
     function setDynamic(on: bool): void {
         if (on === dynamic)

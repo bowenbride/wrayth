@@ -19,7 +19,7 @@ Item {
 
     property string text: ""
     property Item title: null
-    property color color: Theme.signal
+    property color color: Tokens.color.signal
     property real pixelSize: Appearance.size.katakana
     // With no title: centre the tag's own ink on its line (the bar's ticker
     // tag), instead of leaving it where its box puts it (a tag on a line of

@@ -84,8 +84,8 @@ Item {
 
         Rectangle {
             anchors.fill: parent
-            color: dg.held ? Theme.alpha(Theme.accent, 0.12)
-                : (dg.isActive ? Theme.alpha(Theme.accent, 0.06) : "transparent")
+            color: dg.held ? Tokens.color.accentTint
+                : (dg.isActive ? Theme.alpha(Tokens.color.accent, 0.06) : "transparent")
         }
 
         // --- Grip -----------------------------------------------------------
@@ -115,7 +115,7 @@ Item {
                                 width: 2
                                 height: 2
                                 radius: 0
-                                color: dragArea.containsMouse || dg.held ? Theme.text : Theme.mute
+                                color: dragArea.containsMouse || dg.held ? Tokens.color.text : Tokens.color.mute
                             }
                         }
                     }
@@ -167,14 +167,14 @@ Item {
             textFormat: Text.PlainText
             color: {
                 if (dg.isDone)
-                    return Theme.mute;
+                    return Tokens.color.mute;
                 if (dg.isActive)
-                    return Theme.bright;
+                    return Tokens.color.bright;
                 if (dg.model.status === "NEXT")
-                    return Theme.text;
-                return Theme.dim;
+                    return Tokens.color.text;
+                return Tokens.color.dim;
             }
-            font.family: Appearance.font.data
+            font.family: Tokens.font.data
             font.pixelSize: Appearance.size.body
             font.strikeout: dg.isDone
             elide: Text.ElideRight
@@ -195,7 +195,7 @@ Item {
             anchors.right: status.left
             anchors.rightMargin: 10
             anchors.verticalCenter: parent.verticalCenter
-            color: Theme.mute
+            color: Tokens.color.mute
             text: dg.model.tag
         }
 
@@ -221,16 +221,16 @@ Item {
             text: dg.model.status
             color: {
                 if (dg.isActive)
-                    return Theme.accent;
+                    return Tokens.color.accent;
                 if (dg.isDone)
-                    return Theme.mute;
+                    return Tokens.color.mute;
                 if (dg.model.status === "NEXT")
-                    return Theme.text;
-                return Theme.dim;
+                    return Tokens.color.text;
+                return Tokens.color.dim;
             }
-            font.family: Appearance.font.data
+            font.family: Tokens.font.data
             font.pixelSize: Appearance.size.label
-            font.weight: Appearance.font.weightSemi
+            font.weight: Tokens.font.dataWeight
             font.letterSpacing: Appearance.tracking(Appearance.size.label)
             font.capitalization: Font.AllUppercase
             renderType: Text.NativeRendering
@@ -247,13 +247,14 @@ Item {
 
             MinusGlyph {
                 anchors.centerIn: parent
-                color: minusArea.containsMouse ? Theme.alert : Theme.mute
+                color: minusArea.containsMouse ? Tokens.color.alert : Tokens.color.mute
                 opacity: rowHover.hovered || minusArea.containsMouse ? 1 : 0.4
 
                 Behavior on opacity {
                     NumberAnimation {
-                        duration: Appearance.duration.state
-                        easing.type: Easing.OutCubic
+                        duration: Tokens.motion.feedback
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: Tokens.motion.easeIn
                     }
                 }
             }

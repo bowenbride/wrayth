@@ -7,7 +7,7 @@ import qs.config
 Item {
     id: root
 
-    property color fillColor: Theme.accent
+    property color fillColor: Tokens.color.accent
     property real slant: 14
     default property alias content: holder.data
 

@@ -27,7 +27,7 @@ case "${1:-}" in
     session)
         n=$(cat "$state/session" 2> /dev/null)
         case $n in '' | *[!0-9]*) n=1 ;; esac
-        printf '%02d // LOCAL LAB' "$n"
+        printf '%02d · LOCAL LAB' "$n"
         ;;
     profile)
         printf '%s' "$(printf '%s' "$PROFILE" | tr '[:lower:]' '[:upper:]')"
@@ -48,7 +48,7 @@ case "${1:-}" in
         # (accent) -- a check that could not read the state is not an open box.
         if [ "$SHIELD" = ARMED ]; then
             if [ -n "$SHIELD_FW" ]; then
-                printf '%sARMED // %s%s' "$signal" "$(printf '%s' "$SHIELD_FW" | tr '[:lower:]' '[:upper:]')" "$off"
+                printf '%sARMED · %s%s' "$signal" "$(printf '%s' "$SHIELD_FW" | tr '[:lower:]' '[:upper:]')" "$off"
             else
                 printf '%sARMED%s' "$signal" "$off"
             fi
@@ -60,7 +60,7 @@ case "${1:-}" in
         ;;
     ice)
         if [ "${ICE:-0}" -gt 0 ]; then
-            printf '%sBREACH // %s FAILED%s' "$accent" "$ICE" "$off"
+            printf '%sBREACH · %s FAILED%s' "$accent" "$ICE" "$off"
         else
             printf '%sNOMINAL%s' "$signal" "$off"
         fi

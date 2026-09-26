@@ -180,7 +180,7 @@ Singleton {
                     continue;
                 found.push({
                     kind: "profile",
-                    name: `PROFILE${Appearance.separator}${name.toUpperCase()}`,
+                    name: `PROFILE ${name.toUpperCase()}`,
                     tag: "PROFILE",
                     points: points + 4,
                     uses: 0,

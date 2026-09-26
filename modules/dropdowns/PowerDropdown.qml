@@ -1,5 +1,6 @@
 import QtQuick
 import qs.components
+import qs.components.ui as UI
 import qs.config
 import qs.services
 import qs.utils
@@ -26,12 +27,12 @@ DropdownFrame {
     // Anything "not installed" is asked again as the dropdown opens.
     Component.onCompleted: NightLight.recheck()
 
-    title: "PWR // PROFILE"
-    katakana: "電力"
+    title: "POWER"
+    katakana: "電源"
 
     headerRight: NrLabel {
-        text: `${Power.onBattery ? "BATTERY" : "AC"} // ${Power.stateLabel()}`
-        color: Theme.text
+        text: `${Power.onBattery ? "BATTERY" : "AC"} · ${Power.stateLabel()}`
+        color: Tokens.color.text
     }
 
     Column {
@@ -51,17 +52,17 @@ DropdownFrame {
                 anchors.verticalCenter: parent.verticalCenter
 
                 text: Power.present ? `${Math.round(Power.charge)}%` : "--"
-                color: Theme.bright
-                font.family: Appearance.font.display
+                color: Tokens.color.bright
+                font.family: Tokens.font.display
                 font.pixelSize: 38
-                font.weight: Appearance.font.weightBold
+                font.weight: Tokens.font.displayWeight
             }
 
             NrLabel {
                 anchors.left: charge.right
                 anchors.leftMargin: 12
                 anchors.verticalCenter: parent.verticalCenter
-                text: `BATTERY // ${Power.stateLabel()}`
+                text: `BATTERY · ${Power.stateLabel()}`
             }
         }
 
@@ -72,7 +73,7 @@ DropdownFrame {
             segmentWidth: (parent.width - 19 * 2) / 20
             segmentHeight: 8
             value: Power.charge / 100
-            litColor: Theme.signal
+            litColor: Tokens.color.signal
         }
 
         // --- Profile tiles -------------------------------------------------
@@ -94,20 +95,22 @@ DropdownFrame {
                     height: 52
                     opacity: available ? 1 : 0.4
 
-                    color: selected ? Theme.alpha(Theme.accent, 0.12) : "transparent"
-                    border.width: Appearance.metrics.hairline
-                    border.color: selected ? Theme.accent : Theme.hair
+                    color: selected ? Tokens.color.accentTint : "transparent"
+                    border.width: Tokens.measure.hairline
+                    border.color: selected ? Tokens.color.accent : Tokens.color.hair
 
                     Behavior on color {
                         ColorAnimation {
-                            duration: Appearance.duration.state
-                            easing.type: Easing.OutCubic
+                            duration: Tokens.motion.feedback
+                            easing.type: Easing.BezierSpline
+                            easing.bezierCurve: Tokens.motion.easeIn
                         }
                     }
                     Behavior on border.color {
                         ColorAnimation {
-                            duration: Appearance.duration.state
-                            easing.type: Easing.OutCubic
+                            duration: Tokens.motion.feedback
+                            easing.type: Easing.BezierSpline
+                            easing.bezierCurve: Tokens.motion.easeIn
                         }
                     }
 
@@ -119,11 +122,11 @@ DropdownFrame {
                             renderType: Text.NativeRendering
                             anchors.horizontalCenter: parent.horizontalCenter
                             text: tile.modelData.label
-                            color: tile.selected ? Theme.accent : Theme.text
-                            font.family: Appearance.font.data
-                            font.pixelSize: Appearance.size.label
-                            font.weight: Appearance.font.weightSemi
-                            font.letterSpacing: Appearance.tracking(Appearance.size.label)
+                            color: tile.selected ? Tokens.color.accent : Tokens.color.text
+                            font.family: Tokens.font.data
+                            font.pixelSize: Tokens.type.chip.size
+                            font.weight: Tokens.font.dataWeight
+                            font.letterSpacing: Tokens.type.chip.size * Tokens.type.chip.tracking
                             font.capitalization: Font.AllUppercase
                         }
 
@@ -176,8 +179,8 @@ DropdownFrame {
             // --- NIGHT LIGHT -----------------------------------------------------
         Rectangle {
             width: parent.width
-            height: Appearance.metrics.hairline
-            color: Theme.hair
+            height: Tokens.measure.hairline
+            color: Tokens.color.hair
         }
 
         Column {
@@ -197,16 +200,11 @@ DropdownFrame {
                 width: parent.width
                 height: 22
 
-                Text {
+                UI.SectionLabel {
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
+                    topPadding: 0
                     text: "NIGHT LIGHT"
-                    color: Theme.bright
-                    font.family: Appearance.font.data
-                    font.pixelSize: 12
-                    font.weight: Appearance.font.weightSemi
-                    font.letterSpacing: 12 * 0.14
-                    renderType: Text.NativeRendering
                 }
                 Text {
                     anchors.right: nightToggle.left
@@ -214,8 +212,8 @@ DropdownFrame {
                     anchors.verticalCenter: parent.verticalCenter
                     visible: !NightLight.available
                     text: "HYPRSUNSET NOT INSTALLED"
-                    color: Theme.dim
-                    font.family: Appearance.font.data
+                    color: Tokens.color.dim
+                    font.family: Tokens.font.data
                     font.pixelSize: 9
                     font.letterSpacing: 9 * 0.12
                     renderType: Text.NativeRendering
@@ -237,18 +235,13 @@ DropdownFrame {
                 width: parent.width
                 height: 14
 
-                Text {
+                UI.Label {
                     id: warmthLabel
 
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
                     width: 62
                     text: "WARMTH"
-                    color: Theme.dim
-                    font.family: Appearance.font.data
-                    font.pixelSize: 9
-                    font.letterSpacing: 9 * 0.12
-                    renderType: Text.NativeRendering
                 }
                 Row {
                     id: warmthSegs
@@ -269,12 +262,13 @@ DropdownFrame {
                             required property int index
                             width: warmthSegs.seg
                             height: 12
-                            color: index < warmthSegs.lit ? night.warm(index) : Theme.track
+                            color: index < warmthSegs.lit ? night.warm(index) : Tokens.color.track
                             opacity: NightLight.on ? 1 : 0.5
                             Behavior on color {
                                 ColorAnimation {
-                                    duration: Appearance.duration.state
-                                    easing.type: Easing.OutCubic
+                                    duration: Tokens.motion.feedback
+                                    easing.type: Easing.BezierSpline
+                                    easing.bezierCurve: Tokens.motion.easeIn
                                 }
                             }
                         }
@@ -307,10 +301,10 @@ DropdownFrame {
                     width: 44
                     horizontalAlignment: Text.AlignRight
                     text: `${NightLight.kelvin}K`
-                    color: Theme.text
-                    font.family: Appearance.font.data
+                    color: Tokens.color.text
+                    font.family: Tokens.font.data
                     font.pixelSize: 10
-                    font.features: Appearance.tabularFigures
+                    font.features: ({ "tnum": 1 })
                     renderType: Text.NativeRendering
                 }
             }
@@ -320,18 +314,13 @@ DropdownFrame {
                 width: parent.width
                 height: 22
 
-                Text {
+                UI.Label {
                     id: schedLabel
 
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
                     width: 62
                     text: "SCHEDULE"
-                    color: Theme.dim
-                    font.family: Appearance.font.data
-                    font.pixelSize: 9
-                    font.letterSpacing: 9 * 0.12
-                    renderType: Text.NativeRendering
                 }
                 Row {
                     anchors.left: schedLabel.right
@@ -341,37 +330,11 @@ DropdownFrame {
                     Repeater {
                         model: [["manual", "MANUAL"], ["times", "SET TIMES"]]
 
-                        Rectangle {
-                            id: chip
-
+                        UI.Chip {
                             required property var modelData
-                            readonly property bool selected: NightLight.schedule === modelData[0]
-
-                            width: chipText.implicitWidth + 20
-                            height: 22
-                            color: selected ? Theme.alpha(Theme.accent, 0.12) : (chipHover.hovered ? Theme.cell : "transparent")
-                            border.width: 1
-                            border.color: selected ? Theme.accent : Theme.hair
-
-                            Text {
-                                id: chipText
-
-                                anchors.centerIn: parent
-                                text: chip.modelData[1]
-                                color: chip.selected ? Theme.accent : Theme.text
-                                font.family: Appearance.font.data
-                                font.pixelSize: 9
-                                font.weight: Appearance.font.weightSemi
-                                font.letterSpacing: 9 * 0.12
-                                renderType: Text.NativeRendering
-                            }
-                            HoverHandler {
-                                id: chipHover
-                                cursorShape: Qt.PointingHandCursor
-                            }
-                            TapHandler {
-                                onTapped: NightLight.setSchedule(chip.modelData[0])
-                            }
+                            text: modelData[1]
+                            selected: NightLight.schedule === modelData[0]
+                            onClicked: NightLight.setSchedule(modelData[0])
                         }
                     }
                 }
@@ -403,8 +366,8 @@ DropdownFrame {
                             Text {
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: field.modelData[0]
-                                color: Theme.dim
-                                font.family: Appearance.font.data
+                                color: Tokens.color.dim
+                                font.family: Tokens.font.data
                                 font.pixelSize: 9
                                 font.letterSpacing: 9 * 0.12
                                 renderType: Text.NativeRendering
@@ -419,7 +382,7 @@ DropdownFrame {
                                 maximumLength: 5
                                 placeholder: "HH:MM"
                                 text: NightLight[field.modelData[1]]
-                                frameColor: bad ? Theme.alert : (editing ? Theme.accent : Theme.hair)
+                                frameColor: bad ? Tokens.color.alert : (editing ? Tokens.color.accent : Tokens.color.hair)
                                 onEdited: v => bad = v.length === 5 && !NightLight.validTime(v)
                                 onAccepted: commit()
                                 onEditingChanged: if (!editing) commit()

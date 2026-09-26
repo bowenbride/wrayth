@@ -18,7 +18,7 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        color: root.selected ? Theme.alpha(Theme.accent, 0.12) : "transparent"
+        color: root.selected ? Tokens.color.accentTint : "transparent"
     }
 
     Rectangle {
@@ -26,7 +26,7 @@ Item {
         anchors.top: parent.top
         anchors.bottom: parent.bottom
         width: 2
-        color: Theme.accent
+        color: Tokens.color.accent
         visible: root.selected
     }
 
@@ -36,7 +36,7 @@ Item {
         anchors.left: parent.left
         anchors.leftMargin: 14
         anchors.verticalCenter: parent.verticalCenter
-        color: root.selected ? Theme.accent : Theme.mute
+        color: root.selected ? Tokens.color.accent : Tokens.color.mute
         text: Fmt.pad2(root.index + 1)
     }
 
@@ -51,16 +51,16 @@ Item {
 
         chamfer: 5
         // Filled accent when selected, so the letters read as cut out of it.
-        fillColor: root.selected ? Theme.accent : Theme.cell
-        borderColor: root.selected ? Theme.accent : Theme.hair
+        fillColor: root.selected ? Tokens.color.accent : Theme.cell
+        borderColor: root.selected ? Tokens.color.accent : Tokens.color.hair
 
         // Two letters, never an icon: the mockup has no icons here.
         Text {
             anchors.centerIn: parent
 
             text: root.result.name.replace(/[^A-Za-z0-9]/g, "").slice(0, 2).toUpperCase()
-            color: root.selected ? Theme.ground : Theme.dim
-            font.family: Appearance.font.data
+            color: root.selected ? Tokens.color.ground : Tokens.color.dim
+            font.family: Tokens.font.data
             font.pixelSize: 10
             font.weight: Appearance.font.weightBold
             renderType: Text.NativeRendering
@@ -75,8 +75,8 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
 
         text: root.result.name
-        color: root.selected ? Theme.bright : Theme.text
-        font.family: Appearance.font.data
+        color: root.selected ? Tokens.color.bright : Tokens.color.text
+        font.family: Tokens.font.data
         font.pixelSize: Appearance.size.body
         elide: Text.ElideRight
         maximumLineCount: 1
@@ -89,7 +89,7 @@ Item {
         anchors.right: exec.left
         anchors.rightMargin: 12
         anchors.verticalCenter: parent.verticalCenter
-        color: Theme.mute
+        color: Tokens.color.mute
         text: root.result.tag
     }
 
@@ -107,14 +107,14 @@ Item {
 
         NrLabel {
             anchors.verticalCenter: parent.verticalCenter
-            color: Theme.accent
+            color: Tokens.color.accent
             text: "EXEC"
         }
 
         Keycap {
             anchors.verticalCenter: parent.verticalCenter
             key: "ENTER"
-            color: Theme.accent
+            color: Tokens.color.accent
         }
     }
 

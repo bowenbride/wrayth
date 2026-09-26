@@ -1,29 +1,41 @@
 import QtQuick
-import qs.components
+import qs.components as C
+import qs.components.ui
 import qs.config
 import qs.services
 import qs.utils
 
+// CPU (DESIGN.md): Label, then Value, the value's slot as wide as its
+// widest possible value (100%).
 Row {
-    spacing: 7
+    spacing: Tokens.space.s8
 
-    NrLabel {
+    Label {
         anchors.verticalCenter: parent.verticalCenter
+        bar: true
         text: "CPU"
     }
-
-    SegmentMeter {
+    // The small meter, as built before the style pass (DESIGN.md).
+    C.SegmentMeter {
         anchors.verticalCenter: parent.verticalCenter
-        segments: Appearance.metrics.meterSegments
-        segmentWidth: Appearance.metrics.meterSegmentWidth
-        segmentHeight: Appearance.metrics.meterSegmentHeight
+        segments: Tokens.measure.barMeterSegments
+        segmentWidth: Tokens.measure.barMeterSegmentWidth
+        segmentHeight: Tokens.measure.barMeterSegmentHeight
         value: SysInfo.cpuPercent / 100
-        litColor: Theme.signal
+        litColor: Tokens.color.signal
     }
 
-    Slot {
+    Value {
         anchors.verticalCenter: parent.verticalCenter
-        implicitWidth: Appearance.slot.percent
+        bar: true
+        width: widest.width
+        horizontalAlignment: Text.AlignRight
         text: Fmt.percent(SysInfo.cpuPercent)
+
+        TextMetrics {
+            id: widest
+            font: parent.font
+            text: "100%"
+        }
     }
 }

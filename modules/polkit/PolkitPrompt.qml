@@ -98,8 +98,8 @@ Variants {
             width: 560
             height: column.implicitHeight + 36
             chamfer: Appearance.chamfer.panel
-            fillColor: Theme.panel2
-            borderColor: surface.flow?.failed ? Theme.accent : Theme.hair
+            fillColor: Tokens.color.panel2
+            borderColor: surface.flow?.failed ? Tokens.color.accent : Tokens.color.hair
 
             Column {
                 id: column
@@ -126,7 +126,7 @@ Variants {
 
                             anchors.verticalCenter: parent.verticalCenter
                             pixelSize: Appearance.size.label + 2
-                            color: Theme.bright
+                            color: Tokens.color.bright
                             text: "ADMIN ACCESS"
                         }
                         KanaTag {
@@ -145,8 +145,8 @@ Variants {
                     elide: Text.ElideRight
                     textFormat: Text.PlainText
                     text: surface.flow?.message ?? ""
-                    color: Theme.bright
-                    font.family: Appearance.font.data
+                    color: Tokens.color.bright
+                    font.family: Tokens.font.data
                     font.pixelSize: 13
                     renderType: Text.NativeRendering
                 }
@@ -175,7 +175,7 @@ Variants {
                                 anchors.left: parent.left
                                 anchors.verticalCenter: parent.verticalCenter
                                 width: 84
-                                color: Theme.dim
+                                color: Tokens.color.dim
                                 text: modelData.label
                             }
                             Text {
@@ -185,10 +185,10 @@ Variants {
                                 elide: Text.ElideMiddle
                                 textFormat: Text.PlainText
                                 text: modelData.value
-                                color: Theme.text
-                                font.family: Appearance.font.data
+                                color: Tokens.color.text
+                                font.family: Tokens.font.data
                                 font.pixelSize: Appearance.size.body
-                                font.weight: Appearance.font.weightSemi
+                                font.weight: Tokens.font.dataWeight
                                 renderType: Text.NativeRendering
                             }
                         }
@@ -197,12 +197,12 @@ Variants {
 
                 Rectangle {
                     width: parent.width
-                    height: Appearance.metrics.hairline
-                    color: Theme.hair
+                    height: Tokens.measure.hairline
+                    color: Tokens.color.hair
                 }
 
                 NrLabel {
-                    color: Theme.dim
+                    color: Tokens.color.dim
                     text: (surface.flow?.inputPrompt || "PASSWORD").replace(/:\s*$/, "").toUpperCase()
                 }
 
@@ -226,22 +226,22 @@ Variants {
                         anchors.verticalCenter: parent.verticalCenter
                         visible: surface.flow?.responseVisible ?? false
                         text: input.text
-                        color: Theme.bright
-                        font.family: Appearance.font.data
+                        color: Tokens.color.bright
+                        font.family: Tokens.font.data
                         font.pixelSize: 15
                         renderType: Text.NativeRendering
                     }
                 }
 
                 NrLabel {
-                    color: surface.flow?.failed || surface.flow?.supplementaryIsError ? Theme.accent : Theme.dim
+                    color: surface.flow?.failed || surface.flow?.supplementaryIsError ? Tokens.color.accent : Tokens.color.dim
                     text: {
                         if (surface.verifying)
                             return "VERIFYING";
                         if (surface.flow?.supplementaryMessage)
                             return surface.flow.supplementaryMessage.toUpperCase();
                         if (surface.flow?.failed)
-                            return `ACCESS DENIED${Appearance.separator}TRY AGAIN`;
+                            return "ACCESS DENIED · TRY AGAIN";
                         return "ENTER YOUR PASSWORD TO ALLOW THIS";
                     }
                 }

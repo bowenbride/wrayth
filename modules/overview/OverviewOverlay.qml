@@ -115,10 +115,17 @@ Variants {
 
                     Row {
                         spacing: 10
+                        // The full-screen BackControl: does what Escape does.
+                        BackButton {
+                            anchors.verticalCenter: overTitle.verticalCenter
+                            onActivated: ShellState.overviewOpen = false
+                        }
                         GlitchText {
                             id: overTitle
                             text: "OVERVIEW"
-                            pixelSize: 22
+                            // The full-screen view title role (DESIGN.md): 22 px, 0.12em.
+                            pixelSize: Tokens.type.viewTitle.size
+                            tracking: Tokens.type.viewTitle.tracking
                         }
                         KanaTag {
                             anchors.verticalCenter: overTitle.verticalCenter
@@ -128,8 +135,8 @@ Variants {
                         Text {
                             anchors.verticalCenter: overTitle.verticalCenter
                             text: `PAGE ${view.page + 1} · WORKSPACES ${view.pageStart}–${view.pageStart + 4}`
-                            color: Theme.text
-                            font.family: Appearance.font.data
+                            color: Tokens.color.text
+                            font.family: Tokens.font.data
                             font.pixelSize: 10
                             font.letterSpacing: 10 * 0.14
                             renderType: Text.NativeRendering
@@ -137,8 +144,8 @@ Variants {
                     }
                     Text {
                         text: "ARROWS MOVE · ENTER FOCUSES · DRAG A WINDOW TO ANOTHER WORKSPACE · ESC CLOSES"
-                        color: Theme.dim
-                        font.family: Appearance.font.data
+                        color: Tokens.color.dim
+                        font.family: Tokens.font.data
                         font.pixelSize: 9
                         font.letterSpacing: 9 * 0.12
                         renderType: Text.NativeRendering
@@ -158,8 +165,8 @@ Variants {
                     Text {
                         anchors.left: parent.left
                         text: card.ws.label
-                        color: card.current ? Theme.accent : Theme.bright
-                        font.family: Appearance.font.display
+                        color: card.current ? Tokens.color.accent : Tokens.color.bright
+                        font.family: Tokens.font.display
                         font.pixelSize: 14
                         font.weight: Appearance.font.weightBold
                         renderType: Text.NativeRendering
@@ -168,8 +175,8 @@ Variants {
                         anchors.right: parent.right
                         y: 3
                         text: card.wins.length === 1 ? "1 WINDOW" : `${card.wins.length} WINDOWS`
-                        color: Theme.dim
-                        font.family: Appearance.font.data
+                        color: Tokens.color.dim
+                        font.family: Tokens.font.data
                         font.pixelSize: 9
                         font.letterSpacing: 9 * 0.12
                         renderType: Text.NativeRendering
@@ -181,17 +188,17 @@ Variants {
                         y: 26
                         width: parent.width
                         height: view.previewH
-                        color: Theme.alpha(Theme.ground, 0.6)
+                        color: Theme.alpha(Tokens.color.ground, 0.6)
                         border.width: 1
-                        border.color: card.current ? Theme.accent : Theme.hair
+                        border.color: card.current ? Tokens.color.accent : Tokens.color.hair
                         clip: true
 
                         Text {
                             anchors.centerIn: parent
                             visible: card.wins.length === 0
                             text: "EMPTY"
-                            color: Theme.mute
-                            font.family: Appearance.font.data
+                            color: Tokens.color.mute
+                            font.family: Tokens.font.data
                             font.pixelSize: 10
                             font.letterSpacing: 10 * 0.18
                             renderType: Text.NativeRendering
@@ -220,9 +227,9 @@ Variants {
                                 y: modelData.y * frame.height
                                 width: Math.max(12, modelData.w * frame.width)
                                 height: Math.max(12, modelData.h * frame.height)
-                                color: Theme.panel2
+                                color: Tokens.color.panel2
                                 border.width: 1
-                                border.color: sel ? Theme.accent : Theme.hair
+                                border.color: sel ? Tokens.color.accent : Tokens.color.hair
                                 clip: true
                                 z: drag.active ? 10 : 0
 
@@ -244,7 +251,7 @@ Variants {
                                 Rectangle {
                                     anchors.fill: parent
                                     anchors.margins: 1
-                                    color: win.sel ? Theme.alpha(Theme.accent, 0.14) : "transparent"
+                                    color: win.sel ? Theme.alpha(Tokens.color.accent, 0.14) : "transparent"
                                 }
                                 // Its badge and title.
                                 Row {
@@ -264,8 +271,8 @@ Variants {
                                         elide: Text.ElideRight
                                         text: win.modelData.toplevel.title || win.cls
                                         textFormat: Text.PlainText
-                                        color: win.sel ? Theme.bright : Theme.text
-                                        font.family: Appearance.font.data
+                                        color: win.sel ? Tokens.color.bright : Tokens.color.text
+                                        font.family: Tokens.font.data
                                         font.pixelSize: 10
                                         renderType: Text.NativeRendering
                                     }
@@ -333,8 +340,8 @@ Variants {
 
                         Text {
                             text: "SPECIAL"
-                            color: Theme.dim
-                            font.family: Appearance.font.data
+                            color: Tokens.color.dim
+                            font.family: Tokens.font.data
                             font.pixelSize: 9
                             font.letterSpacing: 9 * 0.18
                             renderType: Text.NativeRendering
@@ -350,15 +357,15 @@ Variants {
                                     required property var modelData
                                     width: chipText.implicitWidth + 24
                                     height: 26
-                                    color: chipHover.hovered ? Theme.cell : Theme.alpha(Theme.ground, 0.6)
+                                    color: chipHover.hovered ? Theme.cell : Theme.alpha(Tokens.color.ground, 0.6)
                                     border.width: 1
-                                    border.color: Theme.hair
+                                    border.color: Tokens.color.hair
                                     Text {
                                         id: chipText
                                         anchors.centerIn: parent
                                         text: `${chip.modelData.label} · ${view.windowsOf(chip.modelData.id).length}`
-                                        color: Theme.text
-                                        font.family: Appearance.font.data
+                                        color: Tokens.color.text
+                                        font.family: Tokens.font.data
                                         font.pixelSize: 10
                                         font.letterSpacing: 10 * 0.14
                                         renderType: Text.NativeRendering
@@ -380,8 +387,8 @@ Variants {
                             y: 30
                             visible: view.specials.length === 0
                             text: "NONE OPEN"
-                            color: Theme.mute
-                            font.family: Appearance.font.data
+                            color: Tokens.color.mute
+                            font.family: Tokens.font.data
                             font.pixelSize: 9
                             font.letterSpacing: 9 * 0.18
                             renderType: Text.NativeRendering

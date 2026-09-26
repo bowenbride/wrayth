@@ -13,7 +13,7 @@ import qs.config
 Item {
     id: root
 
-    property color color: Theme.dim
+    property color color: Tokens.color.dim
 
     implicitWidth: 18
     implicitHeight: 14

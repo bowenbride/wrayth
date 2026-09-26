@@ -17,7 +17,7 @@ ChamferPanel {
     chamferTopRight: 0
     chamferBottomRight: chamfer
     chamferBottomLeft: 0
-    fillColor: Theme.panel
+    fillColor: Tokens.color.panel
 
     CornerBrackets {
         inset: 6
@@ -62,10 +62,10 @@ ChamferPanel {
 
                     anchors.verticalCenter: parent.verticalCenter
                     text: "SIGNAL"
-                    color: Theme.text
-                    font.family: Appearance.font.data
+                    color: Tokens.color.text
+                    font.family: Tokens.font.data
                     font.pixelSize: 11
-                    font.weight: Appearance.font.weightSemi
+                    font.weight: Tokens.font.dataWeight
                     font.letterSpacing: 11 * 0.14
                     renderType: Text.NativeRendering
                 }
@@ -99,17 +99,18 @@ ChamferPanel {
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
                 text: root.stateText
-                color: root.call || root.stateText === "LIVE" ? Theme.accent : Theme.dim
-                font.family: Appearance.font.data
+                color: root.call || root.stateText === "LIVE" ? Tokens.color.accent : Tokens.color.dim
+                font.family: Tokens.font.data
                 font.pixelSize: 10
-                font.weight: Appearance.font.weightSemi
+                font.weight: Tokens.font.dataWeight
                 font.letterSpacing: 10 * 0.12
                 renderType: Text.NativeRendering
 
                 Behavior on color {
                     ColorAnimation {
-                        duration: Appearance.duration.state
-                        easing.type: Easing.OutCubic
+                        duration: Tokens.motion.feedback
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: Tokens.motion.easeIn
                     }
                 }
             }
@@ -162,20 +163,23 @@ ChamferPanel {
 
         Behavior on height {
             NumberAnimation {
-                duration: Appearance.duration.panel
-                easing.type: Easing.OutCubic
+                duration: Tokens.motion.panels
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Tokens.motion.easeIn
             }
         }
         Behavior on anchors.topMargin {
             NumberAnimation {
-                duration: Appearance.duration.panel
-                easing.type: Easing.OutCubic
+                duration: Tokens.motion.panels
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Tokens.motion.easeIn
             }
         }
         Behavior on opacity {
             NumberAnimation {
-                duration: Appearance.duration.panel
-                easing.type: Easing.OutCubic
+                duration: Tokens.motion.panels
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Tokens.motion.easeIn
             }
         }
 
@@ -197,20 +201,22 @@ ChamferPanel {
 
                     width: 8 + 5 + 6 + chipLabel.implicitWidth + 8
                     height: 22
-                    color: selected ? Theme.alpha(Theme.accent, 0.12) : (chipHover.hovered ? Theme.cell : "transparent")
+                    color: selected ? Tokens.color.accentTint : (chipHover.hovered ? Theme.cell : "transparent")
                     border.width: 1
-                    border.color: selected ? Theme.accent : Theme.hair
+                    border.color: selected ? Tokens.color.accent : Tokens.color.hair
 
                     Behavior on color {
                         ColorAnimation {
-                            duration: Appearance.duration.state
-                            easing.type: Easing.OutCubic
+                            duration: Tokens.motion.feedback
+                            easing.type: Easing.BezierSpline
+                            easing.bezierCurve: Tokens.motion.easeIn
                         }
                     }
                     Behavior on border.color {
                         ColorAnimation {
-                            duration: Appearance.duration.state
-                            easing.type: Easing.OutCubic
+                            duration: Tokens.motion.feedback
+                            easing.type: Easing.BezierSpline
+                            easing.bezierCurve: Tokens.motion.easeIn
                         }
                     }
 
@@ -219,7 +225,7 @@ ChamferPanel {
                         anchors.verticalCenter: parent.verticalCenter
                         width: 5
                         height: 5
-                        color: chip.sounding ? Theme.signal : Theme.mute
+                        color: chip.sounding ? Tokens.color.signal : Tokens.color.mute
                     }
                     Text {
                         id: chipLabel
@@ -228,10 +234,10 @@ ChamferPanel {
                         anchors.verticalCenter: parent.verticalCenter
                         text: Media.labelOf(chip.modelData)
                         textFormat: Text.PlainText
-                        color: chip.selected ? Theme.accent : Theme.text
-                        font.family: Appearance.font.data
+                        color: chip.selected ? Tokens.color.accent : Tokens.color.text
+                        font.family: Tokens.font.data
                         font.pixelSize: 9
-                        font.weight: Appearance.font.weightSemi
+                        font.weight: Tokens.font.dataWeight
                         font.letterSpacing: 9 * 0.12
                         renderType: Text.NativeRendering
                     }
@@ -268,8 +274,8 @@ ChamferPanel {
 
             anchors.top: parent.top
             width: parent.width
-            height: Appearance.metrics.hairline
-            color: Theme.hair
+            height: Tokens.measure.hairline
+            color: Tokens.color.hair
         }
 
         Text {
@@ -283,10 +289,10 @@ ChamferPanel {
             verticalAlignment: Text.AlignVCenter
             text: root.call ? "VOICE CALL" : root.media ? (root.player?.trackTitle || "UNTITLED") : "NO SIGNAL"
             textFormat: Text.PlainText
-            color: root.source ? Theme.bright : Theme.dim
-            font.family: Appearance.font.display
+            color: root.source ? Tokens.color.bright : Tokens.color.dim
+            font.family: Tokens.font.display
             font.pixelSize: 15
-            font.weight: Appearance.font.weightBold
+            font.weight: Tokens.font.displayWeight
             renderType: Text.NativeRendering
         }
 
@@ -301,8 +307,8 @@ ChamferPanel {
             elide: Text.ElideRight
             verticalAlignment: Text.AlignVCenter
             textFormat: Text.PlainText
-            color: Theme.dim
-            font.family: Appearance.font.data
+            color: Tokens.color.dim
+            font.family: Tokens.font.data
             font.pixelSize: 10
             renderType: Text.NativeRendering
             text: {
@@ -337,8 +343,9 @@ ChamferPanel {
 
             Behavior on opacity {
                 NumberAnimation {
-                    duration: Appearance.duration.state
-                    easing.type: Easing.OutCubic
+                    duration: Tokens.motion.feedback
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: Tokens.motion.easeIn
                 }
             }
 
@@ -349,8 +356,8 @@ ChamferPanel {
                 anchors.verticalCenter: parent.verticalCenter
                 width: 36
                 text: root.player && root.player.positionSupported ? root.clock(root.player.position) : "--:--"
-                color: Theme.dim
-                font.family: Appearance.font.data
+                color: Tokens.color.dim
+                font.family: Tokens.font.data
                 font.pixelSize: 9
                 renderType: Text.NativeRendering
             }
@@ -359,18 +366,19 @@ ChamferPanel {
                 anchors.right: len.left
                 anchors.verticalCenter: parent.verticalCenter
                 height: 2
-                color: Theme.track
+                color: Tokens.color.track
 
                 Rectangle {
                     height: parent.height
                     width: root.player && root.player.lengthSupported && root.player.length > 0
                         ? parent.width * Math.min(1, root.player.position / root.player.length) : 0
-                    color: Theme.signal
+                    color: Tokens.color.signal
 
                     Behavior on width {
                         NumberAnimation {
-                            duration: Appearance.duration.move
-                            easing.type: Easing.OutCubic
+                            duration: Tokens.motion.movement
+                            easing.type: Easing.BezierSpline
+                            easing.bezierCurve: Tokens.motion.easeIn
                         }
                     }
                 }
@@ -383,8 +391,8 @@ ChamferPanel {
                 width: 36
                 horizontalAlignment: Text.AlignRight
                 text: root.player && root.player.lengthSupported ? root.clock(root.player.length) : "--:--"
-                color: Theme.dim
-                font.family: Appearance.font.data
+                color: Tokens.color.dim
+                font.family: Tokens.font.data
                 font.pixelSize: 9
                 renderType: Text.NativeRendering
             }
@@ -399,22 +407,23 @@ ChamferPanel {
             signal clicked
 
             height: 26
-            color: accented ? Theme.alpha(Theme.accent, press.pressed ? 0.24 : 0.12) : (press.pressed ? Theme.alpha(Theme.accent, 0.12) : "transparent")
+            color: accented ? Theme.alpha(Tokens.color.accent, press.pressed ? 0.24 : 0.12) : (press.pressed ? Tokens.color.accentTint : "transparent")
             border.width: 1
-            border.color: accented ? Theme.accent : Theme.hair
+            border.color: accented ? Tokens.color.accent : Tokens.color.hair
             opacity: usable ? 1 : 0.4
 
             Behavior on color {
                 ColorAnimation {
-                    duration: Appearance.duration.state
-                    easing.type: Easing.OutCubic
+                    duration: Tokens.motion.feedback
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: Tokens.motion.easeIn
                 }
             }
 
             MediaGlyph {
                 anchors.centerIn: parent
                 kind: tb.glyph
-                color: tb.accented ? Theme.accent : Theme.text
+                color: tb.accented ? Tokens.color.accent : Tokens.color.text
             }
             HoverHandler {
                 cursorShape: tb.usable ? Qt.PointingHandCursor : Qt.ArrowCursor
@@ -438,8 +447,9 @@ ChamferPanel {
 
             Behavior on opacity {
                 NumberAnimation {
-                    duration: Appearance.duration.state
-                    easing.type: Easing.OutCubic
+                    duration: Tokens.motion.feedback
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: Tokens.motion.easeIn
                 }
             }
 
@@ -474,8 +484,9 @@ ChamferPanel {
 
             Behavior on opacity {
                 NumberAnimation {
-                    duration: Appearance.duration.state
-                    easing.type: Easing.OutCubic
+                    duration: Tokens.motion.feedback
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: Tokens.motion.easeIn
                 }
             }
 
@@ -486,8 +497,8 @@ ChamferPanel {
                 anchors.verticalCenter: parent.verticalCenter
                 elide: Text.ElideRight
                 text: "Mute, deafen and leave live in the app."
-                color: Theme.dim
-                font.family: Appearance.font.data
+                color: Tokens.color.dim
+                font.family: Tokens.font.data
                 font.pixelSize: 9
                 renderType: Text.NativeRendering
             }
@@ -498,19 +509,19 @@ ChamferPanel {
                 anchors.verticalCenter: parent.verticalCenter
                 width: openLabel.implicitWidth + 24
                 height: 26
-                color: Theme.alpha(Theme.accent, callPress.pressed ? 0.24 : 0.12)
+                color: Theme.alpha(Tokens.color.accent, callPress.pressed ? 0.24 : 0.12)
                 border.width: 1
-                border.color: Theme.accent
+                border.color: Tokens.color.accent
 
                 Text {
                     id: openLabel
 
                     anchors.centerIn: parent
                     text: "OPEN CALL"
-                    color: Theme.accent
-                    font.family: Appearance.font.data
+                    color: Tokens.color.accent
+                    font.family: Tokens.font.data
                     font.pixelSize: 10
-                    font.weight: Appearance.font.weightSemi
+                    font.weight: Tokens.font.dataWeight
                     font.letterSpacing: 10 * 0.12
                     renderType: Text.NativeRendering
                 }

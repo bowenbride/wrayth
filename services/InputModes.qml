@@ -69,9 +69,9 @@ Singleton {
     function imName(im: string): string {
         const s = im.toLowerCase();
         if (s.includes("katakana"))
-            return "JAPANESE // KATAKANA";
+            return "JAPANESE · KATAKANA";
         if (/mozc|anthy|kkc|skk|hiragana|japanese/.test(s))
-            return "JAPANESE // HIRAGANA";
+            return "JAPANESE · HIRAGANA";
         return im.toUpperCase();
     }
 

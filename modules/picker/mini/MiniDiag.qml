@@ -54,7 +54,7 @@ ChamferPanel {
         Text {
             text: "SYS.DIAG"
             color: root.palette.bright
-            font.family: Appearance.font.display
+            font.family: Tokens.font.display
             font.pixelSize: 9
             font.weight: Appearance.font.weightBold
             renderType: Text.NativeRendering
@@ -111,9 +111,9 @@ ChamferPanel {
                 anchors.verticalCenter: parent.verticalCenter
                 text: "MEM"
                 color: root.palette.dim
-                font.family: Appearance.font.data
+                font.family: Tokens.font.data
                 font.pixelSize: 8
-                font.weight: Appearance.font.weightSemi
+                font.weight: Tokens.font.dataWeight
                 renderType: Text.NativeRendering
             }
 
@@ -151,7 +151,7 @@ ChamferPanel {
                 Text {
                     text: SystemStatus.breach ? "ICE BREACH" : "ICE NOMINAL"
                     color: root.palette.text
-                    font.family: Appearance.font.data
+                    font.family: Tokens.font.data
                     font.pixelSize: 8
                     renderType: Text.NativeRendering
                 }
@@ -163,7 +163,7 @@ ChamferPanel {
                 Text {
                     text: "VULN"
                     color: root.palette.dim
-                    font.family: Appearance.font.data
+                    font.family: Tokens.font.data
                     font.pixelSize: 8
                     renderType: Text.NativeRendering
                 }
@@ -171,9 +171,9 @@ ChamferPanel {
                 Text {
                     text: `${Vuln.count}`
                     color: Vuln.count > 0 ? root.palette.accent : root.palette.signal
-                    font.family: Appearance.font.data
+                    font.family: Tokens.font.data
                     font.pixelSize: 8
-                    font.weight: Appearance.font.weightSemi
+                    font.weight: Tokens.font.dataWeight
                     renderType: Text.NativeRendering
                 }
             }

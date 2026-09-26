@@ -43,17 +43,17 @@ Item {
             spacing: 6
             Text {
                 text: section.title
-                color: Theme.signal
-                font.family: Appearance.font.data
+                color: Tokens.color.signal
+                font.family: Tokens.font.data
                 font.pixelSize: 11
-                font.weight: Appearance.font.weightSemi
+                font.weight: Tokens.font.dataWeight
                 font.letterSpacing: 11 * 0.14
                 renderType: Text.NativeRendering
             }
             Rectangle {
                 width: parent.width
-                height: Appearance.metrics.hairline
-                color: Theme.hair
+                height: Tokens.measure.hairline
+                color: Tokens.color.hair
             }
         }
         Column {
@@ -68,19 +68,22 @@ Item {
         id: chipRow
 
         property string label: ""
+        // The label column: 150 px (DESIGN.md), wider only where a label
+        // names its key and would otherwise be cut (the WINDOWS rows).
+        property int labelWidth: 150
         property var options: []        // [[value, text]]
         property var current
         signal chosen(var value)
 
         spacing: 0
         Text {
-            width: 150
+            width: chipRow.labelWidth
             height: 24
             verticalAlignment: Text.AlignVCenter
             elide: Text.ElideRight
             text: chipRow.label
-            color: Theme.dim
-            font.family: Appearance.font.data
+            color: Tokens.color.dim
+            font.family: Tokens.font.data
             font.pixelSize: 10
             font.letterSpacing: 10 * 0.12
             renderType: Text.NativeRendering
@@ -97,23 +100,24 @@ Item {
 
                     width: chipText.implicitWidth + 20
                     height: 24
-                    color: selected ? Theme.alpha(Theme.accent, 0.12) : (chipHover.hovered ? Theme.cell : "transparent")
+                    color: selected ? Tokens.color.accentTint : (chipHover.hovered ? Theme.cell : "transparent")
                     border.width: 1
-                    border.color: selected ? Theme.accent : Theme.hair
+                    border.color: selected ? Tokens.color.accent : Tokens.color.hair
                     Behavior on color {
                         ColorAnimation {
-                            duration: Appearance.duration.state
-                            easing.type: Easing.OutCubic
+                            duration: Tokens.motion.feedback
+                            easing.type: Easing.BezierSpline
+                            easing.bezierCurve: Tokens.motion.easeIn
                         }
                     }
                     Text {
                         id: chipText
                         anchors.centerIn: parent
                         text: chip.modelData[1]
-                        color: chip.selected ? Theme.accent : Theme.text
-                        font.family: Appearance.font.data
+                        color: chip.selected ? Tokens.color.accent : Tokens.color.text
+                        font.family: Tokens.font.data
                         font.pixelSize: 9
-                        font.weight: Appearance.font.weightSemi
+                        font.weight: Tokens.font.dataWeight
                         font.letterSpacing: 9 * 0.12
                         renderType: Text.NativeRendering
                     }
@@ -131,9 +135,11 @@ Item {
 
     readonly property var minuteOptions: [[0, "NEVER"], [1, "1 MIN"], [5, "5 MIN"], [10, "10 MIN"], [12, "12 MIN"], [15, "15 MIN"], [30, "30 MIN"], [60, "60 MIN"]]
 
+    // The full-screen header row (DESIGN.md): BackControl, title, status.
     BackButton {
+        id: back
         x: root.originX
-        y: 96
+        y: 151 + Math.round((46 - height) / 2)
         onActivated: root.finished()
     }
 
@@ -145,13 +151,16 @@ Item {
 
         Row {
             anchors.left: parent.left
+            anchors.leftMargin: back.width + Tokens.space.s16
             anchors.verticalCenter: parent.verticalCenter
             spacing: 12
             GlitchText {
                 id: systemTitle
                 anchors.verticalCenter: parent.verticalCenter
                 text: "SYSTEM"
-                pixelSize: 26
+                // The full-screen view title role (DESIGN.md): 22 px, 0.12em.
+                pixelSize: Tokens.type.viewTitle.size
+                tracking: Tokens.type.viewTitle.tracking
             }
             KanaTag {
                 anchors.verticalCenter: parent.verticalCenter
@@ -162,7 +171,7 @@ Item {
         NrLabel {
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            color: Theme.accent
+            color: Tokens.color.accent
             text: "SAVED AND APPLIED LIVE"
         }
     }
@@ -183,7 +192,7 @@ Item {
                     model: root.outputs
                     ChipRow {
                         required property string modelData
-                        label: root.outputs.length > 1 ? `SCALE // ${modelData}` : "INTERFACE SCALE"
+                        label: root.outputs.length > 1 ? `SCALE ${modelData}` : "INTERFACE SCALE"
                         options: SystemSettings.scales.map(s => [s, `${Math.round(s * 100)}%`])
                         current: root.scaleOf(modelData)
                         onChosen: v => SystemSettings.setScale(modelData, v)
@@ -213,6 +222,27 @@ Item {
                     onChosen: v => SystemSettings.setNotify(v)
                 }
             }
+
+            // Optional, off by default: while off, the shell binds neither key,
+            // so it stays with your own config, and loads neither overlay.
+            Section {
+                title: "WINDOWS"
+
+                ChipRow {
+                    label: "WINDOW SWITCHER (ALT + TAB)"
+                    labelWidth: 240
+                    options: [[false, "OFF"], [true, "ON"]]
+                    current: SystemSettings.switcher
+                    onChosen: v => SystemSettings.setOptional("switcher", v)
+                }
+                ChipRow {
+                    label: "WORKSPACE OVERVIEW (SUPER + TAB)"
+                    labelWidth: 240
+                    options: [[false, "OFF"], [true, "ON"]]
+                    current: SystemSettings.overview
+                    onChosen: v => SystemSettings.setOptional("overview", v)
+                }
+            }
         }
 
         // --- Right column ------------------------------------------------------
@@ -220,7 +250,7 @@ Item {
             spacing: 34
 
             Section {
-                title: "IDLE // PLUGGED IN"
+                title: "IDLE · PLUGGED IN"
 
                 ChipRow {
                     label: "SCREEN OFF"
@@ -243,7 +273,7 @@ Item {
             }
 
             Section {
-                title: "IDLE // ON BATTERY"
+                title: "IDLE · ON BATTERY"
                 visible: Power.present
 
                 ChipRow {
@@ -270,8 +300,8 @@ Item {
             // bar still overrides all of this.
             Text {
                 text: SystemSettings.corrected !== "" ? SystemSettings.corrected : "IDLE HOLD ON THE BAR OVERRIDES ALL OF THESE"
-                color: SystemSettings.corrected !== "" ? Theme.alert : Theme.dim
-                font.family: Appearance.font.data
+                color: SystemSettings.corrected !== "" ? Tokens.color.alert : Tokens.color.dim
+                font.family: Tokens.font.data
                 font.pixelSize: 9
                 font.letterSpacing: 9 * 0.12
                 renderType: Text.NativeRendering

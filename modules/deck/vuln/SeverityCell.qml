@@ -9,14 +9,14 @@ Rectangle {
 
     property string label: ""
     property int count: 0
-    property color tone: Theme.dim
+    property color tone: Tokens.color.dim
     property bool filled: false
 
     implicitHeight: 26
 
     color: root.filled ? Theme.alpha(root.tone, 0.15) : "transparent"
-    border.width: Appearance.metrics.hairline
-    border.color: root.filled ? root.tone : Theme.hair
+    border.width: Tokens.measure.hairline
+    border.color: root.filled ? root.tone : Tokens.color.hair
 
     Row {
         anchors.centerIn: parent
@@ -39,9 +39,9 @@ Rectangle {
             horizontalAlignment: Text.AlignHCenter
             text: root.count
             color: root.tone
-            font.family: Appearance.font.data
+            font.family: Tokens.font.data
             font.pixelSize: Appearance.size.body
-            font.weight: Appearance.font.weightSemi
+            font.weight: Tokens.font.dataWeight
             renderType: Text.NativeRendering
         }
     }

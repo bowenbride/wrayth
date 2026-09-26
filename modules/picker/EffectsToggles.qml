@@ -27,7 +27,7 @@ Item {
 
         anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
-        color: Theme.dim
+        color: Tokens.color.dim
         text: root.label
     }
 
@@ -67,21 +67,23 @@ Item {
 
                 width: reserve.implicitWidth + 16
                 height: 22
-                color: active ? Theme.alpha(Theme.accent, 0.18) : hover.hovered ? Theme.alpha(Theme.hair, 0.3) : "transparent"
-                border.width: Appearance.metrics.hairline
-                border.color: active ? Theme.accent : Theme.hair
+                color: active ? Theme.alpha(Tokens.color.accent, 0.18) : hover.hovered ? Theme.alpha(Tokens.color.hair, 0.3) : "transparent"
+                border.width: Tokens.measure.hairline
+                border.color: active ? Tokens.color.accent : Tokens.color.hair
 
                 Behavior on color {
                     ColorAnimation {
-                        duration: Appearance.duration.state
-                        easing.type: Easing.OutCubic
+                        duration: Tokens.motion.feedback
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: Tokens.motion.easeIn
                     }
                 }
 
                 Behavior on border.color {
                     ColorAnimation {
-                        duration: Appearance.duration.state
-                        easing.type: Easing.OutCubic
+                        duration: Tokens.motion.feedback
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: Tokens.motion.easeIn
                     }
                 }
 
@@ -90,13 +92,14 @@ Item {
                     centred: true
                     horizontalAlignment: Text.AlignHCenter
                     pixelSize: 10
-                    color: parent.active ? Theme.accent : Theme.mute
+                    color: parent.active ? Tokens.color.accent : Tokens.color.mute
                     text: parent.modelData.text
 
                     Behavior on color {
                         ColorAnimation {
-                            duration: Appearance.duration.state
-                            easing.type: Easing.OutCubic
+                            duration: Tokens.motion.feedback
+                            easing.type: Easing.BezierSpline
+                            easing.bezierCurve: Tokens.motion.easeIn
                         }
                     }
                 }

@@ -13,8 +13,8 @@ ChamferPanel {
     implicitHeight: 196
 
     chamfer: Appearance.chamfer.panel
-    fillColor: Theme.panel2
-    borderColor: Lock.state === "denied" || Lock.lockedOut ? Theme.accent : Theme.hair
+    fillColor: Tokens.color.panel2
+    borderColor: Lock.state === "denied" || Lock.lockedOut ? Tokens.color.accent : Tokens.color.hair
 
     // The wrong-passphrase glitch: a shove and a shear for 420 ms.
     property real shove: 0
@@ -97,8 +97,8 @@ ChamferPanel {
                 id: authTitle
 
                 anchors.verticalCenter: parent.verticalCenter
-                color: Theme.bright
-                text: `AUTH${Appearance.separator}PASSPHRASE`
+                color: Tokens.color.bright
+                text: "PASSPHRASE"
             }
 
             KanaTag {
@@ -112,7 +112,7 @@ ChamferPanel {
         NrLabel {
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            color: Lock.attempts > 0 ? Theme.accent : Theme.mute
+            color: Lock.attempts > 0 ? Tokens.color.accent : Tokens.color.mute
             text: `FAILED ${Lock.attempts}`
         }
     }
@@ -165,35 +165,35 @@ ChamferPanel {
         // figures, so the countdown does not shuffle as its digits change.
         text: {
             if (Lock.granted)
-                return `ACCESS GRANTED${Appearance.separator}RESUMING SESSION`;
+                return "ACCESS GRANTED · RESUMING SESSION";
             if (Lock.busy)
                 return "VERIFYING";
             if (Lock.keyboardLost)
-                return `KEYBOARD LOST${Appearance.separator}RECOVER FROM A CONSOLE`;
+                return "KEYBOARD LOST · RECOVER FROM A CONSOLE";
             if (Lock.lockedOut) {
                 if (Lock.lockoutSource === "tally" && Lock.lockoutLeft > 0)
-                    return `ACCOUNT LOCKED${Appearance.separator}RETRY IN ${Math.floor(Lock.lockoutLeft / 60)}:${String(Lock.lockoutLeft % 60).padStart(2, "0")}`;
+                    return `ACCOUNT LOCKED · RETRY IN ${Math.floor(Lock.lockoutLeft / 60)}:${String(Lock.lockoutLeft % 60).padStart(2, "0")}`;
                 if (Lock.lockoutSource === "pam" && Lock.lockoutLeft > 0)
-                    return `ACCOUNT LOCKED${Appearance.separator}ABOUT ${Math.ceil(Lock.lockoutLeft / 60)} MIN LEFT`;
-                return `ACCOUNT LOCKED${Appearance.separator}WAIT, THEN RETRY`;
+                    return `ACCOUNT LOCKED · ABOUT ${Math.ceil(Lock.lockoutLeft / 60)} MIN LEFT`;
+                return "ACCOUNT LOCKED · WAIT, THEN RETRY";
             }
             if (Lock.state === "denied")
-                return `ACCESS DENIED${Appearance.separator}ATTEMPT ${Lock.attempts} LOGGED`;
+                return `ACCESS DENIED · ATTEMPT ${Lock.attempts} LOGGED`;
             if (Lock.notice === "timeout")
-                return `NO ANSWER FROM PAM${Appearance.separator}TRY AGAIN`;
+                return "NO ANSWER FROM PAM · TRY AGAIN";
             return "ENTER PASSPHRASE TO RESUME SESSION";
         }
         color: {
             if (Lock.granted)
-                return Theme.signal;
+                return Tokens.color.signal;
             if (Lock.keyboardLost || Lock.lockedOut || Lock.state === "denied" || Lock.notice)
-                return Theme.accent;
-            return Theme.dim;
+                return Tokens.color.accent;
+            return Tokens.color.dim;
         }
-        font.features: Appearance.tabularFigures
-        font.family: Appearance.font.data
+        font.features: ({ "tnum": 1 })
+        font.family: Tokens.font.data
         font.pixelSize: Appearance.size.label
-        font.weight: Appearance.font.weightSemi
+        font.weight: Tokens.font.dataWeight
         font.letterSpacing: Appearance.tracking(Appearance.size.label)
         font.capitalization: Font.AllUppercase
     }
@@ -212,9 +212,9 @@ ChamferPanel {
         visible: Lock.keyboardLost
         text: "Ctrl+Alt+F3, log in, then run  ~/.local/bin/wrayth-recover"
         textFormat: Text.PlainText
-        color: Theme.text
-        font.family: Appearance.font.data
+        color: Tokens.color.text
+        font.family: Tokens.font.data
         font.pixelSize: Appearance.size.label
-        font.weight: Appearance.font.weightSemi
+        font.weight: Tokens.font.dataWeight
     }
 }

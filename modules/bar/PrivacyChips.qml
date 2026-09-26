@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
-import qs.components
+import qs.components as C
+import qs.components.ui as UI
 import qs.config
 import qs.services
 
@@ -12,7 +13,7 @@ import qs.services
 Row {
     id: root
 
-    spacing: 6
+    spacing: Tokens.space.s6
 
     readonly property bool any: Recorder.recording || Privacy.share.length > 0 || Privacy.mic.length > 0 || Privacy.cam.length > 0
 
@@ -36,111 +37,58 @@ Row {
         }
     }
 
-    component Chip: Rectangle {
+    // An IndicatorChip (DESIGN.md) and, for SHARE, MIC and CAM, a small
+    // popup naming the apps responsible. App names keep their own case.
+    component Chip: UI.IndicatorChip {
         id: chip
 
-        property string label: ""
-        property color tone: Theme.alert
-        property bool pulse: false
         property var apps: []
-        signal clicked
-
-        height: 22
-        width: chipRow.implicitWidth + 16
-        color: hover.hovered ? Theme.alpha(tone, 0.16) : Theme.alpha(tone, 0.08)
-        border.width: 1
-        border.color: tone
-
-        Row {
-            id: chipRow
-
-            anchors.centerIn: parent
-            spacing: 6
-
-            Rectangle {
-                id: dot
-
-                anchors.verticalCenter: parent.verticalCenter
-                width: 6
-                height: 6
-                color: chip.tone
-
-                // A gentle pulse, only while the chip is shown.
-                SequentialAnimation on opacity {
-                    running: chip.pulse && chip.visible
-                    loops: Animation.Infinite
-                    NumberAnimation {
-                        to: 0.35
-                        duration: 900
-                        easing.type: Easing.InOutSine
-                    }
-                    NumberAnimation {
-                        to: 1
-                        duration: 900
-                        easing.type: Easing.InOutSine
-                    }
-                }
-            }
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: chip.label
-                color: chip.tone
-                font.family: Appearance.font.data
-                font.pixelSize: 9
-                font.weight: Appearance.font.weightSemi
-                font.letterSpacing: 9 * 0.14
-                font.features: Appearance.tabularFigures
-                renderType: Text.NativeRendering
-            }
-        }
-        HoverHandler {
-            id: hover
-            cursorShape: Qt.PointingHandCursor
-        }
-        TapHandler {
-            onTapped: chip.clicked()
-        }
-
-        // Which app, in a small popup under the chip.
         property bool showing: false
+
+        onClicked: {
+            if (!rec)
+                showing = !showing;
+        }
+
         PopupWindow {
             visible: chip.showing && chip.apps.length > 0
             anchor.item: chip
-            anchor.rect.y: chip.height + 6
-            implicitWidth: popBody.implicitWidth + 24
-            implicitHeight: popBody.implicitHeight + 18
+            anchor.rect.y: chip.height + Tokens.space.s6
+            implicitWidth: popBody.implicitWidth + 2 * Tokens.space.s12
+            implicitHeight: popBody.implicitHeight + 2 * Tokens.space.s8
             color: "transparent"
 
-            ChamferPanel {
+            C.ChamferPanel {
                 anchors.fill: parent
-                chamfer: 8
-                fillColor: Theme.panel2
+                chamfer: Tokens.chamfer.footerButton
+                fillColor: Tokens.color.panel2
                 borderColor: chip.tone
 
                 Column {
                     id: popBody
 
                     anchors.centerIn: parent
-                    spacing: 4
+                    spacing: Tokens.space.s4
 
                     Text {
-                        text: `${chip.label} // IN USE BY`
-                        color: Theme.dim
-                        font.family: Appearance.font.data
-                        font.pixelSize: 9
-                        font.letterSpacing: 9 * 0.14
+                        readonly property var role: Tokens.type.rowMeta
+                        text: `${chip.text} · IN USE BY`
+                        color: Tokens.color.dim
+                        font.family: role.family
+                        font.pixelSize: role.size
+                        font.letterSpacing: role.size * role.tracking
                         renderType: Text.NativeRendering
                     }
                     Repeater {
                         model: chip.apps
                         Text {
                             required property string modelData
-                            text: modelData.toUpperCase()
+                            readonly property var role: Tokens.type.rowName
+                            text: modelData
                             textFormat: Text.PlainText
-                            color: Theme.bright
-                            font.family: Appearance.font.data
-                            font.pixelSize: 11
-                            font.weight: Appearance.font.weightSemi
+                            color: Tokens.color.bright
+                            font.family: role.family
+                            font.pixelSize: role.size
                             renderType: Text.NativeRendering
                         }
                     }
@@ -152,29 +100,27 @@ Row {
             interval: 4000
             onTriggered: chip.showing = false
         }
-        onClicked: showing = !showing
     }
 
     Chip {
         visible: Recorder.recording
-        label: `REC ${root.elapsed}`
-        tone: Theme.accent
-        pulse: true
+        rec: true
+        text: `REC ${root.elapsed}`
         onClicked: Recorder.stop()
     }
     Chip {
         visible: Privacy.share.length > 0
-        label: "SHARE"
+        text: "SHARE"
         apps: Privacy.share
     }
     Chip {
         visible: Privacy.mic.length > 0
-        label: "MIC"
+        text: "MIC"
         apps: Privacy.mic
     }
     Chip {
         visible: Privacy.cam.length > 0
-        label: "CAM"
+        text: "CAM"
         apps: Privacy.cam
     }
 }

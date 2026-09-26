@@ -128,7 +128,10 @@ someone else. See [Issues](#issues).
   workspace, pause when a window covers them or anything is fullscreen, and
   hold their first frame on battery.
 
-**Overview** (`Super + Tab`) and **window switcher** (`Alt + Tab`)
+**Overview** (`Super + Tab`) and **window switcher** (`Alt + Tab`), both
+optional and **off by default**: turn them on in the SYSTEM page's WINDOWS
+section. While off, Wrayth binds neither key (so your own config's binds keep
+them) and loads nothing for them.
 
 - OVERVIEW shows the current page's five workspaces as cards, each window
   drawn where it is with its badge and title; drag a window onto another
@@ -159,6 +162,10 @@ someone else. See [Issues](#issues).
   visualiser, glitches and the scanline band while anything is fullscreen, and
   holds notifications), and idle timings for plugged in and on battery. Lock
   always comes before sleep. Saved to `~/.config/wrayth/system.json`.
+- WINDOWS: the window switcher (Alt + Tab) and the workspace overview
+  (Super + Tab), each OFF or ON, off by default. Turning one on binds its key
+  at once; turning it off gives the key back to your own config (Hyprland's
+  config is reloaded to restore your binds).
 
 **Everything else**
 
@@ -187,9 +194,9 @@ Wrayth's own keys, from `external/hypr-wrayth.lua`:
 | `Super + /` | the keybind list |
 | `Super + Shift + V` | clipboard history |
 | `Super + Shift + A` | next audio output |
-| `Super + Tab` | overview of the workspaces |
+| `Super + Tab` | overview of the workspaces (optional, off by default: SYSTEM page, WINDOWS) |
 | `Super + Shift + R` | record the screen, or stop recording |
-| `Alt + Tab`, `Alt + Shift + Tab` | switch windows (hold Alt) |
+| `Alt + Tab`, `Alt + Shift + Tab` | switch windows, hold Alt (optional, off by default: SYSTEM page, WINDOWS) |
 | `Super + Space` | next keyboard layout or input method |
 | `Print` | screenshot of a region |
 | `Alt + Print` | screenshot of the focused window |

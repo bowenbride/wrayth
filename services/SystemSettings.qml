@@ -26,6 +26,42 @@ Singleton {
     property string motion: "full"
     property string game: "auto"
     property string notify: "hold"
+    // Optional features, off by default (and for anyone updating): the window
+    // switcher (Alt + Tab) and the workspace overview (Super + Tab). Off, the
+    // shell binds neither key and loads neither overlay.
+    property bool switcher: false
+    property bool overview: false
+
+    readonly property string optionalFile: `${Quickshell.env("HOME")}/.config/wrayth/optional-binds.lua`
+    function setOptional(which: string, on: bool): void {
+        const was = which === "switcher" ? switcher : overview;
+        if (which === "switcher")
+            switcher = on;
+        else
+            overview = on;
+        save();
+        optionalWriter.setText(`-- Written by Wrayth's SYSTEM page: the optional binds that are on.\nreturn {\n    switcher = ${switcher},\n    overview = ${overview},\n}\n`);
+        // On: bound live. Off: Hyprland's config is reloaded, which drops ours
+        // and gives the key back to your own binds (binding a key takes it
+        // from every other bind on it, so only a reload restores yours).
+        if (on !== was)
+            optionalApply.command = on ? ["hyprctl", "eval", "wrayth_apply_keybinds()"] : ["hyprctl", "reload"];
+        optionalDelay.restart();
+    }
+    FileView {
+        id: optionalWriter
+        path: root.optionalFile
+        printErrors: false
+    }
+    Timer {
+        id: optionalDelay
+        interval: 150
+        onTriggered: if (optionalApply.command.length > 0) optionalApply.running = true
+    }
+    Process {
+        id: optionalApply
+        command: []
+    }
     // Wrayth's hypridle.conf as shipped: lock at 10, screen off at 12, sleep
     // at 30, on AC and battery alike.
     property var idleAc: ({ screenOff: 12, lock: 10, sleep: 30 })
@@ -139,7 +175,7 @@ general {
     function save(): void {
         if (!loaded)
             return;
-        writer.setText(JSON.stringify({ scale: scale, motion: motion, game: game, notify: notify, idleAc: idleAc, idleBattery: idleBattery, idleManaged: idleManaged }, null, 2) + "\n");
+        writer.setText(JSON.stringify({ scale: scale, motion: motion, game: game, notify: notify, idleAc: idleAc, idleBattery: idleBattery, idleManaged: idleManaged, switcher: switcher, overview: overview }, null, 2) + "\n");
     }
     FileView {
         id: writer
@@ -161,6 +197,8 @@ general {
                 if (s.idleBattery)
                     root.idleBattery = root.fixIdle(s.idleBattery);
                 root.idleManaged = !!s.idleManaged;
+                root.switcher = s.switcher === true;
+                root.overview = s.overview === true;
                 root.corrected = "";
             } catch (e) {}
             root.loaded = true;

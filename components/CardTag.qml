@@ -16,8 +16,8 @@ Item {
     id: root
 
     // The row's profile, not the shell's.
-    property color tone: Theme.accent
-    property color ink: Theme.ground
+    property color tone: Tokens.color.accent
+    property color ink: Tokens.color.ground
     property bool chosen: false
     property bool hovered: false
 
@@ -29,13 +29,14 @@ Item {
         // Opaque either way: this sits on a photograph, and a wash over an
         // image cannot be read at any size.
         color: root.chosen ? root.tone : Qt.rgba(0, 0, 0, root.hovered ? 0.88 : 0.74)
-        border.width: root.chosen ? 0 : Appearance.metrics.hairline
+        border.width: root.chosen ? 0 : Tokens.measure.hairline
         border.color: Theme.alpha(root.tone, root.hovered ? 0.95 : 0.6)
 
         Behavior on color {
             ColorAnimation {
-                duration: Appearance.duration.state
-                easing.type: Easing.OutCubic
+                duration: Tokens.motion.feedback
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Tokens.motion.easeIn
             }
         }
     }

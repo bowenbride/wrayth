@@ -1,5 +1,6 @@
 import QtQuick
 import qs.components
+import qs.components.ui as UI
 import qs.config
 
 // A labelled block in the HUD: a small header line, then whatever it measures.
@@ -7,6 +8,9 @@ Item {
     id: root
 
     property string label: ""
+    // A value after the label (DESIGN.md: a label and its value are set
+    // apart by spacing and colour, never by //).
+    property string value: ""
     property string katakana: ""
     // A value on the right of the heading line, as MEM's percentage.
     property string trailing: ""
@@ -29,6 +33,13 @@ Item {
 
             anchors.verticalCenter: parent.verticalCenter
             text: root.label
+        }
+
+        UI.Value {
+            anchors.verticalCenter: parent.verticalCenter
+            visible: root.value !== ""
+            text: root.value
+            font.pixelSize: Tokens.type.hint.size + 1
         }
 
         KanaTag {
@@ -68,7 +79,7 @@ Item {
         anchors.right: parent.right
         anchors.verticalCenter: heading.verticalCenter
         visible: root.trailing !== ""
-        color: Theme.text
+        color: Tokens.color.text
         text: root.trailing
     }
 

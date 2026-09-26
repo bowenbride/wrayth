@@ -19,9 +19,11 @@ Item {
     readonly property alias font: left.font
     property real pixelSize: 28
     property int weight: Appearance.font.weightBold
-    property color color: Theme.bright
-    property color leftColor: Theme.accent
-    property color rightColor: Theme.signal
+    // Tracking in em (DESIGN.md: panel titles 0.10, view titles 0.12).
+    property real tracking: 0
+    property color color: Tokens.color.bright
+    property color leftColor: Tokens.color.accent
+    property color rightColor: Tokens.color.signal
 
     // **SCRAMBLE writes here, not over `text`.** Assigning to a QML property
     // is the end of whatever binding was on it, and a title like
@@ -61,9 +63,10 @@ Item {
             text: root.shown
             textFormat: Text.PlainText
             color: Theme.alpha(root.leftColor, 0.55)
-            font.family: Appearance.font.display
+            font.family: Tokens.font.display
             font.pixelSize: root.pixelSize
             font.weight: root.weight
+            font.letterSpacing: root.pixelSize * root.tracking
             renderType: Text.NativeRendering
         }
 

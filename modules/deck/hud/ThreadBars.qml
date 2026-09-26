@@ -36,7 +36,7 @@ Item {
                 // The unlit column behind the reading.
                 Rectangle {
                     anchors.fill: parent
-                    color: Theme.track
+                    color: Tokens.color.track
                 }
 
                 Rectangle {
@@ -45,14 +45,15 @@ Item {
                     anchors.bottom: parent.bottom
                     width: parent.width
                     height: Math.max(1, parent.height * parent.level)
-                    color: parent.hot ? Theme.accent : Theme.signal
+                    color: parent.hot ? Tokens.color.accent : Tokens.color.signal
 
                     Behavior on height {
                         enabled: root.animate
 
                         NumberAnimation {
                             duration: Appearance.duration.meter
-                            easing.type: Easing.OutCubic
+                            easing.type: Easing.BezierSpline
+                            easing.bezierCurve: Tokens.motion.easeIn
                         }
                     }
                 }

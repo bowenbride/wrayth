@@ -25,9 +25,11 @@ Item {
     readonly property var historyLabels: ({ memory: "MEMORY ONLY", disk: "SAVE TO DISK", off: "OFF" })
     readonly property var lockLabels: ({ keep: "KEEP HISTORY", clear: "CLEAR HISTORY" })
 
+    // The full-screen header row (DESIGN.md): BackControl, title, status.
     BackButton {
+        id: back
         x: root.originX
-        y: 96
+        y: 151 + Math.round((46 - height) / 2)
         onActivated: root.finished()
     }
 
@@ -41,6 +43,7 @@ Item {
 
         Row {
             anchors.left: parent.left
+            anchors.leftMargin: back.width + Tokens.space.s16
             anchors.verticalCenter: parent.verticalCenter
             spacing: 12
 
@@ -49,7 +52,9 @@ Item {
 
                 anchors.verticalCenter: parent.verticalCenter
                 text: "PRIVACY"
-                pixelSize: 26
+                // The full-screen view title role (DESIGN.md): 22 px, 0.12em.
+                pixelSize: Tokens.type.viewTitle.size
+                tracking: Tokens.type.viewTitle.tracking
             }
             KanaTag {
                 anchors.verticalCenter: parent.verticalCenter
@@ -61,7 +66,7 @@ Item {
         NrLabel {
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            color: Theme.accent
+            color: Tokens.color.accent
             text: "APPLIED AT ONCE"
         }
     }
@@ -69,7 +74,7 @@ Item {
     NrLabel {
         x: root.originX
         y: 223
-        color: Theme.dim
+        color: Tokens.color.dim
         text: "WHAT THE CLIPBOARD HISTORY KEEPS, AND WHEN IT LETS GO"
     }
 
@@ -94,8 +99,8 @@ Item {
                 return "Also saved to ~/.local/state/wrayth/clipboard.json, readable by your account only, so it survives logging out. Switching away from this deletes the file.";
             return "Nothing is watched and nothing is kept. Super + Shift + V shows an empty list.";
         }
-        color: Theme.text
-        font.family: Appearance.font.data
+        color: Tokens.color.text
+        font.family: Tokens.font.data
         font.pixelSize: 12
         renderType: Text.NativeRendering
     }
@@ -115,8 +120,8 @@ Item {
         width: 720
         wrapMode: Text.Wrap
         text: Clipboard.onLock === "clear" ? "Locking the screen empties the history (and the saved file)." : "The history is kept while the screen is locked."
-        color: Theme.text
-        font.family: Appearance.font.data
+        color: Tokens.color.text
+        font.family: Tokens.font.data
         font.pixelSize: 12
         renderType: Text.NativeRendering
     }
@@ -125,8 +130,8 @@ Item {
         x: root.originX
         y: 492
         width: 720
-        height: Appearance.metrics.hairline
-        color: Theme.hair
+        height: Tokens.measure.hairline
+        color: Tokens.color.hair
     }
 
     // Fixed: not a setting.
@@ -139,17 +144,17 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             width: 6
             height: 6
-            color: Theme.signal
+            color: Tokens.color.signal
         }
         Text {
             anchors.verticalCenter: parent.verticalCenter
             width: 700
             wrapMode: Text.Wrap
             text: "Anything a password manager marks as sensitive is never recorded, in any mode. Notifications in COMMS are kept until logout and never saved."
-            color: Theme.bright
-            font.family: Appearance.font.data
+            color: Tokens.color.bright
+            font.family: Tokens.font.data
             font.pixelSize: 12
-            font.weight: Appearance.font.weightSemi
+            font.weight: Tokens.font.dataWeight
             renderType: Text.NativeRendering
         }
     }

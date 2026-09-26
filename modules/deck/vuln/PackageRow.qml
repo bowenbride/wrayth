@@ -14,7 +14,7 @@ Item {
     // The 8 px the detail rises through as it fades in. A transform, so the
     // rows around it never move: the space is already reserved by the time
     // anything is drawn in it.
-    property real detailRise: Appearance.enterRise
+    property real detailRise: Tokens.motion.rise
 
     // Entry only: the detail lifts into place as it fades in, and on the way
     // out it simply fades. The offset is put back while nothing is drawn.
@@ -22,8 +22,9 @@ Item {
 
     Behavior on detailRise {
         NumberAnimation {
-            duration: Appearance.duration.enter
-            easing.type: Easing.OutCubic
+            duration: Tokens.motion.panels
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: Tokens.motion.easeIn
         }
     }
 
@@ -33,10 +34,10 @@ Item {
 
     readonly property color tone: {
         if (entry.severity === "HIGH")
-            return Theme.accent;
+            return Tokens.color.accent;
         if (entry.severity === "MED")
-            return Theme.alert;
-        return Theme.dim;
+            return Tokens.color.alert;
+        return Tokens.color.dim;
     }
 
     readonly property int rowHeight: 20
@@ -60,8 +61,9 @@ Item {
 
     Behavior on implicitHeight {
         NumberAnimation {
-            duration: Appearance.duration.state
-            easing.type: Easing.OutCubic
+            duration: Tokens.motion.feedback
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: Tokens.motion.easeIn
         }
     }
 
@@ -94,8 +96,8 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
 
             text: root.entry.name
-            color: root.expanded ? Theme.bright : Theme.text
-            font.family: Appearance.font.data
+            color: root.expanded ? Tokens.color.bright : Tokens.color.text
+            font.family: Tokens.font.data
             font.pixelSize: Appearance.size.body
             elide: Text.ElideRight
             maximumLineCount: 1
@@ -109,7 +111,7 @@ Item {
             anchors.rightMargin: 8
             anchors.verticalCenter: parent.verticalCenter
 
-            color: Theme.mute
+            color: Tokens.color.mute
             elide: Text.ElideRight
             text: root.entry.shortType
         }
@@ -121,7 +123,7 @@ Item {
             anchors.rightMargin: 8
             anchors.verticalCenter: parent.verticalCenter
 
-            color: Theme.dim
+            color: Tokens.color.dim
             text: `${root.entry.cveCount} CVE`
         }
 
@@ -199,19 +201,20 @@ Item {
 
         Behavior on opacity {
             NumberAnimation {
-                duration: root.expanded ? Appearance.duration.enter : Appearance.duration.exit
-                easing.type: root.expanded ? Easing.OutCubic : Easing.InCubic
+                duration: root.expanded ? Tokens.motion.panels : Tokens.motion.panels
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: root.expanded ? Tokens.motion.easeIn : Tokens.motion.easeOut
             }
         }
 
         // Nothing is drawn any more, so the rise is put back without animating
         // -- ready for the next time the row opens.
-        onVisibleChanged: if (!visible) root.detailRise = Appearance.enterRise
+        onVisibleChanged: if (!visible) root.detailRise = Tokens.motion.rise
 
         // The full phrase arch-audit gave, not the shortened tag on the row.
         NrLabel {
             width: parent.width
-            color: Theme.text
+            color: Tokens.color.text
             wrapMode: Text.WordWrap
             font.capitalization: Font.AllUppercase
             text: root.entry.type || "UNKNOWN"
@@ -220,8 +223,8 @@ Item {
         Text {
             width: parent.width
             text: root.entry.cves.join("   ")
-            color: Theme.dim
-            font.family: Appearance.font.data
+            color: Tokens.color.dim
+            font.family: Tokens.font.data
             font.pixelSize: Appearance.size.label
             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
             renderType: Text.NativeRendering
@@ -230,7 +233,7 @@ Item {
         NrLabel {
             width: parent.width
             visible: root.entry.fixed
-            color: Theme.signal
+            color: Tokens.color.signal
             text: `FIXED IN ${root.entry.fixedVersion}`
         }
 
@@ -238,19 +241,19 @@ Item {
         // decides whether removing it is a sane thing to offer.
         NrLabel {
             width: parent.width
-            color: Theme.dim
+            color: Tokens.color.dim
             wrapMode: Text.WordWrap
             text: {
                 if (!root.requiredKnown)
-                    return "REQUIRED BY // CHECKING";
+                    return "REQUIRED BY  CHECKING";
                 if (root.requiredBy.length === 0)
-                    return `REQUIRED BY${Appearance.separator}NOTHING`;
+                    return "REQUIRED BY  NOTHING";
                 // A core library can be required by forty packages, and the
                 // whole list turns the detail into a wall. The count is the
                 // answer to "can I remove this"; the names are context.
                 const shown = root.requiredBy.slice(0, 8).join(", ").toUpperCase();
                 const rest = root.requiredBy.length - 8;
-                return `REQUIRED BY${Appearance.separator}${root.requiredBy.length}   ${shown}${rest > 0 ? ` +${rest} MORE` : ""}`;
+                return `REQUIRED BY  ${root.requiredBy.length} · ${shown}${rest > 0 ? ` +${rest} MORE` : ""}`;
             }
         }
 

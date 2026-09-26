@@ -77,8 +77,8 @@ SlantBlock {
     // the ticker gives or takes the difference.
     // From the suffix's last ink to the nearest point of the slant.
     implicitWidth: root.countInkEnd + root.sidePadding + slant
-    implicitHeight: Appearance.metrics.barHeight - Appearance.metrics.hairline
-    fillColor: Theme.accent
+    implicitHeight: Appearance.metrics.barHeight - Tokens.measure.hairline
+    fillColor: Tokens.color.accent
     slant: 14
 
     // --- Measurement ------------------------------------------------------
@@ -144,8 +144,8 @@ SlantBlock {
         anchors.verticalCenter: parent.verticalCenter
 
         text: root.codeText
-        color: Theme.ground
-        font.family: Appearance.font.display
+        color: Tokens.color.ground
+        font.family: Tokens.font.display
         font.pixelSize: Appearance.size.logo
         font.weight: Appearance.font.weightBold
         font.letterSpacing: Appearance.size.logo * 0.06
@@ -167,8 +167,8 @@ SlantBlock {
         // dimming the suffix as well said the second half was secondary.
         opacity: 0.4
         text: "//"
-        color: Theme.ground
-        font.family: Appearance.font.display
+        color: Tokens.color.ground
+        font.family: Tokens.font.display
         font.pixelSize: Appearance.size.logo
         font.weight: Appearance.font.weightBold
         font.letterSpacing: Appearance.size.logo * -0.12
@@ -182,8 +182,8 @@ SlantBlock {
         anchors.baseline: codeLabel.baseline
 
         text: root.countText
-        color: Theme.ground
-        font.family: Appearance.font.display
+        color: Tokens.color.ground
+        font.family: Tokens.font.display
         font.pixelSize: Appearance.size.logo
         font.weight: Appearance.font.weightBold
         font.letterSpacing: Appearance.size.logo * 0.06

@@ -34,8 +34,8 @@ ChamferPanel {
     implicitHeight: 230
 
     chamfer: Appearance.chamfer.panel
-    fillColor: Qt.rgba(Theme.ground.r, Theme.ground.g, Theme.ground.b, 0.97)
-    borderColor: Theme.accent
+    fillColor: Qt.rgba(Tokens.color.ground.r, Tokens.color.ground.g, Tokens.color.ground.b, 0.97)
+    borderColor: Tokens.color.accent
 
     MouseArea {
         anchors.fill: parent
@@ -55,9 +55,9 @@ ChamferPanel {
                 id: taggedTitle
 
                 anchors.verticalCenter: parent.verticalCenter
-                text: `NAME${Appearance.separator}PROFILE`
-                color: Theme.bright
-                font.family: Appearance.font.display
+                text: "NAME THE PROFILE"
+                color: Tokens.color.bright
+                font.family: Tokens.font.display
                 font.pixelSize: 18
                 font.weight: Appearance.font.weightBold
                 renderType: Text.NativeRendering
@@ -89,15 +89,15 @@ ChamferPanel {
 
             NrLabel {
                 anchors.verticalCenter: parent.verticalCenter
-                color: Theme.dim
+                color: Tokens.color.dim
                 text: "WALLPAPER"
             }
 
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 text: root.trimmed ? root.filename : "net-<name>.png"
-                color: root.trimmed ? Theme.signal : Theme.mute
-                font.family: Appearance.font.data
+                color: root.trimmed ? Tokens.color.signal : Tokens.color.mute
+                font.family: Tokens.font.data
                 font.pixelSize: 11
                 renderType: Text.NativeRendering
             }
@@ -107,7 +107,7 @@ ChamferPanel {
         // spaces and hyphens are what a filename can carry without quoting.
         NrLabel {
             width: parent.width
-            color: Theme.alert
+            color: Tokens.color.alert
             pixelSize: 10
             text: {
                 if (root.badCharacters)

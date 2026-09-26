@@ -18,9 +18,9 @@ Item {
     property real chamferTopRight: chamfer
     property real chamferBottomRight: 0
     property real chamferBottomLeft: chamfer
-    property color fillColor: Theme.panel2
-    property color borderColor: Theme.hair
-    property real borderWidth: Appearance.metrics.hairline
+    property color fillColor: Tokens.color.panel2
+    property color borderColor: Tokens.color.hair
+    property real borderWidth: Tokens.measure.hairline
 
     // Inset by half the stroke so the hairline sits inside the bounds rather
     // than straddling them.

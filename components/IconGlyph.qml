@@ -8,7 +8,7 @@ Item {
     id: root
 
     property int code: 0
-    property color color: Theme.dim
+    property color color: Tokens.color.dim
     property real pixelSize: 15
     property real slot: 15
 
@@ -24,8 +24,9 @@ Item {
 
         Behavior on color {
             ColorAnimation {
-                duration: Appearance.duration.state
-                easing.type: Easing.OutCubic
+                duration: Tokens.motion.feedback
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Tokens.motion.easeIn
             }
         }
     }

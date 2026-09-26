@@ -125,7 +125,7 @@ Variants {
 
                         NrLabel {
                             anchors.verticalCenter: parent.verticalCenter
-                            color: Theme.text
+                            color: Tokens.color.text
                             text: Demo.host(Machine.hostname)
                         }
 
@@ -133,7 +133,7 @@ Variants {
                             anchors.verticalCenter: parent.verticalCenter
                             spacing: 6
                             NrLabel { text: "UPTIME" }
-                            NrLabel { color: Theme.text; text: Fmt.uptime(SysInfo.uptimeSeconds) }
+                            NrLabel { color: Tokens.color.text; text: Fmt.uptime(SysInfo.uptimeSeconds) }
                         }
                     }
                 }
@@ -176,10 +176,10 @@ Variants {
                         anchors.horizontalCenter: parent.horizontalCenter
 
                         text: Session.status
-                        color: Session.armed ? Theme.accent : Theme.dim
-                        font.family: Appearance.font.data
+                        color: Session.armed ? Tokens.color.accent : Tokens.color.dim
+                        font.family: Tokens.font.data
                         font.pixelSize: Appearance.size.label
-                        font.weight: Appearance.font.weightSemi
+                        font.weight: Tokens.font.dataWeight
                         font.letterSpacing: Appearance.tracking(Appearance.size.label)
                         font.capitalization: Font.AllUppercase
                     }
@@ -187,12 +187,13 @@ Variants {
                     Rectangle {
                         width: tiles.width
                         height: 2
-                        color: Session.armed ? Theme.accent : Theme.hair
+                        color: Session.armed ? Tokens.color.accent : Tokens.color.hair
 
                         Behavior on color {
                             ColorAnimation {
-                                duration: Appearance.duration.state
-                                easing.type: Easing.OutCubic
+                                duration: Tokens.motion.feedback
+                                easing.type: Easing.BezierSpline
+                                easing.bezierCurve: Tokens.motion.easeIn
                             }
                         }
                     }
@@ -207,36 +208,36 @@ Variants {
                         Keycap {
                             anchors.verticalCenter: parent.verticalCenter
                             key: "←→"
-                            color: Theme.mute
+                            color: Tokens.color.mute
                         }
 
                         NrLabel {
                             anchors.verticalCenter: parent.verticalCenter
-                            color: Theme.mute
+                            color: Tokens.color.mute
                             text: "SELECT"
                         }
 
                         Keycap {
                             anchors.verticalCenter: parent.verticalCenter
                             key: "ENTER"
-                            color: Theme.mute
+                            color: Tokens.color.mute
                         }
 
                         NrLabel {
                             anchors.verticalCenter: parent.verticalCenter
-                            color: Theme.mute
+                            color: Tokens.color.mute
                             text: "EXEC"
                         }
 
                         Keycap {
                             anchors.verticalCenter: parent.verticalCenter
                             key: "ESC"
-                            color: Theme.mute
+                            color: Tokens.color.mute
                         }
 
                         NrLabel {
                             anchors.verticalCenter: parent.verticalCenter
-                            color: Theme.mute
+                            color: Tokens.color.mute
                             text: "ABORT"
                         }
                     }

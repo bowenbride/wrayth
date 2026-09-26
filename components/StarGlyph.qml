@@ -13,7 +13,7 @@ import qs.config
 Item {
     id: root
 
-    property color color: Theme.text
+    property color color: Tokens.color.text
     // How far the points stop short of the button's edge.
     property real inset: 2
 

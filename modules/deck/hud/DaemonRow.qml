@@ -19,7 +19,7 @@ Item {
     NrLabel {
         anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
-        color: Theme.dim
+        color: Tokens.color.dim
         text: root.entry.name
     }
 
@@ -29,10 +29,10 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
 
         text: root.reading?.value ?? "..."
-        color: root.reading ? Daemons.toneColor(root.reading.tone) : Theme.mute
-        font.family: Appearance.font.data
+        color: root.reading ? Daemons.toneColor(root.reading.tone) : Tokens.color.mute
+        font.family: Tokens.font.data
         font.pixelSize: Appearance.size.label
-        font.weight: Appearance.font.weightSemi
+        font.weight: Tokens.font.dataWeight
         font.letterSpacing: Appearance.tracking(Appearance.size.label)
     }
 

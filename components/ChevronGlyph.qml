@@ -7,6 +7,6 @@ Icon {
     property string direction: "right"
 
     name: direction === "left" ? "chevron_left" : "chevron_right"
-    color: Theme.text
+    color: Tokens.color.text
     size: 14
 }

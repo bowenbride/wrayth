@@ -45,7 +45,7 @@ Column {
                 anchors.verticalCenter: parent.verticalCenter
                 width: 7
                 height: 7
-                color: SystemStatus.breach ? Theme.accent : Theme.signal
+                color: SystemStatus.breach ? Tokens.color.accent : Tokens.color.signal
 
                 // **Only while anybody can see it.** An infinite animation
                 // on a panel whose window is unmapped still ticks its
@@ -74,11 +74,11 @@ Column {
                 renderType: Text.NativeRendering
                 anchors.verticalCenter: parent.verticalCenter
 
-                text: SystemStatus.breach ? `ICE${Appearance.separator}BREACH` : `ICE${Appearance.separator}NOMINAL`
-                color: SystemStatus.breach ? Theme.accent : Theme.text
-                font.family: Appearance.font.data
+                text: SystemStatus.breach ? "ICE BREACH" : "ICE NOMINAL"
+                color: SystemStatus.breach ? Tokens.color.accent : Tokens.color.text
+                font.family: Tokens.font.data
                 font.pixelSize: Appearance.size.label
-                font.weight: Appearance.font.weightSemi
+                font.weight: Tokens.font.dataWeight
                 font.letterSpacing: Appearance.tracking(Appearance.size.label)
                 font.capitalization: Font.AllUppercase
             }
@@ -127,7 +127,7 @@ Column {
         NrLabel {
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            text: `PKG${Appearance.separator}${SystemStatus.pendingUpdates} PENDING`
+            text: `PKG ${SystemStatus.pendingUpdates} PENDING`
         }
     }
 
@@ -137,7 +137,7 @@ Column {
         // Set apart from the package line: it belongs to the machine, not to
         // anything being measured.
         topPadding: 10
-        color: Theme.mute
+        color: Tokens.color.mute
         // A version string, not a label.
         font.capitalization: Font.MixedCase
         text: `KRN ${Machine.kernel}`

@@ -74,7 +74,7 @@ Variants {
         visible: current !== ""
 
         // Each dropdown may give its own width (AUDIO 400, TRAY 360, COMMS 420).
-        implicitWidth: content.item?.panelWidth ?? 380
+        implicitWidth: content.item?.panelWidth ?? Tokens.measure.dropdownStandard
         // Fixed to the panel. Animating this instead would reconfigure the layer
         // surface on every frame, which Hyprland cannot keep up with — that is
         // what made the slide stutter.
@@ -114,8 +114,9 @@ Variants {
             target: popup
             property: "reveal"
             to: 1
-            duration: Appearance.duration.state
-            easing.type: Easing.OutCubic
+            duration: Tokens.motion.feedback
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: Tokens.motion.easeIn
         }
 
         SequentialAnimation {
@@ -128,8 +129,9 @@ Variants {
                 target: popup
                 property: "reveal"
                 to: 0
-                duration: Math.round(Appearance.duration.state * 0.55)
-                easing.type: Easing.InCubic
+                duration: Math.round(Tokens.motion.feedback * 0.55)
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Tokens.motion.easeOut
             }
             // The surface moves and resizes to the incoming panel here, with
             // nothing drawn in it.
@@ -143,8 +145,9 @@ Variants {
                 target: popup
                 property: "reveal"
                 to: 1
-                duration: Appearance.duration.state
-                easing.type: Easing.OutCubic
+                duration: Tokens.motion.feedback
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Tokens.motion.easeIn
             }
         }
 

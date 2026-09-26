@@ -30,7 +30,7 @@ ChamferPanel {
         return [c.hsvHue < 0 ? 0 : c.hsvHue, c.hsvSaturation, c.hsvValue];
     }
 
-    readonly property color against: (root.background ? root.palette.text : root.palette.ground) ?? Theme.ground
+    readonly property color against: (root.background ? root.palette.text : root.palette.ground) ?? Tokens.color.ground
     readonly property real ratio: Profiles.contrast(root.value, String(root.against))
     readonly property bool weak: ratio < 4.5
 
@@ -42,8 +42,8 @@ ChamferPanel {
     chamfer: 12
     chamferTopRight: 12
     chamferBottomLeft: 12
-    fillColor: Theme.panel2
-    borderColor: Theme.accent
+    fillColor: Tokens.color.panel2
+    borderColor: Tokens.color.accent
 
     Column {
         anchors.fill: parent
@@ -57,7 +57,7 @@ ChamferPanel {
             NrLabel {
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
-                color: Theme.accent
+                color: Tokens.color.accent
                 text: root.tokenKey
             }
 
@@ -67,8 +67,8 @@ ChamferPanel {
                 width: 28
                 height: 14
                 color: root.value
-                border.width: Appearance.metrics.hairline
-                border.color: Theme.hair
+                border.width: Tokens.measure.hairline
+                border.color: Tokens.color.hair
             }
         }
 
@@ -115,8 +115,8 @@ ChamferPanel {
                     }
                 }
 
-                border.width: Appearance.metrics.hairline
-                border.color: Theme.hair
+                border.width: Tokens.measure.hairline
+                border.color: Tokens.color.hair
             }
 
             // The marker is two rings, light over dark, so it stays visible on
@@ -170,8 +170,8 @@ ChamferPanel {
 
             Rectangle {
                 anchors.fill: parent
-                border.width: Appearance.metrics.hairline
-                border.color: Theme.hair
+                border.width: Tokens.measure.hairline
+                border.color: Tokens.color.hair
 
                 gradient: Gradient {
                     orientation: Gradient.Horizontal
@@ -241,7 +241,7 @@ ChamferPanel {
 
             NrLabel {
                 anchors.verticalCenter: parent.verticalCenter
-                color: Theme.dim
+                color: Tokens.color.dim
                 text: "HEX"
             }
 
@@ -266,14 +266,14 @@ ChamferPanel {
             NrLabel {
                 anchors.verticalCenter: parent.verticalCenter
                 pixelSize: 10
-                color: root.weak ? Theme.alert : Theme.signal
+                color: root.weak ? Tokens.color.alert : Tokens.color.signal
                 text: `${root.ratio.toFixed(1)}:1 ON ${root.background ? "TEXT" : "GROUND"}`
             }
         }
 
         // --- Chips ------------------------------------------------------------
         NrLabel {
-            color: Theme.dim
+            color: Tokens.color.dim
             text: "FROM THIS PALETTE"
         }
 
@@ -289,9 +289,9 @@ ChamferPanel {
                     visible: modelData.key !== root.tokenKey
                     width: 20
                     height: 16
-                    color: root.palette[modelData.key] ?? Theme.hair
-                    border.width: Appearance.metrics.hairline
-                    border.color: Theme.hair
+                    color: root.palette[modelData.key] ?? Tokens.color.hair
+                    border.width: Tokens.measure.hairline
+                    border.color: Tokens.color.hair
 
                     HoverHandler {
                         cursorShape: Qt.PointingHandCursor

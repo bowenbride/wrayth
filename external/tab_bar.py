@@ -169,7 +169,7 @@ def draw_tab(
 
     # --- everything after the last tab ------------------------------------
     cwd = _cwd()
-    middle = f" bash // {cwd}" if cwd else " bash"
+    middle = f" bash · {cwd}" if cwd else " bash"
     _put(screen, middle, dim, ground)
 
     # The katakana is pushed hard right. Its cell width is not its character

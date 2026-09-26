@@ -59,8 +59,9 @@ Item {
 
     Behavior on lift {
         NumberAnimation {
-            duration: Appearance.duration.state
-            easing.type: Easing.OutCubic
+            duration: Tokens.motion.feedback
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: Tokens.motion.easeIn
         }
     }
 
@@ -68,8 +69,8 @@ Item {
         anchors.fill: parent
 
         chamfer: Appearance.chamfer.panel
-        fillColor: root.selected ? Theme.ground : Theme.panel2
-        borderColor: root.selected ? root.tone : Theme.hair
+        fillColor: root.selected ? Tokens.color.ground : Tokens.color.panel2
+        borderColor: root.selected ? root.tone : Tokens.color.hair
 
         // **The thumbnail is masked to the card's own cut corner.** It is a
         // rectangle inside a chamfered panel, so its own fill -- the mini
@@ -136,7 +137,7 @@ Item {
                         // at 8 px on a half-transparent backing they could not
                         // be read at all.
                         color: Qt.rgba(0, 0, 0, buttonHover.hovered ? 0.92 : 0.8)
-                        border.width: Appearance.metrics.hairline
+                        border.width: Tokens.measure.hairline
                         border.color: root.tone
 
                         NrLabel {
@@ -236,8 +237,9 @@ Item {
 
             Behavior on opacity {
                 NumberAnimation {
-                    duration: Appearance.duration.state
-                    easing.type: Easing.OutCubic
+                    duration: Tokens.motion.feedback
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: Tokens.motion.easeIn
                 }
             }
         }
@@ -259,8 +261,8 @@ Item {
                     id: title
 
                     text: root.name.toUpperCase()
-                    color: root.selected ? root.tone : Theme.text
-                    font.family: Appearance.font.display
+                    color: root.selected ? root.tone : Tokens.color.text
+                    font.family: Tokens.font.display
                     font.pixelSize: 14
                     font.weight: Appearance.font.weightBold
                     renderType: Text.NativeRendering
@@ -270,7 +272,7 @@ Item {
                     anchors.right: parent.right
                     anchors.verticalCenter: title.verticalCenter
                     pixelSize: 10
-                    color: Theme.dim
+                    color: Tokens.color.dim
                     text: root.badge
                 }
             }
@@ -279,8 +281,8 @@ Item {
                 width: parent.width
 
                 text: Profiles.descriptions[root.name] ?? ""
-                color: Theme.text
-                font.family: Appearance.font.data
+                color: Tokens.color.text
+                font.family: Tokens.font.data
                 font.pixelSize: 10
                 wrapMode: Text.Wrap
                 maximumLineCount: 3

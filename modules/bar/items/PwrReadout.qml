@@ -1,7 +1,8 @@
 import QtQuick
 import Quickshell
 import Quickshell.Services.UPower
-import qs.components
+import qs.components as C
+import qs.components.ui
 import qs.config
 import qs.services
 import qs.utils
@@ -14,39 +15,43 @@ Row {
     readonly property real charge: (battery?.percentage ?? 0) * 100
     readonly property bool unplugged: UPower.onBattery && (battery?.isPresent ?? false)
 
-    spacing: 7
+    spacing: Tokens.space.s8
 
-    NrLabel {
+    // PWR (DESIGN.md): Label, then Value -- AC, or the battery percentage,
+    // in a slot as wide as the widest it can read (100% on a machine with a
+    // battery, AC without one).
+    Label {
         anchors.verticalCenter: parent.verticalCenter
+        bar: true
         text: "PWR"
     }
-
-    SegmentMeter {
+    // The small meter, as built before the style pass (DESIGN.md).
+    C.SegmentMeter {
         anchors.verticalCenter: parent.verticalCenter
-        visible: root.unplugged
-
-        segments: Appearance.metrics.meterSegments
-        segmentWidth: Appearance.metrics.meterSegmentWidth
-        segmentHeight: Appearance.metrics.meterSegmentHeight
+        segments: Tokens.measure.barMeterSegments
+        segmentWidth: Tokens.measure.barMeterSegmentWidth
+        segmentHeight: Tokens.measure.barMeterSegmentHeight
         value: root.charge / 100
-        litColor: Theme.signal
-        // A flat battery is the one thing here worth shouting about.
-        hotThreshold: 0.2
-        hotColor: Theme.accent
+        visible: root.unplugged
+        // A flat battery is a warning: the lit segments turn accent below 20%.
+        // (The pre-pass meter used hotThreshold, which lights *above* it, so
+        // any battery over 20% showed in accent.)
+        litColor: root.charge < 20 ? Tokens.color.accent : Tokens.color.signal
     }
 
-    Slot {
+    Value {
+        id: value
+
         anchors.verticalCenter: parent.verticalCenter
-        implicitWidth: root.unplugged ? Appearance.slot.percent : acLabel.implicitWidth
+        bar: true
+        width: widest.width
+        horizontalAlignment: Text.AlignRight
         text: root.unplugged ? Fmt.percent(root.charge) : "AC"
 
-        Text {
-            renderType: Text.NativeRendering
-            id: acLabel
-
-            visible: false
-            text: "AC"
-            font: parent.font
+        TextMetrics {
+            id: widest
+            font: value.font
+            text: (root.battery?.isPresent ?? false) ? "100%" : "AC"
         }
     }
 

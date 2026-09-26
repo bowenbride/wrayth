@@ -3,6 +3,7 @@ import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Wayland
 import qs.components
+import qs.components.ui as UI
 import qs.config
 import qs.services
 
@@ -72,8 +73,8 @@ Variants {
                     anchors.centerIn: parent
                     width: view.shown * view.tileW + (view.shown - 1) * view.gap + 36
                     height: body.implicitHeight + 36
-                    chamfer: Appearance.chamfer.panel
-                    fillColor: Theme.panel2
+                    chamfer: Tokens.chamfer.centred
+                    fillColor: Tokens.color.panel2
 
                     Column {
                         id: body
@@ -83,28 +84,24 @@ Variants {
                         width: parent.width - 36
                         spacing: 12
 
-                        Column {
-                            spacing: 6
-                            Row {
-                                spacing: 8
-                                NrLabel {
-                                    id: winTitle
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    color: Theme.bright
-                                    text: "WINDOWS"
-                                }
-                                KanaTag {
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    text: "窓"
-                                    title: winTitle
-                                }
+                        // Header: Title + JapaneseLabel, the hint line on the right.
+                        Item {
+                            width: parent.width
+                            height: Tokens.measure.toggleHeight
+                            UI.Title {
+                                anchors.left: parent.left
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: "WINDOWS"
+                                japanese: "窓"
                             }
                             Text {
-                                text: "TAB NEXT · SHIFT+TAB BACK · RELEASE ALT TO SWITCH"
-                                color: Theme.dim
-                                font.family: Appearance.font.data
-                                font.pixelSize: 9
-                                font.letterSpacing: 9 * 0.12
+                                anchors.right: parent.right
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: "TAB NEXT · SHIFT + TAB BACK · RELEASE ALT TO SWITCH"
+                                color: Tokens.color.dim
+                                font.family: Tokens.type.hint.family
+                                font.pixelSize: Tokens.type.hint.size
+                                font.letterSpacing: Tokens.type.hint.size * Tokens.type.hint.tracking
                                 renderType: Text.NativeRendering
                             }
                         }
@@ -150,13 +147,14 @@ Variants {
                                     // bottom-left chamfer.
                                     chamferBottomLeft: tile.index === 0 ? 10 : 0
                                     scanlines: false
-                                    fillColor: tile.sel ? Theme.alpha(Theme.accent, 0.08) : "transparent"
-                                    borderColor: tile.sel ? Theme.accent : Theme.hair
+                                    fillColor: tile.sel ? Tokens.color.accentFaint : "transparent"
+                                    borderColor: tile.sel ? Tokens.color.accent : Tokens.color.hair
 
                                     Behavior on y {
                                         NumberAnimation {
-                                            duration: Appearance.duration.state
-                                            easing.type: Easing.OutCubic
+                                            duration: Tokens.motion.feedback
+                                            easing.type: Easing.BezierSpline
+                                            easing.bezierCurve: Tokens.motion.easeIn
                                         }
                                     }
 
@@ -167,7 +165,7 @@ Variants {
                                         y: 1
                                         width: parent.width - 2
                                         height: 128
-                                        color: Theme.alpha(Theme.ground, 0.6)
+                                        color: Theme.alpha(Tokens.color.ground, 0.6)
                                         clip: true
 
                                         ScreencopyView {
@@ -188,15 +186,15 @@ Variants {
                                             anchors.margins: 5
                                             width: wsTag.implicitWidth + 10
                                             height: 16
-                                            color: Theme.alpha(Theme.ground, 0.85)
+                                            color: Theme.alpha(Tokens.color.ground, 0.85)
                                             border.width: 1
-                                            border.color: Theme.hair
+                                            border.color: Tokens.color.hair
                                             Text {
                                                 id: wsTag
                                                 anchors.centerIn: parent
                                                 text: (tile.modelData.workspace?.id ?? 0) > 0 ? `WS ${tile.modelData.workspace.id}` : (tile.modelData.workspace?.name ?? "").replace(/^special:/, "").toUpperCase()
-                                                color: Theme.text
-                                                font.family: Appearance.font.data
+                                                color: Tokens.color.text
+                                                font.family: Tokens.font.data
                                                 font.pixelSize: 9
                                                 font.letterSpacing: 9 * 0.12
                                                 renderType: Text.NativeRendering
@@ -220,10 +218,10 @@ Variants {
                                         elide: Text.ElideRight
                                         text: tile.cls.replace(/^.*\./, "") || "APP"
                                         textFormat: Text.PlainText
-                                        color: tile.sel ? Theme.bright : Theme.text
-                                        font.family: Appearance.font.data
+                                        color: tile.sel ? Tokens.color.bright : Tokens.color.text
+                                        font.family: Tokens.font.data
                                         font.pixelSize: 11
-                                        font.weight: Appearance.font.weightSemi
+                                        font.weight: Tokens.font.dataWeight
                                         renderType: Text.NativeRendering
                                     }
                                     Text {
@@ -233,8 +231,8 @@ Variants {
                                         elide: Text.ElideRight
                                         text: tile.modelData.title
                                         textFormat: Text.PlainText
-                                        color: Theme.dim
-                                        font.family: Appearance.font.data
+                                        color: Tokens.color.dim
+                                        font.family: Tokens.font.data
                                         font.pixelSize: 9
                                         renderType: Text.NativeRendering
                                     }

@@ -18,7 +18,7 @@ Item {
     Rectangle {
         anchors.fill: parent
         color: root.palette.ground
-        border.width: Appearance.metrics.hairline
+        border.width: Tokens.measure.hairline
         border.color: root.palette.hair
     }
 
@@ -62,16 +62,16 @@ Item {
             Text {
                 text: "wrayth"
                 color: root.palette.accent
-                font.family: Appearance.font.data
+                font.family: Tokens.font.data
                 font.pixelSize: 11
-                font.weight: Appearance.font.weightSemi
+                font.weight: Tokens.font.dataWeight
                 renderType: Text.NativeRendering
             }
 
             Text {
                 text: "~/deck"
                 color: root.palette.signal
-                font.family: Appearance.font.data
+                font.family: Tokens.font.data
                 font.pixelSize: 11
                 renderType: Text.NativeRendering
             }
@@ -79,16 +79,16 @@ Item {
             Text {
                 text: "$"
                 color: root.palette.dim
-                font.family: Appearance.font.data
+                font.family: Tokens.font.data
                 font.pixelSize: 11
                 renderType: Text.NativeRendering
             }
         }
 
         Text {
-            text: "ICE NOMINAL // 25 SERVICES // UPLINK 12MS"
+            text: "ICE NOMINAL · 25 SERVICES · UPLINK 12 MS"
             color: root.palette.text
-            font.family: Appearance.font.data
+            font.family: Tokens.font.data
             font.pixelSize: 11
             renderType: Text.NativeRendering
         }
@@ -107,9 +107,9 @@ Item {
                 anchors.centerIn: parent
                 text: "SELECTED TEXT READS LIKE THIS"
                 color: root.palette.ground
-                font.family: Appearance.font.data
+                font.family: Tokens.font.data
                 font.pixelSize: 11
-                font.weight: Appearance.font.weightSemi
+                font.weight: Tokens.font.dataWeight
                 renderType: Text.NativeRendering
             }
         }
@@ -126,9 +126,9 @@ Item {
             Text {
                 text: "2 PACKAGES PENDING"
                 color: root.palette.alert
-                font.family: Appearance.font.data
+                font.family: Tokens.font.data
                 font.pixelSize: 11
-                font.weight: Appearance.font.weightSemi
+                font.weight: Tokens.font.dataWeight
                 renderType: Text.NativeRendering
             }
         }
@@ -136,7 +136,7 @@ Item {
         Text {
             text: "these are the labels that sit under everything"
             color: root.palette.dim
-            font.family: Appearance.font.data
+            font.family: Tokens.font.data
             font.pixelSize: 10
             renderType: Text.NativeRendering
         }

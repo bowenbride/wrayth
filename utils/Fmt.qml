@@ -9,11 +9,20 @@ Singleton {
     id: root
 
     // Byte rate -> the bar's compact "12K" / "1.4M" form.
+    // Byte rate -> at most four characters, the unit scaling (DESIGN.md):
+    // 0K to 999K, then 1.0M to 9.9M and 10M to 99M, then 0.1G upward (1.0G
+    // at a gibibyte a second). Never longer, so the bar's slot stays tight.
     function rate(bytesPerSecond: real): string {
-        const kib = bytesPerSecond / 1024;
-        if (kib < 1000)
+        const kib = Math.max(0, bytesPerSecond) / 1024;
+        if (Math.round(kib) < 1000)
             return `${Math.round(kib)}K`;
-        return `${(kib / 1024).toFixed(1)}M`;
+        const mib = kib / 1024;
+        if (Number(mib.toFixed(1)) < 10)
+            return `${Math.max(1, mib).toFixed(1)}M`;
+        if (Math.round(mib) < 100)
+            return `${Math.round(mib)}M`;
+        const gib = mib / 1024;
+        return Number(gib.toFixed(1)) < 10 ? `${gib.toFixed(1)}G` : `${Math.min(999, Math.round(gib))}G`;
     }
 
     // Byte rate -> the HUD's "12.4 KB/s" form.
@@ -36,10 +45,10 @@ Singleton {
         return value < 10 ? `0${value}` : `${value}`;
     }
 
-    // The lockscreen's date line, e.g. "FRIDAY // 09.18.26".
+    // A long date line, e.g. "FRIDAY · 09.18.26".
     function lockDate(date: date): string {
         const days = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
-        return `${days[date.getDay()]} // ${pad2(date.getMonth() + 1)}.${pad2(date.getDate())}.${pad2(date.getFullYear() % 100)}`;
+        return `${days[date.getDay()]} · ${pad2(date.getMonth() + 1)}.${pad2(date.getDate())}.${pad2(date.getFullYear() % 100)}`;
     }
 
     // MM.DD.YY, e.g. "09.21.26". The lockscreen draws the numeric date and the

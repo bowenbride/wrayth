@@ -28,35 +28,40 @@ Item {
     // advertising a key that does nothing.
     property bool showKey: true
 
-    implicitWidth: content.implicitWidth + 30
-    implicitHeight: 30
+    // DESIGN.md, the full-screen BackControl: a secondary button reading BACK
+    // with an ESC keycap, 22 px, a 5 px top-left chamfer (corner echo).
+    implicitWidth: content.implicitWidth + 2 * Tokens.space.s10
+    implicitHeight: Tokens.measure.buttonInline
 
-    readonly property color tone: hover.hovered ? Theme.accent : Theme.dim
+    readonly property color tone: Tokens.color.text
 
     ChamferPanel {
         anchors.fill: parent
 
-        chamfer: 8
-        chamferTopLeft: 8
+        chamfer: 0
+        chamferTopLeft: Tokens.chamfer.backControl
         chamferTopRight: 0
+        chamferBottomRight: 0
         chamferBottomLeft: 0
-        fillColor: hover.hovered ? Theme.alpha(Theme.hair, 0.4) : Theme.alpha(Theme.hair, 0.18)
-        borderColor: root.tone
+        fillColor: Tokens.color.panelHex
+        borderColor: hover.hovered ? Tokens.color.dim : Tokens.color.hair
         // A control inside a full-screen view is already inside whatever the
         // view draws; it does not carry its own overlay.
         scanlines: false
 
         Behavior on fillColor {
             ColorAnimation {
-                duration: Appearance.duration.state
-                easing.type: Easing.OutCubic
+                duration: Tokens.motion.feedback
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Tokens.motion.easeIn
             }
         }
 
         Behavior on borderColor {
             ColorAnimation {
-                duration: Appearance.duration.state
-                easing.type: Easing.OutCubic
+                duration: Tokens.motion.feedback
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Tokens.motion.easeIn
             }
         }
     }
@@ -65,18 +70,21 @@ Item {
         id: content
 
         anchors.centerIn: parent
-        spacing: 8
+        spacing: Tokens.space.s6
 
         NrLabel {
             anchors.verticalCenter: parent.verticalCenter
             centred: true
+            pixelSize: Tokens.type.button.size
+            font.letterSpacing: Tokens.type.button.size * Tokens.type.button.tracking
             color: root.tone
             text: "BACK"
 
             Behavior on color {
                 ColorAnimation {
-                    duration: Appearance.duration.state
-                    easing.type: Easing.OutCubic
+                    duration: Tokens.motion.feedback
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: Tokens.motion.easeIn
                 }
             }
         }
@@ -85,7 +93,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             visible: root.showKey
             key: "ESC"
-            color: root.tone
+            color: Tokens.color.bright
         }
     }
 

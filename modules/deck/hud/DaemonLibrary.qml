@@ -62,7 +62,7 @@ Variants {
             width: 720
             height: Math.min(parent.height - 120, body.implicitHeight + 92)
             chamfer: Appearance.chamfer.panel
-            fillColor: Theme.panel2
+            fillColor: Tokens.color.panel2
 
             CornerBrackets {
                 inset: 6
@@ -91,7 +91,7 @@ Variants {
                         id: libraryTitle
 
                         anchors.fill: parent
-                        text: `DAEMONS${Appearance.separator}LIBRARY`
+                        text: "LIBRARY"
                         pixelSize: 20
                     }
                 }
@@ -107,7 +107,7 @@ Variants {
                 anchors.right: parent.right
                 anchors.rightMargin: 22
                 anchors.verticalCenter: head.verticalCenter
-                color: Daemons.atCap() ? Theme.accent : Theme.dim
+                color: Daemons.atCap() ? Tokens.color.accent : Tokens.color.dim
                 text: `${Daemons.selected.length}/${Daemons.maxSelected} LOADED`
             }
 
@@ -149,14 +149,14 @@ Variants {
                             spacing: 4
 
                             NrLabel {
-                                color: Theme.mute
+                                color: Tokens.color.mute
                                 text: group.category
                             }
 
                             Rectangle {
                                 width: group.width
-                                height: Appearance.metrics.hairline
-                                color: Theme.hair
+                                height: Tokens.measure.hairline
+                                color: Tokens.color.hair
                             }
 
                             Repeater {
@@ -187,8 +187,8 @@ Variants {
                     anchors.top: parent.top
                     anchors.left: parent.left
                     anchors.right: parent.right
-                    height: Appearance.metrics.hairline
-                    color: Theme.hair
+                    height: Tokens.measure.hairline
+                    color: Tokens.color.hair
                 }
 
                 Row {
@@ -199,19 +199,19 @@ Variants {
 
                     NrLabel {
                         anchors.verticalCenter: parent.verticalCenter
-                        color: Theme.mute
+                        color: Tokens.color.mute
                         text: "CHANGES APPLY AT ONCE"
                     }
 
                     Keycap {
                         anchors.verticalCenter: parent.verticalCenter
                         key: "ESC"
-                        color: Theme.mute
+                        color: Tokens.color.mute
                     }
 
                     NrLabel {
                         anchors.verticalCenter: parent.verticalCenter
-                        color: Theme.mute
+                        color: Tokens.color.mute
                         text: "CLOSE"
                     }
                 }

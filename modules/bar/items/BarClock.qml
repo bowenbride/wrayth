@@ -47,9 +47,9 @@ Row {
             id: time
 
             text: Fmt.clockHM(clock.date)
-            color: Theme.bright
-            font.family: Appearance.font.display
-            font.pixelSize: Appearance.size.clock
+            color: Tokens.color.bright
+            font.family: Tokens.font.display
+            font.pixelSize: Tokens.type.clock.size
             font.weight: Appearance.font.weightBold
         }
 
@@ -66,9 +66,9 @@ Row {
             y: (big.ascent + bigInk.tightBoundingRect.y) - (small.ascent + smallInk.tightBoundingRect.y)
 
             text: Fmt.pad2(clock.date.getSeconds())
-            color: Theme.accent
-            font.family: Appearance.font.display
-            font.pixelSize: Appearance.size.clockSeconds
+            color: Tokens.color.accent
+            font.family: Tokens.font.display
+            font.pixelSize: Tokens.type.clockSeconds.size
             font.weight: Appearance.font.weightBold
         }
 

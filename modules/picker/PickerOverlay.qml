@@ -368,9 +368,11 @@ Variants {
                 // edge.** Escape is not discoverable and it was the only way
                 // out of this screen; the button does exactly what Escape
                 // does, by calling the same function.
+                // The full-screen header row: BackControl, title, status.
                 BackButton {
+                    id: pickerBack
                     x: gridScreen.gridLeft
-                    y: 96
+                    y: 151 + Math.round((46 - height) / 2)
 
                     onActivated: overlay.dismiss()
                 }
@@ -385,6 +387,7 @@ Variants {
 
                     Row {
                         anchors.left: parent.left
+                        anchors.leftMargin: pickerBack.width + Tokens.space.s16
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: 12
 
@@ -401,8 +404,10 @@ Variants {
                                 id: pickerTitle
 
                                 anchors.fill: parent
-                                text: `PROFILE${Appearance.separator}SELECT`
-                                pixelSize: 26
+                                text: "PROFILES"
+                                // The full-screen view title role (DESIGN.md): 22 px, 0.12em.
+                                pixelSize: Tokens.type.viewTitle.size
+                                tracking: Tokens.type.viewTitle.tracking
                             }
                         }
 
@@ -425,13 +430,13 @@ Variants {
 
                         NrLabel {
                             anchors.verticalCenter: parent.verticalCenter
-                            color: Theme.accent
+                            color: Tokens.color.accent
                             text: {
                                 if (!status.previewing)
-                                    return `APPLIED${Appearance.separator}${overlay.applied.toUpperCase()}`;
+                                    return `APPLIED ${overlay.applied.toUpperCase()}`;
                                 if (status.creating)
                                     return "NEW CUSTOM";
-                                return `PREVIEW${Appearance.separator}${overlay.previewed.toUpperCase()}`;
+                                return `PREVIEW ${overlay.previewed.toUpperCase()}`;
                             }
                         }
 
@@ -439,13 +444,13 @@ Variants {
                             anchors.verticalCenter: parent.verticalCenter
                             visible: status.previewing
                             key: "ENTER"
-                            color: Theme.accent
+                            color: Tokens.color.accent
                         }
 
                         NrLabel {
                             anchors.verticalCenter: parent.verticalCenter
                             visible: status.previewing
-                            color: Theme.accent
+                            color: Tokens.color.accent
                             text: status.creating ? "TO CREATE" : "OR CLICK AGAIN TO APPLY"
                         }
                     }
@@ -454,7 +459,7 @@ Variants {
                 NrLabel {
                     x: gridScreen.gridLeft
                     y: 223
-                    color: Theme.dim
+                    color: Tokens.color.dim
                     text: "SAME DECK, DIFFERENT OWNER    LIVE PREVIEW"
                 }
 
@@ -566,36 +571,36 @@ Variants {
                     Keycap {
                         anchors.verticalCenter: parent.verticalCenter
                         key: "←→↑↓"
-                        color: Theme.mute
+                        color: Tokens.color.mute
                     }
 
                     NrLabel {
                         anchors.verticalCenter: parent.verticalCenter
-                        color: Theme.mute
+                        color: Tokens.color.mute
                         text: "PREVIEW"
                     }
 
                     Keycap {
                         anchors.verticalCenter: parent.verticalCenter
                         key: "ENTER"
-                        color: Theme.mute
+                        color: Tokens.color.mute
                     }
 
                     NrLabel {
                         anchors.verticalCenter: parent.verticalCenter
-                        color: Theme.mute
+                        color: Tokens.color.mute
                         text: "APPLY"
                     }
 
                     Keycap {
                         anchors.verticalCenter: parent.verticalCenter
                         key: "ESC"
-                        color: Theme.mute
+                        color: Tokens.color.mute
                     }
 
                     NrLabel {
                         anchors.verticalCenter: parent.verticalCenter
-                        color: Theme.mute
+                        color: Tokens.color.mute
                         text: "REVERT AND CLOSE"
                     }
                 }
@@ -634,13 +639,14 @@ Variants {
                         // Opaque, blended rather than laid over: it sits on a
                         // wallpaper, and a translucent accent fill lets the
                         // image through the label.
-                        fillColor: Theme.blend(Theme.ground, Theme.accent, effectsHover.hovered ? 0.24 : 0.14)
-                        borderColor: Theme.accent
+                        fillColor: Theme.blend(Tokens.color.ground, Tokens.color.accent, effectsHover.hovered ? 0.24 : 0.14)
+                        borderColor: Tokens.color.accent
 
                         Behavior on fillColor {
                             ColorAnimation {
-                                duration: Appearance.duration.state
-                                easing.type: Easing.OutCubic
+                                duration: Tokens.motion.feedback
+                                easing.type: Easing.BezierSpline
+                                easing.bezierCurve: Tokens.motion.easeIn
                             }
                         }
                     }
@@ -656,7 +662,7 @@ Variants {
 
                             anchors.verticalCenter: parent.verticalCenter
                             centred: true
-                            color: Theme.accent
+                            color: Tokens.color.accent
                             text: "EFFECTS"
                         }
 
@@ -712,13 +718,14 @@ Variants {
                         // Opaque, blended rather than laid over: it sits on a
                         // wallpaper, and a translucent accent fill lets the
                         // image through the label.
-                        fillColor: Theme.blend(Theme.ground, Theme.accent, privacyHover.hovered ? 0.24 : 0.14)
-                        borderColor: Theme.accent
+                        fillColor: Theme.blend(Tokens.color.ground, Tokens.color.accent, privacyHover.hovered ? 0.24 : 0.14)
+                        borderColor: Tokens.color.accent
 
                         Behavior on fillColor {
                             ColorAnimation {
-                                duration: Appearance.duration.state
-                                easing.type: Easing.OutCubic
+                                duration: Tokens.motion.feedback
+                                easing.type: Easing.BezierSpline
+                                easing.bezierCurve: Tokens.motion.easeIn
                             }
                         }
                     }
@@ -734,7 +741,7 @@ Variants {
 
                             anchors.verticalCenter: parent.verticalCenter
                             centred: true
-                            color: Theme.accent
+                            color: Tokens.color.accent
                             text: "PRIVACY"
                         }
 
@@ -790,13 +797,14 @@ Variants {
                         // Opaque, blended rather than laid over: it sits on a
                         // wallpaper, and a translucent accent fill lets the
                         // image through the label.
-                        fillColor: Theme.blend(Theme.ground, Theme.accent, systemHover.hovered ? 0.24 : 0.14)
-                        borderColor: Theme.accent
+                        fillColor: Theme.blend(Tokens.color.ground, Tokens.color.accent, systemHover.hovered ? 0.24 : 0.14)
+                        borderColor: Tokens.color.accent
 
                         Behavior on fillColor {
                             ColorAnimation {
-                                duration: Appearance.duration.state
-                                easing.type: Easing.OutCubic
+                                duration: Tokens.motion.feedback
+                                easing.type: Easing.BezierSpline
+                                easing.bezierCurve: Tokens.motion.easeIn
                             }
                         }
                     }
@@ -812,7 +820,7 @@ Variants {
 
                             anchors.verticalCenter: parent.verticalCenter
                             centred: true
-                            color: Theme.accent
+                            color: Tokens.color.accent
                             text: "SYSTEM"
                         }
 

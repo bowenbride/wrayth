@@ -35,12 +35,20 @@ ShellRoot {
     PickerOverlay {}
     CaptureOverlay {}
     KeybindsOverlay {}
-    OverviewOverlay {}
-    WindowSwitcher {}
+    // Optional (SYSTEM page, WINDOWS): nothing is loaded while they are off.
+    LazyLoader {
+        active: SystemSettings.overview
+        OverviewOverlay {}
+    }
+    LazyLoader {
+        active: SystemSettings.switcher
+        WindowSwitcher {}
+    }
     RecordPanel {}
     ClipboardOverlay {}
     DaemonLibrary {}
     LockScreen {}
+    LockPreview {}
     PolkitPrompt {}
     StatusCache {}
     FontCheck {}

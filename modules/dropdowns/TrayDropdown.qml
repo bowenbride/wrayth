@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Effects
 import Quickshell
 import qs.components
+import qs.components.ui as UI
 import qs.config
 import qs.services
 
@@ -15,8 +16,7 @@ DropdownFrame {
 
     title: "TRAY"
     katakana: "常駐"
-    // Read by Dropdowns: this dropdown is 360 px wide.
-    readonly property int panelWidth: 360
+    panelWidth: Tokens.measure.dropdownSmall
 
     // The app whose menu is up, and the path down its submenus: a list of
     // { handle, title }. Empty: the app list.
@@ -78,7 +78,7 @@ DropdownFrame {
             id: fill
 
             anchors.fill: parent
-            color: Theme.dim
+            color: Tokens.color.dim
             visible: false
         }
         MultiEffect {
@@ -97,8 +97,8 @@ DropdownFrame {
             width: 8
             height: 8
             color: "transparent"
-            border.width: Appearance.metrics.hairline
-            border.color: Theme.mute
+            border.width: Tokens.measure.hairline
+            border.color: Tokens.color.mute
             visible: img.status !== Image.Ready
         }
     }
@@ -127,8 +127,9 @@ DropdownFrame {
             color: hover.hovered && entry.usable ? Theme.cell : "transparent"
             Behavior on color {
                 ColorAnimation {
-                    duration: Appearance.duration.state
-                    easing.type: Easing.OutCubic
+                    duration: Tokens.motion.feedback
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: Tokens.motion.easeIn
                 }
             }
         }
@@ -164,10 +165,10 @@ DropdownFrame {
             elide: Text.ElideRight
             text: entry.text
             textFormat: Text.PlainText
-            color: !entry.usable ? Theme.dim : (entry.accented ? Theme.accent : Theme.text)
-            font.family: Appearance.font.data
+            color: !entry.usable ? Tokens.color.dim : (entry.accented ? Tokens.color.accent : Tokens.color.text)
+            font.family: Tokens.font.data
             font.pixelSize: entry.pixelSize
-            font.weight: entry.accented ? Appearance.font.weightSemi : Appearance.font.weightRegular
+            font.weight: entry.accented ? Tokens.font.dataWeight : Tokens.font.dataWeight
             renderType: Text.NativeRendering
         }
 
@@ -188,8 +189,8 @@ DropdownFrame {
                 elide: Text.ElideRight
                 text: entry.status
                 textFormat: Text.PlainText
-                color: Theme.dim
-                font.family: Appearance.font.data
+                color: Tokens.color.dim
+                font.family: Tokens.font.data
                 font.pixelSize: 9
                 font.letterSpacing: 9 * 0.1
                 renderType: Text.NativeRendering
@@ -203,7 +204,7 @@ DropdownFrame {
                     anchors.centerIn: parent
                     name: "chevron_right"
                     size: 16
-                    color: chevronHover.hovered ? Theme.text : Theme.dim
+                    color: chevronHover.hovered ? Tokens.color.text : Tokens.color.dim
                 }
                 HoverHandler {
                     id: chevronHover
@@ -248,8 +249,9 @@ DropdownFrame {
 
         Behavior on height {
             NumberAnimation {
-                duration: Appearance.duration.panel
-                easing.type: Easing.OutCubic
+                duration: Tokens.motion.panels
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Tokens.motion.easeIn
             }
         }
 
@@ -268,51 +270,41 @@ DropdownFrame {
             }
             Behavior on slide {
                 NumberAnimation {
-                    duration: Appearance.duration.panel
-                    easing.type: Easing.OutCubic
+                    duration: Tokens.motion.panels
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: Tokens.motion.easeIn
                 }
             }
             Behavior on opacity {
                 NumberAnimation {
-                    duration: Appearance.duration.panel
-                    easing.type: Easing.OutCubic
+                    duration: Tokens.motion.panels
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: Tokens.motion.easeIn
                 }
             }
 
-            NrLabel {
+            UI.EmptyState {
+                width: parent.width
                 visible: Tray.items.length === 0
-                color: Theme.dim
                 text: "NO APPS IN THE TRAY"
-                height: 26
-                verticalAlignment: Text.AlignVCenter
             }
 
             Repeater {
                 model: Tray.items
 
-                // 36 px rows separated by hairlines.
-                EntryRow {
+                // A BadgeRow per app (DESIGN.md), with a quiet chevron to its menu.
+                UI.BadgeRow {
+                    id: appRow
+
                     required property var modelData
-                    required property int index
 
-                    height: 36
-                    pixelSize: 12
-                    showIcon: true
-                    badge: Tray.nameOf(modelData)
-                    text: Tray.nameOf(modelData)
+                    width: listColumn.width
+                    name: Tray.nameOf(modelData)
                     status: Tray.statusOf(modelData)
-                    chevron: modelData.hasMenu
-                    onMenuRequested: root.openApp(modelData)
-
-                    Rectangle {
-                        visible: parent.index > 0
-                        width: parent.width
-                        height: Appearance.metrics.hairline
-                        color: Theme.hair
-                    }
+                    trailing: modelData.hasMenu ? Tokens.icon.chevron + Tokens.space.s4 : 0
                     // Left-click: the app's primary action, usually its window.
                     // Apps that only have a menu open that instead.
-                    onActivated: {
+                    onClicked: {
                         if (modelData.onlyMenu && modelData.hasMenu) {
                             root.openApp(modelData);
                             return;
@@ -320,18 +312,42 @@ DropdownFrame {
                         modelData.activate();
                         ShellState.closeDropdown("a tray app activated");
                     }
+                    // Right-click, or the chevron: its menu.
+                    onRightClicked: if (modelData.hasMenu) root.openApp(modelData)
+
+                    Item {
+                        visible: appRow.modelData.hasMenu
+                        anchors.right: parent.right
+                        anchors.rightMargin: Tokens.space.s6
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: Tokens.measure.muteButtonWidth
+                        height: Tokens.measure.muteButtonHeight
+                        Icon {
+                            anchors.centerIn: parent
+                            name: "chevron_right"
+                            size: Tokens.icon.chevron
+                            color: chevHover.hovered ? Tokens.color.text : Tokens.color.dim
+                        }
+                        HoverHandler {
+                            id: chevHover
+                            cursorShape: Qt.PointingHandCursor
+                        }
+                        TapHandler {
+                            onTapped: root.openApp(appRow.modelData)
+                        }
+                    }
                 }
             }
-            // How it works, 9 px dim.
+            // How it works: a hint line.
             Text {
+                readonly property var role: Tokens.type.hint
                 visible: Tray.items.length > 0
-                height: 26
-                verticalAlignment: Text.AlignVCenter
+                topPadding: Tokens.space.s8
                 text: "CLICK OPENS · RIGHT-CLICK FOR ITS MENU"
-                color: Theme.dim
-                font.family: Appearance.font.data
-                font.pixelSize: 9
-                font.letterSpacing: 9 * 0.12
+                color: Tokens.color.dim
+                font.family: role.family
+                font.pixelSize: role.size
+                font.letterSpacing: role.size * role.tracking
                 renderType: Text.NativeRendering
             }
         }
@@ -351,19 +367,21 @@ DropdownFrame {
             }
             Behavior on slide {
                 NumberAnimation {
-                    duration: Appearance.duration.panel
-                    easing.type: Easing.OutCubic
+                    duration: Tokens.motion.panels
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: Tokens.motion.easeIn
                 }
             }
             Behavior on opacity {
                 NumberAnimation {
-                    duration: Appearance.duration.panel
-                    easing.type: Easing.OutCubic
+                    duration: Tokens.motion.panels
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: Tokens.motion.easeIn
                 }
             }
 
-            QuietBack {
-                label: root.path.length > 1 ? root.path[root.path.length - 2].title : "TRAY"
+            UI.BackControl {
+                destination: root.path.length > 1 ? root.path[root.path.length - 2].title : "TRAY"
                 onActivated: root.goBack()
             }
 
@@ -376,11 +394,11 @@ DropdownFrame {
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
                     elide: Text.ElideRight
-                    text: root.path.length > 0 ? root.path.map(p => p.title).join(Appearance.separator) : ""
-                    color: Theme.bright
-                    font.family: Appearance.font.display
+                    text: root.path.length > 0 ? root.path.map(p => p.title).join(" · ") : ""
+                    color: Tokens.color.bright
+                    font.family: Tokens.font.display
                     font.pixelSize: 15
-                    font.weight: Appearance.font.weightBold
+                    font.weight: Tokens.font.displayWeight
                     renderType: Text.NativeRendering
                 }
             }
@@ -405,8 +423,8 @@ DropdownFrame {
                         visible: slot.modelData.isSeparator
                         anchors.verticalCenter: parent.verticalCenter
                         width: parent.width
-                        height: Appearance.metrics.hairline
-                        color: Theme.hair
+                        height: Tokens.measure.hairline
+                        color: Tokens.color.hair
                     }
 
                     EntryRow {

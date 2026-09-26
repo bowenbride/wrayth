@@ -126,12 +126,12 @@ Singleton {
 
     function toneColor(tone: string): color {
         if (tone === "accent")
-            return Theme.accent;
+            return Tokens.color.accent;
         if (tone === "alert")
-            return Theme.alert;
+            return Tokens.color.alert;
         if (tone === "dim")
-            return Theme.dim;
-        return Theme.signal;
+            return Tokens.color.dim;
+        return Tokens.color.signal;
     }
 
     function _save(): void {
@@ -167,7 +167,7 @@ Singleton {
             tone: tone,
             rows: rows,
             // Kept for anything still reading the flat form.
-            detail: rows.map(r => r.value !== undefined ? `${r.label} // ${r.value}` : r.text)
+            detail: rows.map(r => r.value !== undefined ? `${r.label}  ${r.value}` : r.text)
         };
         readings = next;
 

@@ -1,5 +1,6 @@
 import QtQuick
 import qs.components
+import qs.components.ui as UI
 import qs.config
 import qs.services
 
@@ -26,17 +27,17 @@ Column {
         width: parent.width
         renderType: Text.NativeRendering
         text: root.reading?.value ?? "..."
-        color: root.reading ? Daemons.toneColor(root.reading.tone) : Theme.mute
-        font.family: Appearance.font.display
+        color: root.reading ? Daemons.toneColor(root.reading.tone) : Tokens.color.mute
+        font.family: Tokens.font.display
         font.pixelSize: 22
-        font.weight: Appearance.font.weightBold
+        font.weight: Tokens.font.displayWeight
         elide: Text.ElideRight
     }
 
     // --- The plain-English explanation ---------------------------------------
     NrLabel {
         width: parent.width
-        color: Theme.mute
+        color: Tokens.color.mute
         wrapMode: Text.WordWrap
         font.capitalization: Font.MixedCase
         text: root.entry.description
@@ -82,7 +83,7 @@ Column {
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
                     visible: figure.pair
-                    color: Theme.dim
+                    color: Tokens.color.dim
                     text: figure.pair ? figure.modelData.label : ""
                 }
 
@@ -92,10 +93,10 @@ Column {
                     visible: figure.pair
                     renderType: Text.NativeRendering
                     text: figure.pair ? figure.modelData.value : ""
-                    color: Theme.text
-                    font.family: Appearance.font.data
+                    color: Tokens.color.text
+                    font.family: Tokens.font.data
                     font.pixelSize: Appearance.size.body
-                    font.weight: Appearance.font.weightSemi
+                    font.weight: Tokens.font.dataWeight
                 }
 
                 // A sentence of context.
@@ -106,7 +107,7 @@ Column {
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
                     visible: !figure.pair
-                    color: Theme.mute
+                    color: Tokens.color.mute
                     wrapMode: Text.WordWrap
                     font.capitalization: Font.MixedCase
                     text: figure.pair ? "" : figure.modelData.text
@@ -137,21 +138,23 @@ Column {
                     anchors.fill: parent
                     chamfer: 6
                     scanlines: false
-                    fillColor: chip.current ? Theme.alpha(Theme.accent, 0.18)
-                        : chipHover.hovered ? Theme.alpha(Theme.hair, 0.4) : "transparent"
-                    borderColor: chip.current ? Theme.accent : Theme.hair
+                    fillColor: chip.current ? Theme.alpha(Tokens.color.accent, 0.18)
+                        : chipHover.hovered ? Theme.alpha(Tokens.color.hair, 0.4) : "transparent"
+                    borderColor: chip.current ? Tokens.color.accent : Tokens.color.hair
 
                     Behavior on fillColor {
                         ColorAnimation {
-                            duration: Appearance.duration.state
-                            easing.type: Easing.OutCubic
+                            duration: Tokens.motion.feedback
+                            easing.type: Easing.BezierSpline
+                            easing.bezierCurve: Tokens.motion.easeIn
                         }
                     }
 
                     Behavior on borderColor {
                         ColorAnimation {
-                            duration: Appearance.duration.state
-                            easing.type: Easing.OutCubic
+                            duration: Tokens.motion.feedback
+                            easing.type: Easing.BezierSpline
+                            easing.bezierCurve: Tokens.motion.easeIn
                         }
                     }
                 }
@@ -161,7 +164,7 @@ Column {
 
                     anchors.centerIn: parent
                     centred: true
-                    color: chip.current ? Theme.accent : chipHover.hovered ? Theme.text : Theme.dim
+                    color: chip.current ? Tokens.color.accent : chipHover.hovered ? Tokens.color.text : Tokens.color.dim
                     text: chip.modelData.name
                 }
 
@@ -194,7 +197,7 @@ Column {
             spacing: 8
             NrLabel {
                 anchors.verticalCenter: parent.verticalCenter
-                color: Theme.dim
+                color: Tokens.color.dim
                 text: "CITY"
             }
             InputField {
@@ -208,44 +211,41 @@ Column {
             }
             NrLabel {
                 anchors.verticalCenter: parent.verticalCenter
-                color: Weather.error !== "" ? Theme.alert : Theme.dim
+                color: Weather.error !== "" ? Tokens.color.alert : Tokens.color.dim
                 text: Weather.busy ? "LOOKING UP" : Weather.error
             }
         }
 
+        // The unit as Chips; the ticker entry as a Toggle.
         Row {
-            spacing: 6
-            NrLabel {
+            spacing: Tokens.space.s6
+            UI.Label {
                 anchors.verticalCenter: parent.verticalCenter
                 width: 48
-                color: Theme.dim
                 text: "UNIT"
             }
             Repeater {
-                model: [["c", "°C"], ["f", "°F"], ["ticker", "TICKER"]]
-                Rectangle {
-                    id: wchip
+                model: [["c", "°C"], ["f", "°F"]]
+                UI.Chip {
                     required property var modelData
-                    readonly property bool on: modelData[0] === "ticker" ? Weather.ticker : Weather.unit === modelData[0]
-                    width: wLabel.implicitWidth + 16
-                    height: 20
-                    color: on ? Theme.alpha(Theme.accent, 0.18) : "transparent"
-                    border.width: 1
-                    border.color: on ? Theme.accent : Theme.hair
-                    NrLabel {
-                        id: wLabel
-                        anchors.centerIn: parent
-                        centred: true
-                        color: wchip.on ? Theme.accent : Theme.text
-                        text: wchip.modelData[1]
-                    }
-                    HoverHandler {
-                        cursorShape: Qt.PointingHandCursor
-                    }
-                    TapHandler {
-                        onTapped: wchip.modelData[0] === "ticker" ? Weather.setTicker(!Weather.ticker) : Weather.setUnit(wchip.modelData[0])
-                    }
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: modelData[1]
+                    selected: Weather.unit === modelData[0]
+                    onClicked: Weather.setUnit(modelData[0])
                 }
+            }
+        }
+        Row {
+            spacing: Tokens.space.s6
+            UI.Label {
+                anchors.verticalCenter: parent.verticalCenter
+                width: 48
+                text: "TICKER"
+            }
+            UI.Toggle {
+                anchors.verticalCenter: parent.verticalCenter
+                on: Weather.ticker
+                onToggled: Weather.setTicker(!Weather.ticker)
             }
         }
 
@@ -260,18 +260,18 @@ Column {
                     width: 58
                     spacing: 2
                     NrLabel {
-                        color: Theme.dim
+                        color: Tokens.color.dim
                         pixelSize: 9
                         text: modelData.time
                     }
                     NrLabel {
-                        color: Theme.bright
+                        color: Tokens.color.bright
                         text: Weather.temp(modelData.temp)
                     }
                     NrLabel {
                         width: parent.width
                         elide: Text.ElideRight
-                        color: Theme.signal
+                        color: Tokens.color.signal
                         pixelSize: 8
                         text: Weather.condition(modelData.code)
                     }

@@ -22,8 +22,9 @@ Variants {
         // Faded by the compositor, see the layer rule in hypr-wrayth.lua.
         visible: shown
 
-        implicitWidth: 400
-        implicitHeight: 74
+        // The on-screen popup template (DESIGN.md): 330 px, bottom-centre.
+        implicitWidth: 330
+        implicitHeight: 70
 
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.namespace: "wrayth-popup"

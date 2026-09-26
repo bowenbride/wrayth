@@ -147,7 +147,8 @@ Item {
         property: "drift"
         to: 4
         duration: 60
-        easing.type: Easing.OutCubic
+        easing.type: Easing.BezierSpline
+        easing.bezierCurve: Tokens.motion.easeIn
     }
 
     NumberAnimation {
@@ -157,7 +158,8 @@ Item {
         property: "drift"
         to: 0
         duration: 90
-        easing.type: Easing.InCubic
+        easing.type: Easing.BezierSpline
+        easing.bezierCurve: Tokens.motion.easeOut
     }
 
     // --- SLICE --------------------------------------------------------------
@@ -301,7 +303,7 @@ Item {
                 source: holder
                 opacity: 0.55
                 colorization: 1
-                colorizationColor: Theme.accent
+                colorizationColor: Tokens.color.accent
 
                 transform: Translate {
                     x: -root.drift
@@ -314,7 +316,7 @@ Item {
                 source: holder
                 opacity: 0.55
                 colorization: 1
-                colorizationColor: Theme.signal
+                colorizationColor: Tokens.color.signal
 
                 transform: Translate {
                     x: root.drift
@@ -352,7 +354,8 @@ Item {
                         Behavior on x {
                             NumberAnimation {
                                 duration: 40
-                                easing.type: Easing.OutCubic
+                                easing.type: Easing.BezierSpline
+                                easing.bezierCurve: Tokens.motion.easeIn
                             }
                         }
                     }

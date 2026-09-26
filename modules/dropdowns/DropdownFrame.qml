@@ -1,25 +1,29 @@
 import QtQuick
 import qs.components
+import qs.components.ui as UI
 import qs.config
 
-// The shell every bar dropdown shares: chamfered panel2 with blur, a header of
-// title + katakana + a right-hand slot, and a hairline under it.
+// The dropdown template (DESIGN.md): a 1 px ring with 12 px chamfers top-right
+// and bottom-left, `panel2` fill, 14 px padding, one of the three standard
+// widths. Header: Title + JapaneseLabel on the left, at most one header
+// control on the right (a Toggle, or a quiet icon button). Body below a Rule.
 ChamferPanel {
     id: root
 
     property string title: ""
     property string katakana: ""
-    // The title's size and tracking (em); the defaults are every dropdown's.
-    property real titleSize: Appearance.size.label
-    property real titleTracking: -1
     default property alias body: content.data
     property alias headerRight: right.data
+    // Hides the header (a sub-view puts its BackControl and title on its own row).
+    property bool showHeader: true
 
-    readonly property real padding: 14
+    readonly property real padding: Tokens.measure.dropdownPadding
+    // Read by Dropdowns: small 340, standard 400 or wide 520 (DESIGN.md).
+    property int panelWidth: Tokens.measure.dropdownStandard
 
-    implicitWidth: 380
-    chamfer: Appearance.chamfer.panel
-    fillColor: Theme.panel2
+    implicitWidth: panelWidth
+    chamfer: Tokens.chamfer.dropdown
+    fillColor: Tokens.color.panel2
 
     Item {
         id: header
@@ -28,28 +32,14 @@ ChamferPanel {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.margins: root.padding
-        height: 22
+        height: root.showHeader ? Tokens.measure.toggleHeight : 0
+        visible: root.showHeader
 
-        Row {
+        UI.Title {
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
-            spacing: 8
-
-            NrLabel {
-                id: taggedTitle
-
-                anchors.verticalCenter: parent.verticalCenter
-                pixelSize: root.titleSize
-                font.letterSpacing: root.titleTracking >= 0 ? root.titleSize * root.titleTracking : Appearance.tracking(root.titleSize)
-                color: Theme.bright
-                text: root.title
-            }
-
-            KanaTag {
-                anchors.verticalCenter: parent.verticalCenter
-                text: root.katakana
-                title: taggedTitle
-            }
+            text: root.title
+            japanese: root.katakana
         }
 
         Item {
@@ -64,26 +54,26 @@ ChamferPanel {
         }
     }
 
-    Rectangle {
+    UI.Rule {
         id: rule
 
+        visible: root.showHeader
         anchors.top: header.bottom
-        anchors.topMargin: root.padding * 0.7
+        anchors.topMargin: root.showHeader ? Tokens.space.s10 : 0
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.leftMargin: root.padding
         anchors.rightMargin: root.padding
-        height: Appearance.metrics.hairline
-        color: Theme.hair
+        width: undefined
     }
 
     Item {
         id: content
 
-        anchors.top: rule.bottom
+        anchors.top: root.showHeader ? rule.bottom : header.bottom
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.topMargin: root.padding * 0.8
+        anchors.topMargin: root.showHeader ? Tokens.measure.sectionGap : 0
         anchors.leftMargin: root.padding
         anchors.rightMargin: root.padding
         height: childrenRect.height

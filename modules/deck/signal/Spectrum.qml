@@ -57,7 +57,7 @@ Item {
     // MUTED animates in `alert` rather than falling flat: something is playing
     // that cannot be heard, and a flat line would say the opposite.
     // The data colour at every level and in every state -- never the accent.
-    readonly property color barColor: Theme.signal
+    readonly property color barColor: Tokens.color.signal
 
     readonly property real barWidth: Math.max(1, (width - (bars - 1) * spacing) / bars)
     property real spacing: 3
@@ -68,8 +68,8 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
-        height: Appearance.metrics.hairline
-        color: Theme.hair
+        height: Tokens.measure.hairline
+        color: Tokens.color.hair
     }
 
     // What the spectrum falls to with nothing playing.
@@ -77,14 +77,15 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
-        height: Appearance.metrics.hairline
+        height: Tokens.measure.hairline
         color: root.barColor
         opacity: root.live ? 0 : 1
 
         Behavior on opacity {
             NumberAnimation {
-                duration: Appearance.duration.panel
-                easing.type: Easing.OutCubic
+                duration: Tokens.motion.panels
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Tokens.motion.easeIn
             }
         }
     }

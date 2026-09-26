@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Wayland
 import qs.components
+import qs.components.ui as UI
 import qs.config
 import qs.services
 import qs.utils
@@ -126,8 +127,9 @@ Variants {
             anchors.centerIn: parent
             width: 520
             height: header.height + search.height + 10 + list.height + footer.height
-            chamfer: Appearance.chamfer.panel
-            fillColor: Theme.panel2
+            // The centred-panel template: 14 px chamfers for the clipboard.
+            chamfer: Tokens.chamfer.clipboard
+            fillColor: Tokens.color.panel2
 
             MouseArea {
                 anchors.fill: parent
@@ -142,21 +144,20 @@ Variants {
                 anchors.right: parent.right
                 height: 48
 
-                GlitchText {
-                    id: clipTitle
-
+                // Split and slice still find it (DESIGN.md); no scramble.
+                GlitchFx {
+                    group: "overlay"
                     anchors.left: parent.left
-                    anchors.leftMargin: 16
+                    anchors.leftMargin: Tokens.space.s16
                     anchors.verticalCenter: parent.verticalCenter
-                    text: "CLIPBOARD"
-                    pixelSize: 18
-                }
-                KanaTag {
-                    anchors.left: clipTitle.right
-                    anchors.leftMargin: 10
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: "記憶"
-                    title: clipTitle
+                    fills: true
+                    width: clipTitle.implicitWidth
+                    height: clipTitle.implicitHeight
+                    UI.Title {
+                        id: clipTitle
+                        text: "CLIPBOARD"
+                        japanese: "記憶"
+                    }
                 }
                 Text {
                     anchors.right: parent.right
@@ -167,10 +168,10 @@ Variants {
                         const mode = { memory: "MEMORY ONLY", disk: "SAVED TO DISK", off: "HISTORY OFF" }[Clipboard.history];
                         return `${n} ${n === 1 ? "ITEM" : "ITEMS"} · ${mode}`;
                     }
-                    color: Theme.dim
-                    font.family: Appearance.font.data
-                    font.pixelSize: 9
-                    font.letterSpacing: 9 * 0.12
+                    color: Tokens.color.dim
+                    font.family: Tokens.type.hint.family
+                    font.pixelSize: Tokens.type.hint.size
+                    font.letterSpacing: Tokens.type.hint.size * Tokens.type.hint.tracking
                     renderType: Text.NativeRendering
                 }
             }
@@ -187,7 +188,7 @@ Variants {
                 height: 28
                 color: "transparent"
                 border.width: 1
-                border.color: Theme.accent
+                border.color: Tokens.color.accent
 
                 Text {
                     anchors.left: parent.left
@@ -195,8 +196,8 @@ Variants {
                     anchors.verticalCenter: parent.verticalCenter
                     visible: input.text === ""
                     text: "Type to filter…"
-                    color: Theme.dim
-                    font.family: Appearance.font.data
+                    color: Tokens.color.dim
+                    font.family: Tokens.font.data
                     font.pixelSize: 11
                     renderType: Text.NativeRendering
                 }
@@ -208,15 +209,15 @@ Variants {
                     anchors.right: parent.right
                     anchors.rightMargin: 10
                     anchors.verticalCenter: parent.verticalCenter
-                    color: Theme.bright
-                    selectionColor: Theme.alpha(Theme.accent, 0.35)
-                    selectedTextColor: Theme.bright
-                    font.family: Appearance.font.data
+                    color: Tokens.color.bright
+                    selectionColor: Theme.alpha(Tokens.color.accent, 0.35)
+                    selectedTextColor: Tokens.color.bright
+                    font.family: Tokens.font.data
                     font.pixelSize: 11
                     renderType: Text.NativeRendering
                     cursorDelegate: Rectangle {
                         width: 1
-                        color: Theme.accent
+                        color: Tokens.color.accent
                     }
 
                     onTextChanged: overlay.filter = text.trim().toLowerCase()
@@ -258,8 +259,9 @@ Variants {
 
                 Behavior on contentY {
                     NumberAnimation {
-                        duration: Appearance.duration.move
-                        easing.type: Easing.OutCubic
+                        duration: Tokens.motion.movement
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: Tokens.motion.easeIn
                     }
                 }
 
@@ -269,8 +271,8 @@ Variants {
                     y: 14
                     text: Clipboard.history === "off" ? "HISTORY IS OFF · TURN IT ON UNDER PRIVACY IN THE PROFILE PICKER"
                         : (Clipboard.entries.length === 0 ? "NOTHING COPIED YET" : "NOTHING MATCHES")
-                    color: Theme.dim
-                    font.family: Appearance.font.data
+                    color: Tokens.color.dim
+                    font.family: Tokens.font.data
                     font.pixelSize: 10
                     font.letterSpacing: 10 * 0.12
                     renderType: Text.NativeRendering
@@ -298,12 +300,13 @@ Variants {
                             // Selected: a subtle dark fill and a 2 px accent edge.
                             Rectangle {
                                 anchors.fill: parent
-                                color: Theme.alpha(Theme.ground, 0.55)
+                                color: Theme.alpha(Tokens.color.ground, 0.55)
                                 opacity: row.current ? 1 : 0
                                 Behavior on opacity {
                                     NumberAnimation {
-                                        duration: Appearance.duration.state
-                                        easing.type: Easing.OutCubic
+                                        duration: Tokens.motion.feedback
+                                        easing.type: Easing.BezierSpline
+                                        easing.bezierCurve: Tokens.motion.easeIn
                                     }
                                 }
                             }
@@ -312,7 +315,7 @@ Variants {
                                 anchors.top: parent.top
                                 anchors.bottom: parent.bottom
                                 width: 2
-                                color: Theme.accent
+                                color: Tokens.color.accent
                                 opacity: row.current ? 1 : 0
                             }
 
@@ -327,7 +330,7 @@ Variants {
                                 height: 30
                                 color: "transparent"
                                 border.width: 1
-                                border.color: Theme.hair
+                                border.color: Tokens.color.hair
 
                                 Image {
                                     anchors.fill: parent
@@ -356,8 +359,8 @@ Variants {
                                     maximumLineCount: 1
                                     textFormat: Text.PlainText
                                     text: row.image ? "" : row.modelData.preview.replace(/\s+/g, " ")
-                                    color: row.current ? Theme.bright : Theme.text
-                                    font.family: Appearance.font.data
+                                    color: row.current ? Tokens.color.bright : Tokens.color.text
+                                    font.family: Tokens.font.data
                                     font.pixelSize: 11
                                     renderType: Text.NativeRendering
                                 }
@@ -365,8 +368,8 @@ Variants {
                                     width: parent.width
                                     elide: Text.ElideRight
                                     text: `${overlay.kindOf(row.modelData)} · ${overlay.ageText(row.modelData.time)}`
-                                    color: Theme.dim
-                                    font.family: Appearance.font.data
+                                    color: Tokens.color.dim
+                                    font.family: Tokens.font.data
                                     font.pixelSize: 9
                                     font.letterSpacing: 9 * 0.1
                                     renderType: Text.NativeRendering
@@ -382,9 +385,9 @@ Variants {
                                 anchors.verticalCenter: parent.verticalCenter
                                 width: pinReserve.implicitWidth + 16
                                 height: 20
-                                color: row.modelData.pinned ? Theme.alpha(Theme.accent, 0.12) : "transparent"
+                                color: row.modelData.pinned ? Tokens.color.accentTint : "transparent"
                                 border.width: 1
-                                border.color: row.modelData.pinned ? Theme.accent : Theme.hair
+                                border.color: row.modelData.pinned ? Tokens.color.accent : Tokens.color.hair
 
                                 Text {
                                     id: pinReserve
@@ -398,8 +401,8 @@ Variants {
 
                                     anchors.centerIn: parent
                                     text: row.modelData.pinned ? "PINNED" : "PIN"
-                                    color: row.modelData.pinned ? Theme.accent : (pinHover.hovered ? Theme.text : Theme.dim)
-                                    font.family: Appearance.font.data
+                                    color: row.modelData.pinned ? Tokens.color.accent : (pinHover.hovered ? Tokens.color.text : Tokens.color.dim)
+                                    font.family: Tokens.font.data
                                     font.pixelSize: 9
                                     font.letterSpacing: 9 * 0.12
                                     renderType: Text.NativeRendering
@@ -427,7 +430,7 @@ Variants {
                                     anchors.fill: parent
                                     inset: 5
                                     thickness: 1.5
-                                    color: delHover.hovered ? Theme.accent : Theme.dim
+                                    color: delHover.hovered ? Tokens.color.accent : Tokens.color.dim
                                 }
                                 HoverHandler {
                                     id: delHover
@@ -465,16 +468,16 @@ Variants {
                     anchors.top: parent.top
                     anchors.left: parent.left
                     anchors.right: parent.right
-                    height: Appearance.metrics.hairline
-                    color: Theme.hair
+                    height: Tokens.measure.hairline
+                    color: Tokens.color.hair
                 }
                 Text {
                     anchors.left: parent.left
                     anchors.leftMargin: 16
                     anchors.verticalCenter: parent.verticalCenter
                     text: "ENTER PASTES · PINNED STAY AT THE TOP"
-                    color: Theme.dim
-                    font.family: Appearance.font.data
+                    color: Tokens.color.dim
+                    font.family: Tokens.font.data
                     font.pixelSize: 9
                     font.letterSpacing: 9 * 0.12
                     renderType: Text.NativeRendering

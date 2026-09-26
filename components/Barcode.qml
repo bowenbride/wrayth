@@ -8,7 +8,7 @@ Row {
 
     property int count: 0
     property int maxBars: 40
-    property color barColor: Theme.mute
+    property color barColor: Tokens.color.mute
 
     readonly property int bars: Math.min(count, maxBars)
 

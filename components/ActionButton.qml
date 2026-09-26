@@ -27,9 +27,14 @@ Item {
     // the button and any notification it raises agree on what was happening.
     property string verbText: ""
     property bool accented: false
+    // DESIGN.md: "primary" (the one main action of a view: accent frame, 12%
+    // accent tint, accent label), "secondary" (hair frame, panelHex fill,
+    // text label) or "quiet" (no frame, no fill, dim label, text on hover).
+    property string kind: accented ? "primary" : "secondary"
+    readonly property bool quiet: kind === "quiet"
     // Overrides the resting label colour, for a button that should read as
     // secondary -- DISMISS beside VIEW, say.
-    property color textColor: accented ? Theme.accent : Theme.text
+    property color textColor: kind === "primary" ? Tokens.color.accent : (quiet ? (hover.hovered ? Tokens.color.text : Tokens.color.dim) : Tokens.color.text)
     property ActionState action: null
     // A button that is visible but cannot be used: greyed, unclickable, and
     // still hoverable so the host can explain why. `reason` is what it would
@@ -49,7 +54,7 @@ Item {
     // it is only up for three seconds.
     readonly property string display: {
         if (failed)
-            return action.reason ? `FAILED${Appearance.separator}${action.reason}` : "FAILED";
+            return action.reason ? `FAILED · ${action.reason}` : "FAILED";
         if (working)
             return verbText || text;
         return text;
@@ -96,6 +101,8 @@ Item {
             NrLabel {
                 required property string modelData
 
+                pixelSize: Tokens.type.button.size
+                font.letterSpacing: Tokens.type.button.size * Tokens.type.button.tracking
                 text: modelData
             }
         }
@@ -112,8 +119,9 @@ Item {
     // top of that, so every button grew the moment it was pressed. The
     // Bluetooth row is where it showed -- `UNLINKING` ran straight through its
     // neighbours -- but every action button in the shell did it.
-    implicitWidth: reserve.implicitWidth + root.workReserve + 20
-    implicitHeight: 24
+    implicitWidth: reserve.implicitWidth + root.workReserve + (quiet ? 0 : 2 * Tokens.space.s10)
+    // 28 px across the full width of its container, 22 px inline.
+    implicitHeight: parent && width >= parent.width - 1 ? Tokens.measure.buttonFull : Tokens.measure.buttonInline
 
     // The fill and frame, drawn as one chamfered shape so the bottom-left cut
     // is possible. Square on every corner but the one a host asks to cut.
@@ -129,38 +137,39 @@ Item {
         chamferBottomRight: 0
         chamferBottomLeft: root.cutBottomLeft
 
+        visible: !root.quiet
         fillColor: {
             if (!root.usable)
                 return "transparent";
-            if (root.failed)
-                return Theme.alpha(Theme.accent, 0.12);
-            if (root.accented)
-                return Theme.alpha(Theme.accent, 0.12);
-            return hover.hovered ? Theme.alpha(Theme.hair, 0.35) : "transparent";
+            if (root.failed || root.kind === "primary")
+                return Tokens.color.accentTint;
+            return Tokens.color.panelHex;
         }
         // The press flash brightens the border with it, which is what makes a
         // click on a transparent button read as a press at all.
         borderColor: {
             if (!root.usable)
-                return Theme.alpha(Theme.hair, 0.5);
+                return Qt.alpha(Tokens.color.hair, 0.5);
             if (root.failed || feedback.flashing)
-                return Theme.accent;
+                return Tokens.color.accent;
             if (root.working)
-                return Theme.alpha(Theme.accent, 0.6);
-            return root.accented ? Theme.accent : Theme.hair;
+                return Qt.alpha(Tokens.color.accent, 0.6);
+            return root.kind === "primary" ? Tokens.color.accent : Tokens.color.hair;
         }
 
         Behavior on fillColor {
             ColorAnimation {
-                duration: Appearance.duration.state
-                easing.type: Easing.OutCubic
+                duration: Tokens.motion.feedback
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Tokens.motion.easeIn
             }
         }
 
         Behavior on borderColor {
             ColorAnimation {
-                duration: Appearance.duration.state
-                easing.type: Easing.OutCubic
+                duration: Tokens.motion.feedback
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Tokens.motion.easeIn
             }
         }
     }
@@ -198,18 +207,21 @@ Item {
             // `FAILED // OUT OF RANGE` elided to `FAILED // OU...` with 200 px
             // of empty button beside it. On a button at its own natural width
             // this is the same number it always was.
-            width: Math.max(reserve.implicitWidth + (root.working ? 0 : root.workReserve), root.width - 20 - (root.working ? root.workReserve : 0))
+            width: Math.max(reserve.implicitWidth + (root.working ? 0 : root.workReserve), root.width - (root.quiet ? 0 : 2 * Tokens.space.s10) - (root.working ? root.workReserve : 0))
             horizontalAlignment: Text.AlignHCenter
             elide: Text.ElideRight
             centred: true
+            pixelSize: Tokens.type.button.size
+            font.letterSpacing: Tokens.type.button.size * Tokens.type.button.tracking
+            font.weight: Tokens.type.button.weight
             text: root.display
             color: {
                 if (!root.usable)
-                    return Theme.mute;
+                    return Tokens.color.mute;
                 if (root.failed)
-                    return Theme.accent;
+                    return Tokens.color.accent;
                 if (root.working)
-                    return Theme.dim;
+                    return Tokens.color.dim;
                 return root.textColor;
             }
         }

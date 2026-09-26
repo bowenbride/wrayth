@@ -34,9 +34,9 @@ Item {
         // A whole number of pixels wide, so the repeat lands exactly.
         width: Math.max(1, Math.ceil(implicitWidth))
         height: Math.ceil(implicitHeight)
-        color: Theme.dim
+        color: Tokens.color.dim
         text: root.text
-        font.family: Appearance.font.data
+        font.family: Tokens.font.data
         font.pixelSize: Appearance.size.ticker
         font.letterSpacing: Appearance.size.ticker * Appearance.tickerTracking
         renderType: Text.NativeRendering

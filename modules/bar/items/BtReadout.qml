@@ -18,73 +18,23 @@ Row {
         return null;
     }
 
-    // **Rune alone when the bar runs short** (Bar decides; see
-    // `metrics.tickerMin`). The name eases to nothing rather than vanishing,
-    // and `fullWidth` is what the readout needs with its name, whichever way
-    // it is showing, so the decision never feeds back on itself.
+    // BLUETOOTH (DESIGN.md): the rune only. `compact` and `fullWidth` stay
+    // for the bar's width logic; with no name there is nothing to hide.
     property bool compact: false
-    readonly property real nameWidth: Math.min(Appearance.slot.btName, label.implicitWidth)
-    readonly property real fullWidth: rune.implicitWidth + 7 + nameWidth
+    readonly property real fullWidth: implicitWidth
 
-    spacing: nameSlot.implicitWidth > 0 ? 7 : 0
-
-    // The rune is dim, and takes the bar's value-text colour while a device
-    // is connected; off or disconnected, it stays dim. The change eases with
-    // the feedback timing.
     BluetoothGlyph {
         id: rune
 
         anchors.verticalCenter: parent.verticalCenter
-        color: root.linked && root.adapter?.enabled ? Theme.text : Theme.dim
+        color: root.linked && root.adapter?.enabled ? Tokens.color.text : Tokens.color.dim
 
         Behavior on color {
             ColorAnimation {
-                duration: Appearance.duration.state
-                easing.type: Easing.OutCubic
+                duration: Tokens.motion.feedback
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Tokens.motion.easeIn
             }
-        }
-    }
-
-    // Left-aligned so a short name sits next to the label, but capped at 120px
-    // so a long one truncates instead of pushing the ticker around.
-    Slot {
-        id: nameSlot
-
-        anchors.verticalCenter: parent.verticalCenter
-        clip: true
-        opacity: root.compact ? 0 : 1
-
-        implicitWidth: root.compact ? 0 : root.nameWidth
-
-        Behavior on implicitWidth {
-            NumberAnimation {
-                duration: Appearance.duration.move
-                easing.type: Easing.OutCubic
-            }
-        }
-        Behavior on opacity {
-            NumberAnimation {
-                duration: Appearance.duration.move
-                easing.type: root.compact ? Easing.InCubic : Easing.OutCubic
-            }
-        }
-        horizontalAlignment: Text.AlignLeft
-
-        text: {
-            if (!root.adapter || !root.adapter.enabled)
-                return "OFF";
-            return root.linked ? Demo.device(root.linked.name, 0) : "NONE";
-        }
-        color: root.linked ? Theme.signal : Theme.dim
-
-        // Measures the untruncated name so the slot can shrink below its cap.
-        Text {
-            renderType: Text.NativeRendering
-            id: label
-
-            visible: false
-            text: parent.text
-            font: parent.font
         }
     }
 

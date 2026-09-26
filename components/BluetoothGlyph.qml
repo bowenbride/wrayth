@@ -1,38 +1,38 @@
 import QtQuick
+import QtQuick.Shapes
 import qs.config
 
-// The Bluetooth rune, in place of the `BT` label.
-//
-// **It is the standard mark, not one of ours.** Three hand-drawn versions
-// came before this -- filled, then stroked at 2 px, then at 1 -- and each was
-// wrong in a way the last was not: a slab, then chunky, then thin and still
-// misshapen. The last of them measured 11 wide by 13 tall, and the real rune
-// is close to half as wide as it is tall. A logo with fixed proportions is
-// not something to redraw by eye at 13 px.
-//
-// `JetBrainsMono Nerd Font` is the data family's own patched build, so this
-// glyph sits on the same metrics as the labels beside it, is hinted for the
-// sizes the bar uses, and takes a colour like any other text. **U+F00AF, the
-// Material Design rune** -- measured 9 x 15 at 15 px, a ratio of 0.60 --
-// rather than U+F293, which is a filled blob at this size.
-//
-// Dim by default; the bar's readout turns it the value-text colour while a
-// device is connected.
+// The Bluetooth rune (DESIGN.md, a bespoke icon): stroke-drawn, 1.7 px, no
+// fill, mitred joins, in a 10 x 16 box. `dim` idle; the bar's value `text`
+// colour while a device is connected (the readout sets `color`).
 Item {
     id: root
 
-    property color color: Theme.dim
+    property color color: Tokens.color.dim
 
-    // The layout slot is unchanged, so nothing on the bar moves.
-    implicitWidth: 13
-    implicitHeight: 15
+    implicitWidth: 10
+    implicitHeight: 16
 
-    Glyph {
-        anchors.centerIn: parent
-        // Above the BMP, so it needs the code point rather than an escape.
-        text: String.fromCodePoint(0xF00AF)
-        color: root.color
-        family: Appearance.font.icons
-        pixelSize: 15
+    Shape {
+        anchors.fill: parent
+        preferredRendererType: Shape.GeometryRenderer
+
+        ShapePath {
+            strokeWidth: 1.7
+            strokeColor: root.color
+            fillColor: "transparent"
+            joinStyle: ShapePath.MiterJoin
+            capStyle: ShapePath.FlatCap
+
+            // The lower-left arm, across to the lower chevron, up the spine,
+            // round the upper chevron, down to the upper-left arm.
+            startX: 1
+            startY: 4.5
+            PathLine { x: 8.8; y: 11.2 }
+            PathLine { x: 5; y: 15 }
+            PathLine { x: 5; y: 1 }
+            PathLine { x: 8.8; y: 4.8 }
+            PathLine { x: 1; y: 11.5 }
+        }
     }
 }

@@ -65,6 +65,8 @@ Rectangle {
             NrLabel {
                 required property string modelData
 
+                pixelSize: Tokens.type.button.size
+                font.letterSpacing: Tokens.type.button.size * Tokens.type.button.tracking
                 text: modelData
             }
         }
@@ -74,31 +76,34 @@ Rectangle {
     // to size to the live label and ease the change, so `ON` -> `ENABLING` ->
     // `FAILED // OUT OF RANGE` moved everything to its right, three times, in
     // one action.
-    implicitWidth: Math.max(38, reserve.implicitWidth + 16)
-    implicitHeight: 20
+    // DESIGN.md Toggle: 58 x 22, wider only for a longer state name.
+    implicitWidth: Math.max(Tokens.measure.toggleWidth, reserve.implicitWidth + 2 * Tokens.space.s8)
+    implicitHeight: Tokens.measure.toggleHeight
 
-    color: !root.usable ? "transparent" : root.failed ? Theme.alpha(Theme.accent, 0.12) : (on ? Theme.alpha(Theme.accent, 0.12) : "transparent")
-    border.width: Appearance.metrics.hairline
+    color: !root.usable ? "transparent" : root.failed ? Tokens.color.accentTint : (on ? Tokens.color.accentTint : "transparent")
+    border.width: Tokens.measure.hairline
     border.color: {
         if (!root.usable)
-            return Theme.alpha(Theme.hair, 0.5);
+            return Theme.alpha(Tokens.color.hair, 0.5);
         if (root.failed || feedback.flashing)
-            return Theme.accent;
+            return Tokens.color.accent;
         if (root.working)
-            return Theme.alpha(Theme.accent, 0.6);
-        return on ? Theme.accent : Theme.hair;
+            return Theme.alpha(Tokens.color.accent, 0.6);
+        return on ? Tokens.color.accent : Tokens.color.hair;
     }
 
     Behavior on color {
         ColorAnimation {
-            duration: Appearance.duration.state
-            easing.type: Easing.OutCubic
+            duration: Tokens.motion.feedback
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: Tokens.motion.easeIn
         }
     }
     Behavior on border.color {
         ColorAnimation {
-            duration: Appearance.duration.state
-            easing.type: Easing.OutCubic
+            duration: Tokens.motion.feedback
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: Tokens.motion.easeIn
         }
     }
 
@@ -107,6 +112,8 @@ Rectangle {
 
         anchors.fill: parent
         centred: true
+        pixelSize: Tokens.type.button.size
+        font.letterSpacing: Tokens.type.button.size * Tokens.type.button.tracking
         horizontalAlignment: Text.AlignHCenter
         // A reason longer than the slot elides inside it rather than widening
         // the switch; the sentence goes out as a notification.
@@ -120,18 +127,19 @@ Rectangle {
         }
         color: {
             if (!root.usable)
-                return Theme.mute;
+                return Tokens.color.mute;
             if (root.failed)
-                return Theme.accent;
+                return Tokens.color.accent;
             if (root.working)
-                return Theme.dim;
-            return root.on ? Theme.accent : Theme.dim;
+                return Tokens.color.dim;
+            return root.on ? Tokens.color.accent : Tokens.color.dim;
         }
 
         Behavior on color {
             ColorAnimation {
-                duration: Appearance.duration.state
-                easing.type: Easing.OutCubic
+                duration: Tokens.motion.feedback
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Tokens.motion.easeIn
             }
         }
     }

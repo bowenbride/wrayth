@@ -21,7 +21,7 @@ Item {
     property alias readOnly: input.readOnly
     property string placeholder: ""
     property int maximumLength: 0
-    property color frameColor: input.activeFocus ? Theme.accent : Theme.hair
+    property color frameColor: input.activeFocus ? Tokens.color.accent : Tokens.color.hair
     property real pixelSize: 11
     property real hPadding: 8
 
@@ -46,14 +46,15 @@ Item {
     Rectangle {
         anchors.fill: parent
 
-        color: input.activeFocus ? Theme.alpha(Theme.accent, 0.06) : Theme.alpha(Theme.hair, 0.22)
-        border.width: Appearance.metrics.hairline
+        color: input.activeFocus ? Theme.alpha(Tokens.color.accent, 0.06) : Theme.alpha(Tokens.color.hair, 0.22)
+        border.width: Tokens.measure.hairline
         border.color: root.frameColor
 
         Behavior on border.color {
             ColorAnimation {
-                duration: Appearance.duration.state
-                easing.type: Easing.OutCubic
+                duration: Tokens.motion.feedback
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Tokens.motion.easeIn
             }
         }
     }
@@ -66,12 +67,12 @@ Item {
         anchors.rightMargin: root.hPadding
         verticalAlignment: TextInput.AlignVCenter
 
-        color: Theme.bright
-        selectionColor: Theme.alpha(Theme.accent, 0.35)
-        selectedTextColor: Theme.bright
-        font.family: Appearance.font.data
+        color: Tokens.color.bright
+        selectionColor: Theme.alpha(Tokens.color.accent, 0.35)
+        selectedTextColor: Tokens.color.bright
+        font.family: Tokens.font.data
         font.pixelSize: root.pixelSize
-        font.weight: Appearance.font.weightSemi
+        font.weight: Tokens.font.dataWeight
         renderType: Text.NativeRendering
         clip: true
         maximumLength: root.maximumLength > 0 ? root.maximumLength : 32767
@@ -80,7 +81,7 @@ Item {
         // 1 px black line that vanishes on every one of these grounds.
         cursorDelegate: Rectangle {
             width: 1
-            color: Theme.accent
+            color: Tokens.color.accent
             visible: input.activeFocus
         }
 
@@ -105,8 +106,8 @@ Item {
 
         visible: !input.text && !input.activeFocus
         text: root.placeholder
-        color: Theme.mute
-        font.family: Appearance.font.data
+        color: Tokens.color.mute
+        font.family: Tokens.font.data
         font.pixelSize: root.pixelSize
         renderType: Text.NativeRendering
     }

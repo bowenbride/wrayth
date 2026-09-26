@@ -3,7 +3,7 @@ import qs.config
 
 // The 1px hair separator between bar readouts.
 Rectangle {
-    implicitWidth: Appearance.metrics.hairline
+    implicitWidth: Tokens.measure.hairline
     implicitHeight: Appearance.metrics.dividerHeight
-    color: Theme.hair
+    color: Tokens.color.hair
 }
