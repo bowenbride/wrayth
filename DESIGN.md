@@ -133,6 +133,40 @@ their own colours and render badly small.
 **Key hints** are keycaps (`components/Keycap.qml`), named (`ENTER`, `ESC`),
 in the surrounding text's colour.
 
+## Building an interface: tokens and components
+
+Every surface is assembled from shared pieces rather than styled by hand.
+
+- **Tokens** (`config/Tokens.qml`) hold every colour (through the active
+  profile), every type role (font, size, tracking), the spacing scale and
+  common measures, the chamfer sizes, and the four durations with their two
+  easing curves. A hex colour, pixel size or duration typed straight into a
+  surface is a bug: add or reuse a token instead.
+- **Components** (`components/ui/`, imported as `qs.components.ui`) are the
+  building blocks, each defined once: `Label` and `Value` (a value that
+  changes with the system is always a `Value`, never styled as a label),
+  `Title` with its `JapaneseLabel`, `SectionLabel`, `EmptyState`, `Rule`,
+  `BarDivider`, rows (`ListRow`, `BadgeRow`, `TwoLineRow`), `Button` in three
+  kinds (primary, secondary, quiet), `BackControl`, `Chip`, `Toggle`,
+  `SegmentMeter`, `VolumeLine`, `ConfirmInPlace`, `SlotInput`, `TextField`,
+  `Keycap`, `Badge`, `Tag`, `IndicatorChip`, `StatusDot`, `WorkingIndicator`
+  and `Scrollbar`. A new need gets a new component, not an inline restyle.
+- **Surface templates.** Dropdowns share `DropdownFrame` (title and Japanese
+  label, at most one header control, three standard widths); full-screen
+  views, centred panels, notification cards and on-screen popups each follow
+  one layout. A new surface picks the template that fits.
+- **Icons** are glyphs from the bundled Material Symbols Sharp font, drawn by
+  `components/Icon.qml` by name, snapped to whole pixels. Only four marks are
+  drawn by hand: the Wi-Fi bars, the Bluetooth rune, the message bubble and
+  the distro logo.
+- **The `//` mark is rationed** to the ID block, the IDLE toggle, the
+  DAEMONS // LOADED header and the lockscreen's operator line. Everywhere else,
+  parallel items are separated by `·` and a label and its value by spacing and
+  colour.
+- **Check by measuring.** A change is finished when its widths, colours, type
+  and alignment have been measured on screen against the tokens, not when it
+  looks right.
+
 ## Colour
 
 Every colour comes from the active profile's tokens (`config/Theme.qml`);
