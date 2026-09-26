@@ -42,6 +42,25 @@ hl.layer_rule({
     ignore_alpha = 0.15,
 })
 
+-- The screenshot selector disappears at once, never fading: it must be off
+-- the screen before the capture is taken, and a fade would put it in the image.
+hl.layer_rule({
+    match   = { namespace = "wrayth-capture" },
+    no_anim = true,
+})
+
+-- The admin prompt (polkit) and the dim it lays over every screen fade in and
+-- out as one; the prompt itself is blurred behind like any panel.
+hl.layer_rule({
+    match     = { namespace = "wrayth-polkit" },
+    animation = "fade",
+})
+hl.layer_rule({
+    match        = { namespace = "wrayth-polkit" },
+    blur         = true,
+    ignore_alpha = 0.15,
+})
+
 -- The wallpaper layer is opaque and must not fade on a profile change (the
 -- shell crossfades the image itself), so it is outside both rules above.
 hl.layer_rule({
@@ -149,13 +168,13 @@ hl.config({
 -- a new wrayth lockscreen take that lock over (wrayth-shell starts one at once,
 -- and wrayth-recover does it from a text console), so getting back in is typing
 -- your password, not ending the session. It never unlocks anything: the new
--- lockscreen still needs your password. See DESIGN.md, Security.
+-- lockscreen still needs your password. See SPEC.md, Security.
 --
 -- `session_lock_xray` keeps Hyprland drawing the desktop *behind* the lock
 -- surface, which the lock surface covers opaquely until the password is
 -- accepted; the unlock then dissolves onto the live desktop instead of onto
 -- black. The surface is only ever transparent during that exit fade, after
--- authentication (see modules/lock/LockScreen.qml and DESIGN.md, Security).
+-- authentication (see modules/lock/LockScreen.qml and SPEC.md, Security).
 hl.config({
     misc = {
         allow_session_lock_restore = true,
@@ -179,57 +198,141 @@ hl.on("hyprland.start", function()
 end)
 
 -- ===========================================================================
--- Keybinds -- an example set (change freely)
+-- Keybinds
 -- ===========================================================================
+--
+-- **One catalogue of every action Wrayth binds**, with an id, a group, a
+-- plain label and its default keys. The KEYBINDS overlay (Super + /) lists
+-- them from `hyprctl binds` -- the `wrayth:<id>:<label>` description is how it
+-- tells Wrayth's binds from your own -- and moves them by writing
+-- ~/.config/wrayth/keybinds.lua, a table of id = "NEW + KEYS" read here after
+-- the defaults. Updates never touch that file, so your keys survive them.
+--
+-- Each key is unbound before it is bound (see the header): wrayth's action is
+-- the only one on it.
 
--- Unbind first: see the header. Unbinding a key nothing is bound to is fine.
-for _, key in ipairs({
-    "SUPER + E", "SUPER + SHIFT + E", "SUPER + SUPER_L", "SUPER + P", "SUPER + L",
-    "XF86MonBrightnessUp", "XF86MonBrightnessDown",
-    "XF86AudioRaiseVolume", "XF86AudioLowerVolume", "XF86AudioMute",
-    "SUPER + 1", "SUPER + 2", "SUPER + 3", "SUPER + 4", "SUPER + 5",
-    "SUPER + 6", "SUPER + 7", "SUPER + 8", "SUPER + 9", "SUPER + 0",
-}) do
-    hl.unbind(key)
-end
+local HOME = os.getenv("HOME")
+local IPC = "qs -c wrayth ipc call "
 
--- Super + E toggles the deck; Super + Shift + E redraws the deck terminal.
-hl.bind("SUPER + E", hl.dsp.workspace.toggle_special("deck"))
-hl.bind("SUPER + SHIFT + E", hl.dsp.exec_cmd(os.getenv("HOME") .. "/.local/bin/wrayth-deck-refresh"))
-
--- Super (tap) opens the launcher.
-hl.bind("SUPER + SUPER_L", hl.dsp.exec_cmd("qs -c wrayth ipc call launcher toggle"), { release = true })
-
--- Super + P opens the power menu; Super + L locks the screen.
-hl.bind("SUPER + P", hl.dsp.exec_cmd("qs -c wrayth ipc call power toggle"))
-hl.bind("SUPER + L", hl.dsp.exec_cmd("qs -c wrayth ipc call lock lock"))
-
--- Brightness straight to brightnessctl (optional package); the OSD follows the
--- sysfs change whoever made it.
-hl.bind("XF86MonBrightnessUp",   hl.dsp.exec_cmd("brightnessctl set 5%+"), { locked = true })
-hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightnessctl set 5%-"), { locked = true })
-
--- Volume in 5% steps, so one press is one segment on the OSD's 20-segment bar,
--- capped at 100%. The OSD follows PipeWire whoever moves it.
-hl.bind("XF86AudioRaiseVolume",
-    hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ 0; wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ 5%+"),
-    { locked = true, repeating = true })
-hl.bind("XF86AudioLowerVolume",
-    hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ 0; wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"),
-    { locked = true, repeating = true })
-hl.bind("XF86AudioMute", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"), { locked = true })
-
--- Super + <number> goes to that workspace, first closing any open special
--- workspace (the deck) so a number key means the same thing whether the deck is
--- up or not. A Lua function so it reads the live state on each press.
-for i = 1, 10 do
-    local key = tostring(i % 10) -- 10 maps to key 0
-    local ws  = tostring(i)
-    hl.bind("SUPER + " .. key, function()
+local function goto_workspace(ws)
+    -- Closes any open special workspace (the deck) first, so a number key
+    -- means the same thing whether the deck is up or not. A function, so it
+    -- reads the live state on each press.
+    return function()
         local sp = hl.get_active_special_workspace()
         if sp then
             hl.dispatch(hl.dsp.workspace.toggle_special((sp.name:gsub("^special:", ""))))
         end
         hl.dispatch(hl.dsp.focus({ workspace = ws }))
-    end)
+    end
 end
+
+-- `own = false`: the action's default bind lives in Wrayth's complete
+-- hyprland.lua (the window keys), so it is only re-bound here once moved.
+local catalogue = {
+    { id = "deck",          group = "SHELL", label = "Open or close the deck",        keys = "SUPER + E",         run = hl.dsp.workspace.toggle_special("deck") },
+    { id = "deck-refresh",  group = "SHELL", label = "Refresh the deck terminal",     keys = "SUPER + SHIFT + E", run = hl.dsp.exec_cmd(HOME .. "/.local/bin/wrayth-deck-refresh") },
+    { id = "launcher",      group = "SHELL", label = "Launcher",                      keys = "SUPER + SUPER_L",   run = hl.dsp.exec_cmd(IPC .. "launcher toggle"), opts = { release = true } },
+    { id = "power",         group = "SHELL", label = "Power menu",                    keys = "SUPER + P",         run = hl.dsp.exec_cmd(IPC .. "power toggle") },
+    { id = "lock",          group = "SHELL", label = "Lock the screen",               keys = "SUPER + L",         run = hl.dsp.exec_cmd(IPC .. "lock lock") },
+    { id = "keybinds",      group = "SHELL", label = "Keybinds",                      keys = "SUPER + slash",     run = hl.dsp.exec_cmd(IPC .. "keybinds toggle") },
+    { id = "clipboard",     group = "SHELL", label = "Clipboard history",             keys = "SUPER + SHIFT + V", run = hl.dsp.exec_cmd(IPC .. "clipboard toggle") },
+    { id = "audio-next",    group = "MEDIA AND CAPTURE", label = "Next audio output", keys = "SUPER + SHIFT + A", run = hl.dsp.exec_cmd(IPC .. "audio next") },
+    { id = "shot-region",   group = "MEDIA AND CAPTURE", label = "Screenshot of a region",          keys = "Print",         run = hl.dsp.exec_cmd(IPC .. "screenshot region") },
+    { id = "shot-window",   group = "MEDIA AND CAPTURE", label = "Screenshot of the focused window", keys = "ALT + Print",   run = hl.dsp.exec_cmd(IPC .. "screenshot window") },
+    { id = "shot-screen",   group = "MEDIA AND CAPTURE", label = "Screenshot of the whole screen",   keys = "SHIFT + Print", run = hl.dsp.exec_cmd(IPC .. "screenshot screen") },
+    { id = "media-toggle",  group = "MEDIA AND CAPTURE", label = "Play or pause",     keys = "XF86AudioPlay",    run = hl.dsp.exec_cmd(IPC .. "media toggle"),   opts = { locked = true } },
+    { id = "media-pause",   group = "MEDIA AND CAPTURE", label = "Pause",             keys = "XF86AudioPause",   run = hl.dsp.exec_cmd(IPC .. "media toggle"),   opts = { locked = true } },
+    { id = "media-next",    group = "MEDIA AND CAPTURE", label = "Next track",        keys = "XF86AudioNext",    run = hl.dsp.exec_cmd(IPC .. "media next"),     opts = { locked = true } },
+    { id = "media-prev",    group = "MEDIA AND CAPTURE", label = "Previous track",    keys = "XF86AudioPrev",    run = hl.dsp.exec_cmd(IPC .. "media previous"), opts = { locked = true } },
+    -- Volume in 5% steps, so one press is one segment on the popup's
+    -- 20-segment bar, capped at 100%. The popup follows PipeWire whoever
+    -- moves it.
+    { id = "volume-up",     group = "MEDIA AND CAPTURE", label = "Volume up",   keys = "XF86AudioRaiseVolume",
+      run = hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ 0; wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ 5%+"), opts = { locked = true, repeating = true } },
+    { id = "volume-down",   group = "MEDIA AND CAPTURE", label = "Volume down", keys = "XF86AudioLowerVolume",
+      run = hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ 0; wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"), opts = { locked = true, repeating = true } },
+    { id = "volume-mute",   group = "MEDIA AND CAPTURE", label = "Mute",        keys = "XF86AudioMute", run = hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"), opts = { locked = true } },
+    -- Brightness straight to brightnessctl (an optional package).
+    { id = "bright-up",     group = "MEDIA AND CAPTURE", label = "Brightness up",   keys = "XF86MonBrightnessUp",   run = hl.dsp.exec_cmd("brightnessctl set 5%+"), opts = { locked = true } },
+    { id = "bright-down",   group = "MEDIA AND CAPTURE", label = "Brightness down", keys = "XF86MonBrightnessDown", run = hl.dsp.exec_cmd("brightnessctl set 5%-"), opts = { locked = true } },
+    -- The window keys of Wrayth's complete hyprland.lua.
+    { id = "window-terminal", group = "WINDOWS", label = "Open a terminal",          keys = "SUPER + Q",         run = hl.dsp.exec_cmd("kitty"), own = false },
+    { id = "window-close",    group = "WINDOWS", label = "Close the window",         keys = "SUPER + C",         run = hl.dsp.window.close(), own = false },
+    { id = "window-float",    group = "WINDOWS", label = "Float or tile the window", keys = "SUPER + V",         run = hl.dsp.window.float({ action = "toggle" }), own = false },
+    { id = "window-full",     group = "WINDOWS", label = "Fullscreen",               keys = "SUPER + F",         run = hl.dsp.window.fullscreen(), own = false },
+    { id = "window-split",    group = "WINDOWS", label = "Toggle the split",         keys = "SUPER + J",         run = hl.dsp.layout("togglesplit"), own = false },
+    { id = "window-exit",     group = "WINDOWS", label = "Exit Hyprland",            keys = "SUPER + SHIFT + M", run = hl.dsp.exit(), own = false },
+    { id = "focus-left",      group = "WINDOWS", label = "Focus left",               keys = "SUPER + left",      run = hl.dsp.focus({ direction = "left" }), own = false },
+    { id = "focus-right",     group = "WINDOWS", label = "Focus right",              keys = "SUPER + right",     run = hl.dsp.focus({ direction = "right" }), own = false },
+    { id = "focus-up",        group = "WINDOWS", label = "Focus up",                 keys = "SUPER + up",        run = hl.dsp.focus({ direction = "up" }), own = false },
+    { id = "focus-down",      group = "WINDOWS", label = "Focus down",               keys = "SUPER + down",      run = hl.dsp.focus({ direction = "down" }), own = false },
+}
+for i = 1, 10 do
+    local key = tostring(i % 10) -- 10 maps to key 0
+    table.insert(catalogue, { id = "workspace-" .. i, group = "WORKSPACES", label = "Go to workspace " .. i,
+        keys = "SUPER + " .. key, run = goto_workspace(tostring(i)) })
+    table.insert(catalogue, { id = "move-" .. i, group = "WORKSPACES", label = "Move the window to workspace " .. i,
+        keys = "SUPER + SHIFT + " .. key, run = hl.dsp.window.move({ workspace = i }), own = false })
+end
+
+-- The keys each action is bound to right now, so re-applying unbinds exactly
+-- what it bound before.
+local bound = {}
+
+-- Applies the catalogue with your changes from ~/.config/wrayth/keybinds.lua.
+-- Global, so the shell can call it through `hyprctl eval` the moment you
+-- change a key, without reloading the whole config.
+function wrayth_apply_keybinds()
+    local ok, changes = pcall(dofile, HOME .. "/.config/wrayth/keybinds.lua")
+    if not ok or type(changes) ~= "table" then
+        changes = {}
+    end
+    -- Two passes, so a swap works: every key this bound before, and every key
+    -- about to be used, is unbound first -- one action at a time, the second
+    -- of two swapped actions would take the first's new bind away with its
+    -- old one.
+    local was = bound
+    local plan = {}
+    for _, a in ipairs(catalogue) do
+        local keys = changes[a.id] or a.keys
+        -- Wrayth's own binds always; a window key of the complete config only
+        -- once it has been moved, or when it is coming back to its default.
+        if a.own ~= false or keys ~= a.keys or was[a.id] then
+            table.insert(plan, { a = a, keys = keys })
+        end
+    end
+    for _, keys in pairs(was) do
+        hl.unbind(keys)
+    end
+    for _, p in ipairs(plan) do
+        if p.a.own == false and not was[p.a.id] then
+            hl.unbind(p.a.keys) -- the complete config's own bind
+        end
+        if p.keys ~= "" then
+            hl.unbind(p.keys)
+        end
+    end
+    bound = {}
+    for _, p in ipairs(plan) do
+        local a, keys = p.a, p.keys
+        -- id, group, label and default keys: what the KEYBINDS overlay
+        -- lists, and what RESET goes back to.
+        local opts = { description = "wrayth:" .. a.id .. ":" .. a.group .. ":" .. a.label .. ":" .. a.keys }
+        for k, v in pairs(a.opts or {}) do
+            opts[k] = v
+        end
+        if keys ~= "" then
+            hl.bind(keys, a.run, opts)
+            bound[a.id] = keys
+        end
+    end
+end
+wrayth_apply_keybinds()
+
+-- While the KEYBINDS overlay captures a new combination, every bind is off, so
+-- the keys reach the overlay instead of doing what they do. Escape is the one
+-- way out of the submap, whatever happens to the shell.
+hl.define_submap("wrayth-capture", function()
+    hl.bind("Escape", hl.dsp.submap("reset"))
+end)

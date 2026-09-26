@@ -15,7 +15,7 @@ Variants {
         required property ShellScreen modelData
 
         // On the focused screen only, not every one.
-        readonly property bool shown: Osd.showing !== "" && ShellState.focusedScreen === modelData.name
+        readonly property bool shown: Osd.showing !== "" && ShellState.focusedScreen === modelData?.name
 
         screen: modelData
         color: "transparent"
@@ -46,7 +46,8 @@ Variants {
 
             // Falls back to what was last shown, so the panel does not change
             // identity on its way off screen.
-            volume: (Osd.showing || Osd.lastShown) === "volume"
+            volume: (Osd.showing || Osd.lastShown) !== "brightness"
+            media: (Osd.showing || Osd.lastShown) === "media"
         }
     }
 }

@@ -16,8 +16,8 @@ import qs.config
 // Material Design rune** -- measured 9 x 15 at 15 px, a ratio of 0.60 --
 // rather than U+F293, which is a filled blob at this size.
 //
-// It stays the label grey in every state: it stands in for a word, not for a
-// reading. The device name beside it is what carries the data colour.
+// Dim by default; the bar's readout turns it the value-text colour while a
+// device is connected.
 Item {
     id: root
 

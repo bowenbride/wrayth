@@ -102,7 +102,7 @@ Scope {
         // reached by clicking, and a recording has no pointer -- this is the
         // only way to put one of them on screen without one.
         function view(name: string): string {
-            if (["grid", "editor", "pools", "effects"].indexOf(name) < 0)
+            if (["grid", "editor", "pools", "effects", "privacy"].indexOf(name) < 0)
                 return `unknown view ${name}`;
             ShellState.pickerEditing = "";
             ShellState.pickerView = name;
@@ -132,7 +132,7 @@ Scope {
     // reasons to have a way in that is not the pointer. It validates the name
     // now: setting `dropdown` to something no panel answers to left `overlay
     // state` reporting a dropdown that was not on screen.
-    readonly property var dropdownNames: ["ident", "wifi", "bluetooth", "power"]
+    readonly property var dropdownNames: ["ident", "wifi", "bluetooth", "power", "audio", "tray", "comms"]
 
     // The screen a dropdown opened without a click belongs on.
     function focusedScreen(): string {
@@ -284,16 +284,247 @@ Scope {
         }
     }
 
+    // Audio: Super + Shift + A, and what the tests read.
+    IpcHandler {
+        target: "audio"
+
+        function next(): string {
+            return Audio.cycleOutput();
+        }
+        function output(): string {
+            return Audio.sink ? `${Audio.sink.name} ${Math.round(Audio.volume * 100)}${Audio.muted ? " muted" : ""}` : "none";
+        }
+        function input(): string {
+            return Audio.source ? `${Audio.source.name}${Audio.micMuted ? " muted" : ""}` : "none";
+        }
+        function apps(): string {
+            return Audio.streams.map(n => Audio.appName(n)).join(",") || "none";
+        }
+        function volume(value: string): string {
+            Audio.setVolume(Audio.sink, Number(value));
+            return `${Audio.snap(Number(value))}`;
+        }
+        function outputs(): string {
+            return Audio.outputs.map(n => Audio.shortName(n)).join(",") || "none";
+        }
+    }
+
+    // Super + /, and what the tests read and do.
+    IpcHandler {
+        target: "keybinds"
+
+        function toggle(): void {
+            ShellState.openExclusive(ShellState.keybindsOpen ? "" : "keybinds");
+        }
+        function open(): void {
+            ShellState.openExclusive("keybinds");
+        }
+        function close(): void {
+            ShellState.keybindsOpen = false;
+        }
+        // "<id>=<keys>" for Wrayth's binds, changed ones marked with a *.
+        function list(): string {
+            return Keybinds.binds.filter(b => b.ours).map(b => `${b.id}=${b.keys}${b.changed ? "*" : ""}`).join(";") || "none";
+        }
+        function theirs(): string {
+            return `${Keybinds.binds.filter(b => !b.ours && !b.fixed).length}`;
+        }
+        // The labels the list gives the user's own binds (their descriptions).
+        function theirLabels(): string {
+            return Keybinds.binds.filter(b => !b.ours && !b.fixed).map(b => b.label).join(";") || "none";
+        }
+        function refresh(): void {
+            Keybinds.refresh();
+        }
+        function capture(id: string): void {
+            ShellState.keybindCapture(id);
+        }
+        // "swap", "theirs", "strand" or "none": the question a capture asked.
+        function pending(): string {
+            return ShellState.keybindPending || "none";
+        }
+        function confirm(): void {
+            ShellState.keybindAnswer(true);
+        }
+        function cancel(): void {
+            ShellState.keybindAnswer(false);
+        }
+        function reset(id: string): void {
+            Keybinds.reset(id);
+        }
+        function capturing(): bool {
+            return Keybinds.capturing;
+        }
+    }
+
+    // COMMS, for the tests.
+    IpcHandler {
+        target: "comms"
+
+        function state(): string {
+            return `history=${Notifications.history.length} unseen=${Notifications.unseen} dnd=${Notifications.dnd} fullscreen=${Notifications.fullscreen} cards=${Notifications.list.length}`;
+        }
+        function dnd(on: string): string {
+            Notifications.dnd = on === "on";
+            return `${Notifications.dnd}`;
+        }
+        function apps(): string {
+            return Notifications.groups.map(g => `${g.app}:${g.entries.length}`).join(",") || "none";
+        }
+    }
+
+    IpcHandler {
+        target: "tray"
+
+        function items(): string {
+            return Tray.items.map(i => Tray.nameOf(i)).join(",") || "none";
+        }
+    }
+
+    IpcHandler {
+        target: "polkit"
+
+        // Whether the agent is registered and a request is up. Nothing more:
+        // there is no way to answer a request from here.
+        function state(): string {
+            return `enabled=${Polkit.enabled} registered=${Polkit.registered} active=${Polkit.active} screen=${Polkit.active ? Polkit.screen : "none"} submitted=${Polkit.previewSubmitted}`;
+        }
+        // The prompt with a stand-in request that is not connected to polkit
+        // and cannot authorise anything: for testing how it is drawn.
+        function preview(): void {
+            Polkit.startPreview();
+        }
+        // Closes that stand-in, as its CANCEL does.
+        function endPreview(): void {
+            Polkit.previewSubmitted = -1;
+            Polkit.previewing = false;
+        }
+    }
+
+    // Super + Shift + V, and what the tests read.
+    IpcHandler {
+        target: "clipboard"
+
+        function toggle(): void {
+            ShellState.openExclusive(ShellState.clipboardOpen ? "" : "clipboard");
+        }
+        function open(): void {
+            ShellState.openExclusive("clipboard");
+        }
+        function close(): void {
+            ShellState.clipboardOpen = false;
+        }
+        // The entries, newest first: kind and a short preview (text only).
+        function list(): string {
+            return Clipboard.ordered.map(e => `${e.kind}${e.pinned ? "*" : ""}:${e.kind === "text" ? e.preview.slice(0, 24) : e.bytes}`).join("|") || "none";
+        }
+        function skipped(): string {
+            return Clipboard.lastSkip || "none";
+        }
+        function mode(): string {
+            return `${Clipboard.history} ${Clipboard.onLock}`;
+        }
+        function setHistory(which: string): string {
+            Clipboard.setHistory(which);
+            return Clipboard.history;
+        }
+        function setOnLock(which: string): string {
+            Clipboard.setOnLock(which);
+            return Clipboard.onLock;
+        }
+        // Removes the entry at a position in `list` (1 = the first shown).
+        function remove(position: int): string {
+            const e = Clipboard.ordered[position - 1];
+            if (!e)
+                return "none";
+            Clipboard.remove(e.key);
+            return `${e.kind}`;
+        }
+        function pinFirst(): string {
+            const e = Clipboard.ordered.find(x => !x.pinned);
+            if (e)
+                Clipboard.togglePin(e.key);
+            return e ? `${e.key}` : "none";
+        }
+    }
+
+    // Print, Alt + Print, Shift + Print.
+    IpcHandler {
+        target: "screenshot"
+
+        function region(): string {
+            return Screenshot.start("region");
+        }
+        function window(): string {
+            return Screenshot.start("window");
+        }
+        function screen(): string {
+            return Screenshot.start("screen");
+        }
+        // For the tests: the selector's mode, and choosing a region without a
+        // pointer (x y w h in the focused screen's own coordinates).
+        function mode(which: string): string {
+            if (Screenshot.modes.indexOf(which) < 0)
+                return "one of region, window, screen";
+            Screenshot.mode = which;
+            return which;
+        }
+        function last(): string {
+            return Screenshot.last || "none";
+        }
+        function geometry(): string {
+            return Screenshot.lastGeometry || "none";
+        }
+        // What DELETE does, for the tests: only a file in the screenshots
+        // folder, like the button.
+        function remove(file: string): string {
+            Screenshot.remove(file);
+            return Screenshot.ours(file) ? "removing" : "refused";
+        }
+    }
+
+    // The media keys, and the SIGNAL panel's sources.
+    IpcHandler {
+        target: "media"
+
+        function toggle(): string {
+            return Media.toggle();
+        }
+        function next(): string {
+            return Media.next();
+        }
+        function previous(): string {
+            return Media.previous();
+        }
+        function sources(): string {
+            return Media.sources.map(src => `${src.kind}:${src.app}`).join(",") || "none";
+        }
+        function current(): string {
+            return Media.current ? `${Media.current.kind}:${Media.current.app} cava=${Media.cavaSource}` : "none";
+        }
+        function select(app: string): string {
+            const src = Media.sources.find(x => x.app.toLowerCase() === app.toLowerCase());
+            if (!src)
+                return "none";
+            Media.select(src.key);
+            return src.key;
+        }
+    }
+
     // The volume and brightness popup, for the tests: there is no audio server
     // or backlight in a nested session to change.
     IpcHandler {
         target: "osd"
 
         function flash(which: string): string {
-            if (which !== "vol" && which !== "bri")
-                return "one of vol, bri";
-            Osd.flash(which);
+            const kinds = { vol: "volume", bri: "brightness", media: "media" };
+            if (!kinds[which])
+                return "one of vol, bri, media";
+            Osd.flash(kinds[which]);
             return which;
+        }
+        function state(): string {
+            return Osd.showing || "none";
         }
         // The screen it shows on (the focused one).
         function screen(): string {
@@ -372,6 +603,12 @@ Scope {
                 return "send <summary> [body] [app] [urgency]";
             Notifications.sendDemo(summary, body, app, urgency);
             return summary;
+        }
+        // Forgets the COMMS history (what CLEAR ALL does).
+        function clear(): string {
+            const n = Notifications.history.length;
+            Notifications.clearHistory();
+            return `${n} cleared`;
         }
     }
 
@@ -507,6 +744,9 @@ Scope {
                 was.push("picker");
             if (Daemons.libraryOpen)
                 was.push("daemons");
+            for (const name of ["capture", "keybinds", "clipboard"])
+                if (ShellState[`${name}Open`])
+                    was.push(name);
             if (ShellState.dropdown)
                 was.push(`dropdown:${ShellState.dropdown}`);
             // `closeAll` covers every overlay and the dropdown; the two
@@ -520,7 +760,7 @@ Scope {
 
         // The screen the open full-screen overlay is on, or "none".
         function screen(): string {
-            return (ShellState.launcherOpen || ShellState.powerOpen || ShellState.pickerOpen || Daemons.libraryOpen) ? ShellState.overlayScreen : "none";
+            return ShellState.anyOverlay ? ShellState.overlayScreen : "none";
         }
         function state(): string {
             const up = [];
@@ -532,6 +772,9 @@ Scope {
                 up.push(`picker:${ShellState.pickerView}`);
             if (Daemons.libraryOpen)
                 up.push("daemons");
+            for (const name of ["capture", "keybinds", "clipboard"])
+                if (ShellState[`${name}Open`])
+                    up.push(name);
             if (ShellState.dropdown)
                 up.push(`dropdown:${ShellState.dropdown}`);
             if (ShellState.locked)

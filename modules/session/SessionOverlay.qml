@@ -16,7 +16,7 @@ Variants {
         required property ShellScreen modelData
 
         // One screen only: see `ShellState.overlayScreen`.
-        readonly property bool shown: ShellState.powerOpen && ShellState.overlayScreen === modelData.name
+        readonly property bool shown: ShellState.powerOpen && ShellState.overlayScreen === modelData?.name
 
         screen: modelData
         color: "transparent"
@@ -110,14 +110,10 @@ Variants {
                             }
                         }
 
-                        Text {
+                        KanaTag {
                             anchors.verticalCenter: parent.verticalCenter
                             text: "電源管理"
-                            color: Theme.signal
-                            font.family: Appearance.font.accent
-                            font.pixelSize: Appearance.size.katakana
-                            font.weight: Appearance.font.weightMedium
-                            renderType: Text.NativeRendering
+                            title: sessionTitle
                         }
                     }
 

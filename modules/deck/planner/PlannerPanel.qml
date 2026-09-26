@@ -123,19 +123,17 @@ ChamferPanel {
                 spacing: 8
 
                 NrLabel {
+                    id: taggedTitle
+
                     anchors.verticalCenter: parent.verticalCenter
                     color: Theme.bright
                     text: `QUEUE${Appearance.separator}DAILY GIGS`
                 }
 
-                Text {
+                KanaTag {
                     anchors.verticalCenter: parent.verticalCenter
                     text: "依頼"
-                    color: Theme.signal
-                    font.family: Appearance.font.accent
-                    font.pixelSize: Appearance.size.katakana
-                    font.weight: Appearance.font.weightMedium
-                    renderType: Text.NativeRendering
+                    title: taggedTitle
                 }
             }
         }

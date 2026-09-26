@@ -64,31 +64,25 @@ ChamferPanel {
             textual: true
             fills: true
             width: parent.width
-            height: title.height
-            scrambleItems: [title]
+            height: diagTitle.height
+            scrambleItems: [diagTitle]
 
         Item {
             anchors.fill: parent
 
             GlitchText {
-                id: title
+                id: diagTitle
 
                 text: "SYS.DIAG"
                 pixelSize: 28
             }
 
-            Text {
-                anchors.left: title.right
+            KanaTag {
+                anchors.left: diagTitle.right
                 anchors.leftMargin: 10
-                anchors.baseline: title.bottom
-                anchors.baselineOffset: -6
-
+                anchors.verticalCenter: diagTitle.verticalCenter
                 text: "システム診断"
-                color: Theme.signal
-                font.family: Appearance.font.accent
-                font.pixelSize: Appearance.size.katakana
-                font.weight: Appearance.font.weightMedium
-                renderType: Text.NativeRendering
+                title: diagTitle
             }
         }
         }
@@ -191,7 +185,7 @@ ChamferPanel {
                         // The widest each of these can ever be, so the two
                         // readouts beside them never move when a figure does.
                         valueReserve: "100%"
-                        value: Fmt.percent(SysInfo.cpuPercent)
+                        value: Fmt.percent(DeckData.cpuPercent)
                     }
 
                     Readout {
@@ -215,8 +209,8 @@ ChamferPanel {
         HudSection {
             // Fmt.gib's decimals argument is typed, so leaving it out passes 0
             // rather than the default -- hence the explicit 1.
-            label: `MEM${Appearance.separator}${Fmt.gib(SysInfo.memUsedGib, 1)} / ${Fmt.gib(SysInfo.memTotalGib, 1)} GB`
-            trailing: Fmt.percent(SysInfo.memPercent)
+            label: `MEM${Appearance.separator}${Fmt.gib(DeckData.memUsedGib, 1)} / ${Fmt.gib(DeckData.memTotalGib, 1)} GB`
+            trailing: Fmt.percent(DeckData.memPercent)
 
             Column {
                 width: parent.width
@@ -228,7 +222,7 @@ ChamferPanel {
                     segmentWidth: (parent.width - 19 * 3) / 20
                     segmentHeight: 12
                     spacing: 3
-                    value: SysInfo.memPercent / 100
+                    value: DeckData.memPercent / 100
                     // /proc/meminfo twice a second against a 900 ms ease is
                     // an animation that never stops. Not while nobody is
                     // looking at it.
@@ -249,8 +243,8 @@ ChamferPanel {
                     width: parent.width
                     height: 48
                     points: 13
-                    downValues: SysInfo.netRxHistory
-                    upValues: SysInfo.netTxHistory
+                    downValues: DeckData.netRxHistory
+                    upValues: DeckData.netTxHistory
                 }
 
                 Item {
@@ -262,7 +256,7 @@ ChamferPanel {
 
                         label: "▲ UP"
                         valueReserve: "999.9 KB/s"
-                        value: Fmt.rateLong(SysInfo.netTxRate)
+                        value: Fmt.rateLong(DeckData.netTxRate)
                         valueColor: Theme.accent
                     }
 
@@ -270,7 +264,7 @@ ChamferPanel {
                         anchors.right: parent.right
                         label: "▼ DOWN"
                         valueReserve: "999.9 KB/s"
-                        value: Fmt.rateLong(SysInfo.netRxRate)
+                        value: Fmt.rateLong(DeckData.netRxRate)
                         valueColor: Theme.signal
                     }
                 }

@@ -18,20 +18,56 @@ Row {
         return null;
     }
 
-    spacing: 7
+    // **Rune alone when the bar runs short** (Bar decides; see
+    // `metrics.tickerMin`). The name eases to nothing rather than vanishing,
+    // and `fullWidth` is what the readout needs with its name, whichever way
+    // it is showing, so the decision never feeds back on itself.
+    property bool compact: false
+    readonly property real nameWidth: Math.min(Appearance.slot.btName, label.implicitWidth)
+    readonly property real fullWidth: rune.implicitWidth + 7 + nameWidth
 
-    // The rune stands in for the word `BT`, so it keeps that word's grey in
-    // every state. The device name beside it is what carries the reading.
+    spacing: nameSlot.implicitWidth > 0 ? 7 : 0
+
+    // The rune is dim, and takes the bar's value-text colour while a device
+    // is connected; off or disconnected, it stays dim. The change eases with
+    // the feedback timing.
     BluetoothGlyph {
+        id: rune
+
         anchors.verticalCenter: parent.verticalCenter
+        color: root.linked && root.adapter?.enabled ? Theme.text : Theme.dim
+
+        Behavior on color {
+            ColorAnimation {
+                duration: Appearance.duration.state
+                easing.type: Easing.OutCubic
+            }
+        }
     }
 
     // Left-aligned so a short name sits next to the label, but capped at 120px
     // so a long one truncates instead of pushing the ticker around.
     Slot {
-        anchors.verticalCenter: parent.verticalCenter
+        id: nameSlot
 
-        implicitWidth: Math.min(Appearance.slot.btName, label.implicitWidth)
+        anchors.verticalCenter: parent.verticalCenter
+        clip: true
+        opacity: root.compact ? 0 : 1
+
+        implicitWidth: root.compact ? 0 : root.nameWidth
+
+        Behavior on implicitWidth {
+            NumberAnimation {
+                duration: Appearance.duration.move
+                easing.type: Easing.OutCubic
+            }
+        }
+        Behavior on opacity {
+            NumberAnimation {
+                duration: Appearance.duration.move
+                easing.type: root.compact ? Easing.InCubic : Easing.OutCubic
+            }
+        }
         horizontalAlignment: Text.AlignLeft
 
         text: {

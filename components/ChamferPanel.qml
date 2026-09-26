@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Effects
 import QtQuick.Shapes
 import qs.config
+import qs.services
 
 // A panel with cut corners instead of rounded ones. The default is the design
 // system's top-right and bottom-left; each corner is separable because the deck
@@ -58,6 +59,8 @@ Item {
             }
             above = above.parent;
         }
+        if (root._scanlinesWanted)
+            root._scanlinesUsed = true;
     }
 
     Shape {
@@ -122,92 +125,111 @@ Item {
     }
 
     // --- Scanlines ------------------------------------------------------------
-    // **Every panel in the shell carries them here**, which is what makes "one
-    // overlay layer per surface" true rather than a thing each panel remembers
-    // -- and it is why the coverage setting can say `PANELS ONLY` and mean it.
-    //
-    // **Masked to the panel's own cut corner.** The overlay is a rectangle and
-    // the panel is not: unmasked, the lines carried on past the chamfer and
-    // floated over the blurred desktop in two 16 px triangles on every panel.
-    // The layer only exists while the lines are actually drawn, so a shell with
-    // scanlines off pays nothing for this at all.
-    Item {
-        id: lines
+    // **Built the first time this panel actually draws them, and kept.** With
+    // scanlines off -- the default -- none of this exists: it used to be
+    // created for every panel in the shell, 510 of them at login, each with
+    // its own mask shape and texture images, for an effect nobody had turned
+    // on. Once built it stays, so turning the setting off still fades out.
+    property bool _scanlinesUsed: false
+    readonly property bool _scanlinesWanted: root.scanlines && !root.nested && Effects.scanlinesOn
+    on_ScanlinesWantedChanged: if (_scanlinesWanted) _scanlinesUsed = true
 
+    Loader {
         anchors.fill: parent
-        // **The opacity, not the child's `visible`.** An item's effective
-        // visibility includes its parents', so `visible: overlay.visible`
-        // was a loop that settled at false and the overlay never drew once.
-        // Opacity does not propagate, so it can be asked.
-        visible: overlay.opacity > 0
-        layer.enabled: overlay.opacity > 0
-        layer.effect: MultiEffect {
-            maskEnabled: true
-            maskSource: outline
-            maskThresholdMin: 0.5
-        }
+        active: root._scanlinesUsed
 
-        Scanlines {
-            id: overlay
-
-            surface: "panel"
-            active: root.scanlines && !root.nested
-        }
-    }
-
-    // Drawn at zero opacity rather than hidden: an invisible item never renders
-    // into its layer, and an empty mask hides everything it is given.
-    Item {
-        id: outline
-
-        anchors.fill: parent
-        opacity: 0
-        visible: overlay.opacity > 0
-        layer.enabled: overlay.opacity > 0
-
-        Shape {
+        sourceComponent: Item {
             anchors.fill: parent
-            preferredRendererType: Shape.GeometryRenderer
 
-            ShapePath {
-                fillColor: "white"
-                strokeWidth: 0
-                strokeColor: "transparent"
+            // --- Scanlines ------------------------------------------------------------
+            // **Every panel in the shell carries them here**, which is what makes "one
+            // overlay layer per surface" true rather than a thing each panel remembers
+            // -- and it is why the coverage setting can say `PANELS ONLY` and mean it.
+            //
+            // **Masked to the panel's own cut corner.** The overlay is a rectangle and
+            // the panel is not: unmasked, the lines carried on past the chamfer and
+            // floated over the blurred desktop in two 16 px triangles on every panel.
+            // The layer only exists while the lines are actually drawn, so a shell with
+            // scanlines off pays nothing for this at all.
+            Item {
+                id: lines
 
-                startX: root.chamferTopLeft
-                startY: 0
+                anchors.fill: parent
+                // **The opacity, not the child's `visible`.** An item's effective
+                // visibility includes its parents', so `visible: overlay.visible`
+                // was a loop that settled at false and the overlay never drew once.
+                // Opacity does not propagate, so it can be asked.
+                visible: overlay.opacity > 0
+                layer.enabled: overlay.opacity > 0
+                layer.effect: MultiEffect {
+                    maskEnabled: true
+                    maskSource: outline
+                    maskThresholdMin: 0.5
+                }
 
-                PathLine {
-                    x: root.width - root.chamferTopRight
-                    y: 0
+                Scanlines {
+                    id: overlay
+
+                    surface: "panel"
+                    active: root.scanlines && !root.nested
                 }
-                PathLine {
-                    x: root.width
-                    y: root.chamferTopRight
-                }
-                PathLine {
-                    x: root.width
-                    y: root.height - root.chamferBottomRight
-                }
-                PathLine {
-                    x: root.width - root.chamferBottomRight
-                    y: root.height
-                }
-                PathLine {
-                    x: root.chamferBottomLeft
-                    y: root.height
-                }
-                PathLine {
-                    x: 0
-                    y: root.height - root.chamferBottomLeft
-                }
-                PathLine {
-                    x: 0
-                    y: root.chamferTopLeft
-                }
-                PathLine {
-                    x: root.chamferTopLeft
-                    y: 0
+            }
+
+            // Drawn at zero opacity rather than hidden: an invisible item never renders
+            // into its layer, and an empty mask hides everything it is given.
+            Item {
+                id: outline
+
+                anchors.fill: parent
+                opacity: 0
+                visible: overlay.opacity > 0
+                layer.enabled: overlay.opacity > 0
+
+                Shape {
+                    anchors.fill: parent
+                    preferredRendererType: Shape.GeometryRenderer
+
+                    ShapePath {
+                        fillColor: "white"
+                        strokeWidth: 0
+                        strokeColor: "transparent"
+
+                        startX: root.chamferTopLeft
+                        startY: 0
+
+                        PathLine {
+                            x: root.width - root.chamferTopRight
+                            y: 0
+                        }
+                        PathLine {
+                            x: root.width
+                            y: root.chamferTopRight
+                        }
+                        PathLine {
+                            x: root.width
+                            y: root.height - root.chamferBottomRight
+                        }
+                        PathLine {
+                            x: root.width - root.chamferBottomRight
+                            y: root.height
+                        }
+                        PathLine {
+                            x: root.chamferBottomLeft
+                            y: root.height
+                        }
+                        PathLine {
+                            x: 0
+                            y: root.height - root.chamferBottomLeft
+                        }
+                        PathLine {
+                            x: 0
+                            y: root.chamferTopLeft
+                        }
+                        PathLine {
+                            x: root.chamferTopLeft
+                            y: 0
+                        }
+                    }
                 }
             }
         }

@@ -56,13 +56,8 @@ Item {
             }
         }
 
-        Text {
+        KanaTag {
             text: "セッション停止 // 防壁稼働中"
-            color: Theme.signal
-            font.family: Appearance.font.accent
-            font.pixelSize: Appearance.size.katakana
-            font.weight: Appearance.font.weightMedium
-            renderType: Text.NativeRendering
         }
     }
 

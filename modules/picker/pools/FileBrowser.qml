@@ -79,6 +79,8 @@ Item {
                 spacing: 10
 
                 Text {
+                    id: taggedTitle
+
                     anchors.verticalCenter: parent.verticalCenter
                     text: `ADD FILES${Appearance.separator}LIBRARY`
                     color: Theme.bright
@@ -88,14 +90,10 @@ Item {
                     renderType: Text.NativeRendering
                 }
 
-                Text {
+                KanaTag {
                     anchors.verticalCenter: parent.verticalCenter
                     text: "画像"
-                    color: Theme.signal
-                    font.family: Appearance.font.accent
-                    font.pixelSize: Appearance.size.katakana
-                    font.weight: Appearance.font.weightMedium
-                    renderType: Text.NativeRendering
+                    title: taggedTitle
                 }
             }
 

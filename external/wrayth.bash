@@ -8,7 +8,7 @@
 # ~/.local/bin on PATH (where install.sh links the wrayth-* helpers), and in the
 # deck terminal only (WRAYTH_DECK=1) prints the fetch and welcome greeting and
 # defines `_wrayth_refresh`, which Super + Shift + E sends to redraw it. Nothing
-# here runs outside an interactive shell. The design is described in DESIGN.md.
+# here runs outside an interactive shell. The design is described in SPEC.md.
 
 # Interactive shells only.
 case $- in

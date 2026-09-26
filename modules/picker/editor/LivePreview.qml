@@ -117,13 +117,10 @@ Item {
         Row {
             spacing: 8
 
-            Text {
-                text: "接続中"
+            KanaTag {
                 color: root.palette.signal
-                font.family: Appearance.font.accent
-                font.pixelSize: 12
-                font.weight: Appearance.font.weightMedium
-                renderType: Text.NativeRendering
+                pixelSize: 12
+                text: "接続中"
             }
 
             Text {

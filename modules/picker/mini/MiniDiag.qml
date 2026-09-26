@@ -13,6 +13,27 @@ ChamferPanel {
 
     required property var palette
 
+    // **Live while the picker is open, and still otherwise.** Every card's
+    // preview follows the real CPU and memory figures; bound straight to them,
+    // all six cards re-evaluated every second with the picker closed and
+    // nothing on screen (measured: ~250 binding runs a second at idle).
+    property real cpu: 0
+    property real mem: 0
+    Binding {
+        target: root
+        property: "cpu"
+        when: ShellState.pickerOpen
+        value: SysInfo.cpuPercent
+        restoreMode: Binding.RestoreNone
+    }
+    Binding {
+        target: root
+        property: "mem"
+        when: ShellState.pickerOpen
+        value: SysInfo.memPercent
+        restoreMode: Binding.RestoreNone
+    }
+
     // **Authored at the size it is drawn.** It used to be 70 x 77 inside a
     // wrapper scaled up by 1.35, which rasterised 6 and 7 px type and then
     // magnified it. Every figure here is that old one times 1.35, rounded to
@@ -60,7 +81,7 @@ ChamferPanel {
                     // A fixed spread around the live figure, so the bars read
                     // as a load profile rather than eight copies of one
                     // number. The average is the real one.
-                    readonly property real value: Math.max(0.04, Math.min(1, SysInfo.cpuPercent / 100 + [0.22, -0.1, 0.05, -0.18, 0.3, -0.05, 0.12, -0.24][index]))
+                    readonly property real value: Math.max(0.04, Math.min(1, root.cpu / 100 + [0.22, -0.1, 0.05, -0.18, 0.3, -0.05, 0.12, -0.24][index]))
 
                     width: 7
                     height: 24
@@ -108,7 +129,7 @@ ChamferPanel {
 
                         width: 4
                         height: 7
-                        color: SysInfo.memPercent / 100 * 10 > index ? root.palette.signal : root.palette.track
+                        color: root.mem / 100 * 10 > index ? root.palette.signal : root.palette.track
                     }
                 }
             }

@@ -98,7 +98,8 @@ Item {
         // **A url, not a path.** `shellPath` returns a filesystem path and
         // `Image.source` wants a url; handed the bare path the image silently
         // failed to load and the overlay drew nothing at all.
-        source: Paths.url(Quickshell.shellPath(root.treatment.pitch === 4 ? "assets/scanline-wide.png" : "assets/scanline.png"))
+        // Only while drawn: an unwanted image is not even loaded.
+        source: root.linesWanted ? Paths.url(Quickshell.shellPath(root.treatment.pitch === 4 ? "assets/scanline-wide.png" : "assets/scanline.png")) : ""
         fillMode: Image.Tile
         // **Neither smoothed nor mipmapped.** A 1 px line filtered is a 3 px
         // grey smear, which is a different effect and a worse one.
@@ -166,7 +167,9 @@ Item {
     Image {
         anchors.fill: parent
         visible: root.vignetteWanted
-        source: Paths.url(Quickshell.shellPath("assets/vignette.png"))
+        // Only while drawn: this one is uncached, so every instance that
+        // merely existed used to decode its own copy.
+        source: root.vignetteWanted ? Paths.url(Quickshell.shellPath("assets/vignette.png")) : ""
         fillMode: Image.Stretch
         smooth: true
         // **Not cached.** Qt's pixmap cache keys on the url, and this texture

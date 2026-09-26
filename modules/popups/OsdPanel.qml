@@ -10,8 +10,12 @@ ChamferPanel {
     id: root
 
     required property bool volume
+    // The track, briefly, on a media key: the panel keeps its size and swaps
+    // its meter for the title.
+    property bool media: false
+    readonly property var player: Media.player
 
-    readonly property bool muted: volume && Audio.muted
+    readonly property bool muted: volume && !media && Audio.muted
     readonly property real level: volume ? Audio.volume : Brightness.value
 
     readonly property real padding: 14
@@ -35,8 +39,10 @@ ChamferPanel {
             spacing: 8
 
             Text {
+                id: osdTitle
+
                 anchors.verticalCenter: parent.verticalCenter
-                text: root.volume ? "VOL" : "BRI"
+                text: root.media ? (root.player?.isPlaying ? "PLAY" : "PAUSED") : (root.volume ? "VOL" : "BRI")
                 color: Theme.bright
                 font.family: Appearance.font.display
                 font.pixelSize: 14
@@ -46,17 +52,13 @@ ChamferPanel {
 
             NrLabel {
                 anchors.verticalCenter: parent.verticalCenter
-                text: root.volume ? Audio.deviceName : Brightness.outputName
+                text: root.media ? Media.appOf(root.player).toUpperCase() : (root.volume ? Audio.deviceName : Brightness.outputName)
             }
 
-            Text {
+            KanaTag {
                 anchors.verticalCenter: parent.verticalCenter
-                text: root.volume ? "音量" : "輝度"
-                color: Theme.signal
-                font.family: Appearance.font.accent
-                font.pixelSize: Appearance.size.katakana
-                font.weight: Appearance.font.weightMedium
-                renderType: Text.NativeRendering
+                text: root.media ? "再生" : (root.volume ? "音量" : "輝度")
+                title: osdTitle
             }
         }
 
@@ -65,6 +67,7 @@ ChamferPanel {
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
 
+            opacity: root.media ? 0 : 1
             text: root.muted ? "MUTED" : Fmt.percent(root.level * 100)
             color: root.muted ? Theme.accent : Theme.bright
             font.family: Appearance.font.data
@@ -93,6 +96,40 @@ ChamferPanel {
         value: root.level
         litColor: root.muted ? Theme.mute : Theme.accent
         animate: false
+        opacity: root.media ? 0 : 1
+
+        Behavior on opacity {
+            NumberAnimation {
+                duration: Appearance.duration.state
+                easing.type: Easing.OutCubic
+            }
+        }
+    }
+
+    // In media mode: the track and who it is by, where the meter was.
+    Text {
+        anchors.top: line.bottom
+        anchors.topMargin: 6
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.leftMargin: root.padding
+        anchors.rightMargin: root.padding
+        opacity: root.media ? 1 : 0
+        elide: Text.ElideRight
+        textFormat: Text.PlainText
+        text: [root.player?.trackTitle, root.player?.trackArtist].filter(t => t).join(" / ") || "NOTHING PLAYING"
+        color: Theme.bright
+        font.family: Appearance.font.data
+        font.pixelSize: Appearance.size.body
+        font.weight: Appearance.font.weightSemi
+        renderType: Text.NativeRendering
+
+        Behavior on opacity {
+            NumberAnimation {
+                duration: Appearance.duration.state
+                easing.type: Easing.OutCubic
+            }
+        }
     }
 
     // The spec's "slight glow" on the bar.

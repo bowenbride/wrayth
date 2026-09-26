@@ -5,7 +5,7 @@ import qs.config
 
 // The profile wallpaper, blurred and darkened, under a radial vignette and a
 // tiled grain. Its own layer, because anything that fades a blurred Wallpaper
-// through a parent's opacity loses the blur entirely -- see DESIGN.md.
+// through a parent's opacity loses the blur entirely -- see SPEC.md.
 Item {
     id: root
 

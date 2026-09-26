@@ -17,7 +17,7 @@ Variants {
         required property ShellScreen modelData
 
         // One screen only: see `ShellState.overlayScreen`.
-        readonly property bool shown: ShellState.launcherOpen && ShellState.overlayScreen === modelData.name
+        readonly property bool shown: ShellState.launcherOpen && ShellState.overlayScreen === modelData?.name
 
         screen: modelData
         color: "transparent"
@@ -102,17 +102,12 @@ Variants {
                     }
                 }
 
-                Text {
+                KanaTag {
                     anchors.left: title.right
                     anchors.leftMargin: 10
                     anchors.verticalCenter: parent.verticalCenter
-
                     text: "実行"
-                    color: Theme.signal
-                    font.family: Appearance.font.accent
-                    font.pixelSize: Appearance.size.katakana
-                    font.weight: Appearance.font.weightMedium
-                    renderType: Text.NativeRendering
+                    title: execTitle
                 }
 
                 NrLabel {
@@ -204,17 +199,19 @@ Variants {
                 anchors.left: parent.left
                 anchors.right: parent.right
 
+                // **A fixed set of rows that rebind, not a model of results.**
+                // Given the results array as its model, the Repeater destroyed
+                // and rebuilt every row on each keystroke and every change to
+                // the app list, launcher closed or not.
                 Repeater {
-                    model: Launcher.results
+                    model: Launcher.maxResults
 
                     ResultRow {
                         // `index` is a required property on ResultRow itself,
-                        // which the Repeater fills directly -- redeclaring it
-                        // here made the binding refer to itself.
-                        required property var modelData
-
+                        // which the Repeater fills directly.
                         width: list.width
-                        result: modelData
+                        visible: index < Launcher.results.length
+                        result: Launcher.results[index] ?? ({ kind: "app", name: "", tag: "", points: 0, uses: 0 })
                         selected: index === Launcher.selected
 
                         onActivated: {

@@ -1,20 +1,17 @@
 import QtQuick
-import Quickshell.Hyprland
+import Quickshell
 import qs.components
 import qs.config
 import qs.services
 
-// Unread messages: our speech bubble, and an accent square on its corner when
-// something is waiting. The whole item goes when the client is not running --
-// the ticker absorbs the width, which is the rule the ID block established.
+// The notification centre's indicator: our speech bubble, and an accent square
+// on its corner when anything is unread -- a message waiting in the chat app,
+// or a notification not yet seen in COMMS. Always there (it is the way into
+// COMMS), and clicking it opens the COMMS dropdown.
 Item {
     id: root
 
-    readonly property bool unread: Messages.unread
-
-    // A `Row` skips an invisible child entirely, its spacing included, so
-    // hiding this closes the gap without any width juggling here.
-    visible: Messages.running
+    readonly property bool unread: Messages.unread || Notifications.unseen > 0
 
     implicitWidth: glyph.implicitWidth + 6
     implicitHeight: Appearance.metrics.idleButtonHeight
@@ -60,8 +57,13 @@ Item {
         cursorShape: Qt.PointingHandCursor
     }
 
+    readonly property string dropdownName: "comms"
+    readonly property string screenName: QsWindow.window?.screen?.name ?? ""
+
+    Component.onCompleted: ShellState.registerReadout(root)
+    Component.onDestruction: ShellState.unregisterReadout(root)
+
     TapHandler {
-        // The same thing Super + D does.
-        onTapped: Hyprland.dispatch(`hl.dsp.workspace.toggle_special("communication")`)
+        onTapped: ShellState.toggleDropdown(root)
     }
 }

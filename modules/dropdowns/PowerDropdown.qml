@@ -124,14 +124,9 @@ DropdownFrame {
                             font.capitalization: Font.AllUppercase
                         }
 
-                        Text {
+                        KanaTag {
                             anchors.horizontalCenter: parent.horizontalCenter
                             text: tile.modelData.katakana
-                            color: Theme.signal
-                            font.family: Appearance.font.accent
-                            font.pixelSize: Appearance.size.katakana
-                            font.weight: Appearance.font.weightMedium
-                            renderType: Text.NativeRendering
                         }
                     }
 

@@ -23,11 +23,24 @@ ChamferPanel {
         return Theme.signal;
     }
 
+    // The shell's own summary of what was held while you played.
+    readonly property bool summaryCard: (notification?.hints?.["x-wrayth-internal"] ?? "") !== ""
     readonly property string tabText: critical ? "ALERT" : (low ? "LOG" : "INCOMING")
     readonly property string katakana: critical ? "警告" : (low ? "記録" : "着信")
 
     // Critical never times out; everything else gets the spec's six seconds.
-    readonly property int lifetime: critical ? 0 : 6000
+    // A screenshot's card: the file it is about, from the shell's own hint.
+    // It shows the thumbnail and OPEN, COPY and DELETE instead of VIEW.
+    readonly property string shot: notification?.hints?.["x-wrayth-screenshot"] ?? ""
+    readonly property int lifetime: critical ? 0 : (shot !== "" ? 10000 : 6000)
+    // DELETE asks first: the first press arms it, a second deletes, and it
+    // stands down on its own after three seconds.
+    property bool deleteArmed: false
+    Timer {
+        id: disarm
+        interval: 3000
+        onTriggered: root.deleteArmed = false
+    }
 
     // Whole seconds left, read off the drain bar's current width. Ceil so it
     // reads 6 for the whole of the first second and only shows 0 as the card
@@ -93,22 +106,17 @@ ChamferPanel {
             anchors.rightMargin: 8
             anchors.verticalCenter: parent.verticalCenter
             elide: Text.ElideRight
-            text: `FROM${Appearance.separator}${root.notification?.appName || "UNKNOWN"}`
+            text: root.summaryCard ? "WRAYTH" : `FROM${Appearance.separator}${root.notification?.appName || "UNKNOWN"}`
         }
 
-        Text {
+        KanaTag {
             id: kana
-
             anchors.right: age.left
             anchors.rightMargin: 8
             anchors.verticalCenter: parent.verticalCenter
-
-            text: root.katakana
             color: root.tone
-            font.family: Appearance.font.accent
-            font.pixelSize: Appearance.size.katakana
-            font.weight: Appearance.font.weightMedium
-            renderType: Text.NativeRendering
+            text: root.katakana
+            title: from
         }
 
         NrLabel {
@@ -143,7 +151,7 @@ ChamferPanel {
             color: Theme.bright
             elide: Text.ElideRight
             font.family: Appearance.font.data
-            font.pixelSize: Appearance.size.body
+            font.pixelSize: root.summaryCard ? 12 : Appearance.size.body
             font.weight: Appearance.font.weightSemi
         }
 
@@ -152,14 +160,29 @@ ChamferPanel {
             visible: text !== ""
 
             text: root.notification?.body ?? ""
-            color: Theme.text
+            color: root.summaryCard ? Theme.dim : Theme.text
             font.family: Appearance.font.data
-            font.pixelSize: 12
+            font.pixelSize: root.summaryCard ? 10 : 12
             wrapMode: Text.Wrap
             maximumLineCount: 4
             elide: Text.ElideRight
             textFormat: Text.PlainText
             renderType: Text.NativeRendering
+        }
+
+        // The screenshot itself, small, the full width of the card.
+        Image {
+            visible: root.shot !== ""
+            width: parent.width
+            // A fixed frame, the image fitted inside it: its own height is not
+            // known until it has loaded, and the card must not jump when it is.
+            height: visible ? 140 : 0
+            source: root.shot !== "" ? `file://${root.shot}` : ""
+            sourceSize.width: 744
+            fillMode: Image.PreserveAspectFit
+            horizontalAlignment: Image.AlignLeft
+            asynchronous: true
+            cache: false
         }
 
         // The meta line and the buttons share one row rather than stacking:
@@ -182,7 +205,7 @@ ChamferPanel {
                 // of its own, so the two can never drift apart and there is
                 // only one thing keeping time -- the same rule the spectrum's
                 // bars follow.
-                text: root.critical ? `PERSISTENT${Appearance.separator}ACK REQUIRED` : `AUTO CLEAR${Appearance.separator}${root.remainingSeconds}S`
+                text: root.shot !== "" ? `${root.remainingSeconds}S` : (root.critical ? `PERSISTENT${Appearance.separator}ACK REQUIRED` : `AUTO CLEAR${Appearance.separator}${root.remainingSeconds}S`)
             }
 
             Row {
@@ -193,7 +216,37 @@ ChamferPanel {
                 spacing: 8
 
                 ActionButton {
-                    visible: root.action !== null
+                    visible: root.shot !== ""
+                    text: "OPEN"
+                    accented: true
+                    onClicked: {
+                        Screenshot.open(root.shot);
+                        root.dismissed();
+                    }
+                }
+                ActionButton {
+                    visible: root.shot !== ""
+                    text: "COPY"
+                    onClicked: Screenshot.copy(root.shot)
+                }
+                ActionButton {
+                    visible: root.shot !== ""
+                    text: root.deleteArmed ? "CONFIRM" : "DELETE"
+                    alsoText: ["CONFIRM", "DELETE"]
+                    accented: root.deleteArmed
+                    onClicked: {
+                        if (!root.deleteArmed) {
+                            root.deleteArmed = true;
+                            disarm.restart();
+                            return;
+                        }
+                        Screenshot.remove(root.shot);
+                        root.dismissed();
+                    }
+                }
+
+                ActionButton {
+                    visible: root.action !== null && root.shot === ""
                     text: "VIEW"
                     accented: true
                     // The app opens or raises its own window in answer, so
@@ -206,6 +259,7 @@ ChamferPanel {
                 }
 
                 ActionButton {
+                    visible: root.shot === ""
                     text: "DISMISS"
                     textColor: Theme.dim
                     onClicked: root.dismissed()

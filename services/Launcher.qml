@@ -72,23 +72,101 @@ Singleton {
         return points;
     }
 
+    // --- The app index ----------------------------------------------------------
+    // **Plain data, built once the desktop entries settle, a few at a time.**
+    // Searching `DesktopEntries` directly re-read every entry's properties
+    // through JS and re-sorted them each time the list changed -- 33 times at
+    // login as the entries arrived, 12 to 22 ms each on the main thread, and
+    // again with the launcher closed whenever an app was installed. Now a
+    // change schedules one rebuild, done in pieces of 25 entries so no piece
+    // blocks a frame, and the search runs over lowercased copies.
+    property var _apps: []
+    property var _pending: []
+    property var _source: []
+    property int _at: 0
+    Connections {
+        target: DesktopEntries.applications
+        function onValuesChanged(): void {
+            rebuild.restart();
+        }
+    }
+    Timer {
+        id: rebuild
+
+        interval: 300
+        running: true
+        onTriggered: {
+            root._source = Array.from(DesktopEntries.applications?.values ?? []);
+            root._pending = [];
+            root._at = 0;
+            chunk.restart();
+        }
+    }
+    Timer {
+        id: chunk
+
+        interval: 1
+        repeat: true
+        onTriggered: {
+            const end = Math.min(root._source.length, root._at + 25);
+            for (let i = root._at; i < end; i++) {
+                const entry = root._source[i];
+                if (!entry || entry.noDisplay)
+                    continue;
+                const name = entry.name ?? "";
+                const id = entry.id ?? "";
+                root._pending.push({ name: name, id: id, lname: name.toLowerCase(), lid: id.toLowerCase(), tag: root.tagFor(entry), entry: entry });
+            }
+            root._at = end;
+            if (end >= root._source.length) {
+                stop();
+                root._apps = root._pending;
+                root._pending = [];
+                root._source = [];
+            }
+        }
+    }
+
+    // `score` on text already lowercased.
+    function scoreLower(haystack: string, want: string): int {
+        if (!want)
+            return 0;
+        let at = 0;
+        let points = 0;
+        let previous = -2;
+        for (const character of want) {
+            const found = haystack.indexOf(character, at);
+            if (found < 0)
+                return -1;
+            points += found === previous + 1 ? 12 : 0;
+            points += found === 0 ? 20 : Math.max(0, 10 - found);
+            previous = found;
+            at = found + 1;
+        }
+        return points;
+    }
+
+    readonly property var shellViews: [
+        { name: "KEYBINDS", open: "keybinds", words: ["keybinds", "keys", "shortcuts", "hotkeys"] },
+        { name: "CLIPBOARD", open: "clipboard", words: ["clipboard", "paste", "history"] }
+    ]
+
     readonly property var results: {
         const needle = query.trim();
         const found = [];
 
-        for (const entry of DesktopEntries.applications?.values ?? []) {
-            if (entry.noDisplay)
-                continue;
-            const points = Math.max(score(entry.name, needle), score(entry.id ?? "", needle));
+        const want = needle.toLowerCase();
+        for (const app of root._apps) {
+            const points = Math.max(scoreLower(app.lname, want), scoreLower(app.lid, want));
             if (points < 0)
                 continue;
             found.push({
                 kind: "app",
-                name: entry.name,
-                tag: tagFor(entry),
+                name: app.name,
+                tag: app.tag,
                 points: points,
-                uses: launches[entry.id] ?? 0,
-                entry: entry
+                uses: launches[app.id] ?? 0,
+                entry: app.entry
             });
         }
 
@@ -106,6 +184,23 @@ Singleton {
                     points: points + 4,
                     uses: 0,
                     profile: name
+                });
+            }
+        }
+
+        // The shell's own views, by name or by what people call them.
+        if (needle) {
+            for (const view of root.shellViews) {
+                const points = Math.max(...view.words.map(w => score(w, needle)));
+                if (points < 0)
+                    continue;
+                found.push({
+                    kind: "shell",
+                    name: view.name,
+                    tag: "SHELL",
+                    points: points + 4,
+                    uses: 0,
+                    view: view.open
                 });
             }
         }
@@ -129,6 +224,11 @@ Singleton {
         const chosen = results[selected];
         if (!chosen)
             return;
+        if (chosen.kind === "shell") {
+            // Straight to the view: opening it closes the launcher.
+            ShellState.openExclusive(chosen.view);
+            return;
+        }
         if (chosen.kind === "profile") {
             Theme.apply(chosen.profile);
         } else {

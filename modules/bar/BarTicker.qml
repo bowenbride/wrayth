@@ -22,6 +22,10 @@ Item {
                 : SystemStatus.shieldState === "down" ? "SHIELD DOWN" : "SHIELD UNKNOWN",
             `PROFILE ${Theme.profile.toUpperCase()}`
         ];
+        // While something plays, it leads the loop: its title, and who by.
+        const track = Media.playing ? Media.players.find(p => p.isPlaying) : null;
+        if (track && track.trackTitle)
+            segments.unshift(`NOW PLAYING ${track.trackTitle.toUpperCase()}${track.trackArtist ? ` BY ${track.trackArtist.toUpperCase()}` : ""}`);
         // Leading and trailing separators so the loop reads continuously.
         return `// ${segments.join(" // ")} `;
     }
@@ -61,17 +65,11 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
     }
 
-    Text {
+    KanaTag {
         id: katakana
-
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
-
         text: "レイス"
-        color: Theme.signal
-        font.family: Appearance.font.accent
-        font.pixelSize: Appearance.size.katakana
-        font.weight: Appearance.font.weightMedium
-        renderType: Text.NativeRendering
+        centreInk: true
     }
 }

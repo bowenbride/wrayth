@@ -6,6 +6,7 @@ import qs.config
 import qs.services
 import qs.modules.picker.editor
 import qs.modules.picker.effects
+import qs.modules.picker.privacy
 import qs.modules.picker.pools
 
 // PROFILE // SELECT, and the two screens it leads to. Moving the selection
@@ -24,7 +25,7 @@ Variants {
         required property ShellScreen modelData
 
         // One screen only: see `ShellState.overlayScreen`.
-        readonly property bool shown: ShellState.pickerOpen && ShellState.overlayScreen === modelData.name
+        readonly property bool shown: ShellState.pickerOpen && ShellState.overlayScreen === modelData?.name
 
         // "grid", "editor" or "pools". Held on `ShellState` rather than here so
         // the IPC can drive it; **not called `screen`**, because `PanelWindow`
@@ -106,7 +107,7 @@ Variants {
             }
             // Nothing on the effects page waits for Enter: every control there
             // applies itself the moment it is pressed.
-            if (view === "effects")
+            if (view === "effects" || view === "privacy")
                 return;
             confirm();
         }
@@ -211,6 +212,8 @@ Variants {
                 return;
             if (view === "pools" && poolsScreen.back())
                 return;
+            if (view === "privacy" && privacyScreen.back())
+                return;
             if (view === "effects" && effectsScreen.back())
                 return;
             if (confirming) {
@@ -308,6 +311,8 @@ Variants {
                         return poolsScreen.contentRect;
                     if (overlay.view === "effects")
                         return effectsScreen.contentRect;
+                    if (overlay.view === "privacy")
+                        return privacyScreen.contentRect;
                     return gridScreen.contentRect;
                 }
 
@@ -396,14 +401,10 @@ Variants {
                             }
                         }
 
-                        Text {
+                        KanaTag {
                             anchors.verticalCenter: parent.verticalCenter
                             text: "配色"
-                            color: Theme.signal
-                            font.family: Appearance.font.accent
-                            font.pixelSize: Appearance.size.katakana
-                            font.weight: Appearance.font.weightMedium
-                            renderType: Text.NativeRendering
+                            title: pickerTitle
                         }
                     }
 
@@ -654,14 +655,10 @@ Variants {
                             text: "EFFECTS"
                         }
 
-                        Text {
+                        KanaTag {
                             anchors.verticalCenter: parent.verticalCenter
                             text: "演出"
-                            color: Theme.signal
-                            font.family: Appearance.font.accent
-                            font.pixelSize: Appearance.size.katakana
-                            font.weight: Appearance.font.weightMedium
-                            renderType: Text.NativeRendering
+                            title: effectsLabel
                         }
                     }
 
@@ -681,6 +678,84 @@ Variants {
                     TapHandler {
                         onPressedChanged: if (pressed) effectsFeedback.flash()
                         onTapped: overlay.show("effects")
+                    }
+                }
+
+                // --- The way to the privacy page, beside EFFECTS -------------------------
+                // On the key hints' line and at the composition's right edge,
+                // so it reads as a way out of this screen rather than as one
+                // more thing on it. The wallpaper column's own `MANAGE
+                // WALLPAPER POOLS` is the same button in the same role.
+                Item {
+                    id: privacyButton
+
+                    x: effectsButton.x - width - 12
+                    y: 756
+                    // **The whole row, not just the word.** It was sized from
+                    // the label alone while it holds the label *and* its
+                    // katakana, so the tag was pressed against the chamfer and
+                    // the word against the left edge.
+                    width: privacyRow.implicitWidth + 40
+                    height: 30
+
+                    ChamferPanel {
+                        anchors.fill: parent
+
+                        chamfer: 8
+                        chamferTopRight: 0
+                        chamferBottomLeft: 8
+                        // Opaque, blended rather than laid over: it sits on a
+                        // wallpaper, and a translucent accent fill lets the
+                        // image through the label.
+                        fillColor: Theme.blend(Theme.ground, Theme.accent, privacyHover.hovered ? 0.24 : 0.14)
+                        borderColor: Theme.accent
+
+                        Behavior on fillColor {
+                            ColorAnimation {
+                                duration: Appearance.duration.state
+                                easing.type: Easing.OutCubic
+                            }
+                        }
+                    }
+
+                    Row {
+                        id: privacyRow
+
+                        anchors.centerIn: parent
+                        spacing: 8
+
+                        NrLabel {
+                            id: privacyLabel
+
+                            anchors.verticalCenter: parent.verticalCenter
+                            centred: true
+                            color: Theme.accent
+                            text: "PRIVACY"
+                        }
+
+                        KanaTag {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: "秘匿"
+                            title: privacyLabel
+                        }
+                    }
+
+                    HoverHandler {
+                        id: privacyHover
+
+                        cursorShape: Qt.PointingHandCursor
+                    }
+
+                    Feedback {
+                        id: privacyFeedback
+
+                        anchors.fill: parent
+                        flashOpacity: 0.3
+                    }
+
+                    TapHandler {
+                        onPressedChanged: if (pressed) privacyFeedback.flash()
+                        onTapped: overlay.show("privacy")
                     }
                 }
             }
@@ -707,6 +782,21 @@ Variants {
                     }
                 }
                 onCancelled: overlay.show("grid")
+            }
+            }
+
+            // --- The privacy page ------------------------------------------------
+            Appear {
+                anchors.fill: parent
+                fills: true
+                shown: overlay.view === "privacy"
+
+            PrivacyPage {
+                id: privacyScreen
+
+                anchors.fill: parent
+
+                onFinished: overlay.show("grid")
             }
             }
 

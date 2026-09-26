@@ -25,6 +25,64 @@ Singleton {
     readonly property bool active: true
     readonly property int bars: 48
 
+    // **Paused, not stopped, while the deck is down.** cava is SIGSTOPped once
+    // the deck has finished closing and SIGCONTed the moment it starts to
+    // open: the process, its PipeWire stream and its buffers stay exactly as
+    // they were, so the first frame after a resume arrives at once (no 405 ms
+    // cold start), and a stopped process costs nothing. It used to run, and be
+    // read, the whole session for a panel almost always hidden -- about 2% of
+    // a core, the largest single part of the shell's idle cost.
+    readonly property bool wanted: ShellState.deckVisible
+    property bool _paused: false
+    function _pause(on: bool): void {
+        if (!cava.running || on === root._paused)
+            return;
+        cava.signal(on ? 19 : 18); // SIGSTOP : SIGCONT
+        root._paused = on;
+    }
+    // A reload tears this down: never leave a stopped cava behind.
+    Component.onDestruction: _pause(false)
+    onWantedChanged: {
+        if (wanted) {
+            pauseLater.stop();
+            _pause(false);
+        } else {
+            pauseLater.restart();
+        }
+    }
+    // Long enough for the deck's close to finish with the spectrum still live.
+    Timer {
+        id: pauseLater
+
+        interval: 1000
+        onTriggered: if (!root.wanted) root._pause(true)
+    }
+
+    readonly property string runtimeDir: `${Quickshell.env("XDG_RUNTIME_DIR") || "/tmp"}/wrayth`
+    // **It follows the selected source only while the deck is up.** A browser
+    // creates and drops audio streams as its pages play and pause, and each
+    // change re-pointed cava -- a restart, with the deck closed and nothing to
+    // show. While the deck is down the source is held; opening it catches up.
+    property string source: "auto"
+    Component.onCompleted: source = Media.cavaSource
+    Binding {
+        target: root
+        property: "source"
+        when: root.wanted
+        value: Media.cavaSource
+        restoreMode: Binding.RestoreNone
+    }
+    property bool switching: false
+    // A new source: cava is restarted on it (a cold start is ~400 ms, and
+    // only happens when the source actually changes).
+    onSourceChanged: {
+        if (!cava.running)
+            return;
+        switching = true;
+        _pause(false); // a stopped process would not act on the SIGTERM
+        cava.running = false;
+    }
+
     // **cava keeps running; the shell stops reading every frame of it.**
     // Leaving the process up is what makes the spectrum live the instant the
     // deck opens -- see the note above, and the 405 ms cold start it exists
@@ -58,11 +116,26 @@ Singleton {
         id: cava
 
         running: root.active
-        command: ["cava", "-p", Quickshell.shellPath("assets/cava.conf")]
+        // **It follows the selected source** (Media.cavaSource: a PipeWire
+        // stream's serial, or "auto" for every sound). The config is the
+        // shipped one with its `source` line replaced, written to the runtime
+        // dir; the serial arrives as an argument, never spliced into the
+        // script, and is digits or "auto" by construction.
+        command: ["sh", "-c", 'mkdir -p "$1" && sed "s/^source = .*/source = $2/" "$3" > "$1/cava.conf" && exec cava -p "$1/cava.conf"',
+            "sh", root.runtimeDir, root.source, Quickshell.shellPath("assets/cava.conf")]
 
         onRunningChanged: {
-            if (running)
+            root._paused = false;
+            if (running) {
+                if (!root.wanted)
+                    pauseLater.restart();
                 return;
+            }
+            if (root.switching) {
+                root.switching = false;
+                running = true;
+                return;
+            }
             root.levels = [];
             root.live = false;
             quiet.stop();

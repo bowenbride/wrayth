@@ -71,12 +71,12 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 fills: true
                 textual: true
-                width: title.implicitWidth
-                height: title.implicitHeight
-                scrambleItems: [title]
+                width: effectsTitle.implicitWidth
+                height: effectsTitle.implicitHeight
+                scrambleItems: [effectsTitle]
 
                 GlitchText {
-                    id: title
+                    id: effectsTitle
 
                     anchors.fill: parent
                     text: "EFFECTS"
@@ -84,14 +84,10 @@ Item {
                 }
             }
 
-            Text {
+            KanaTag {
                 anchors.verticalCenter: parent.verticalCenter
                 text: "演出"
-                color: Theme.signal
-                font.family: Appearance.font.accent
-                font.pixelSize: Appearance.size.katakana
-                font.weight: Appearance.font.weightMedium
-                renderType: Text.NativeRendering
+                title: effectsTitle
             }
         }
 

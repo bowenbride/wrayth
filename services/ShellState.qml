@@ -47,7 +47,7 @@ Singleton {
     // rather than left "open" on a screen that no longer exists, holding a
     // flag that the next toggle would read as "close".
     onScreensChanged: {
-        if (overlayScreen !== "" && !screenNamed(overlayScreen) && (launcherOpen || powerOpen || pickerOpen || Daemons.libraryOpen))
+        if (overlayScreen !== "" && !screenNamed(overlayScreen) && anyOverlay)
             openExclusive("");
         if (dropdown !== "" && !screenNamed(dropdownScreen))
             closeDropdown("its screen was removed");
@@ -56,6 +56,12 @@ Singleton {
     property bool launcherOpen: false
     property bool powerOpen: false
     property bool pickerOpen: false
+    // Tier 1's full-screen overlays: the screenshot selector, KEYBINDS and
+    // CLIPBOARD. Exclusive of every other overlay, like the three above.
+    property bool captureOpen: false
+    property bool keybindsOpen: false
+    property bool clipboardOpen: false
+    readonly property bool anyOverlay: launcherOpen || powerOpen || pickerOpen || captureOpen || keybindsOpen || clipboardOpen || Daemons.libraryOpen
     // Which of the picker's three screens is up: "grid", "editor" or "pools".
     // It lives here rather than on the overlay so the IPC can drive it -- the
     // two inner screens are reached by clicking, and nothing in a test session
@@ -218,6 +224,9 @@ Singleton {
         launcherOpen = which === "launcher";
         powerOpen = which === "power";
         pickerOpen = which === "picker";
+        captureOpen = which === "capture";
+        keybindsOpen = which === "keybinds";
+        clipboardOpen = which === "clipboard";
         Daemons.libraryOpen = which === "daemons";
         // A dropdown is not an overlay, but it is a surface holding a focus
         // grab, and two things on screen asking for the keyboard is the bug
@@ -237,6 +246,12 @@ Singleton {
     // the editor owns its own draft and nothing else should be able to hold a
     // copy of it.
     signal editorColour(string key, string hex)
+
+    // KEYBINDS, from the IPC (a test has no pointer): start capturing new keys
+    // for a bind, and answer the question a capture asked.
+    signal keybindCapture(string id)
+    signal keybindAnswer(bool yes)
+    property string keybindPending: ""
 
     // Moves the picker's selection, which is what previews a profile *and*
     // lifts its card. `profile preview` only recolours the shell: the grid

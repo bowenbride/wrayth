@@ -111,8 +111,20 @@ Singleton {
             ShellState.locked = true;
             break;
         case "logout":
-            // Hyprland is configured in Lua, so this is an expression.
-            Hyprland.dispatch("hl.dsp.exit()");
+            // **Logging out ends the session, not just Hyprland.** Exiting
+            // Hyprland alone left anything the shell had launched running
+            // with no display -- an Electron app's main process, VSCodium
+            // for one, survived with no window and held its single-instance
+            // lock, so it would not open again after logging back in (logind
+            // keeps a closed session's processes unless KillUserProcesses is
+            // set, and Arch leaves it off). So Hyprland is asked to exit
+            // first, which lets apps close normally, and a few seconds later
+            // logind ends the session, which sends SIGTERM to whatever is
+            // left. Only ever this login's own session: the id comes from
+            // XDG_SESSION_ID alone and nothing is done without it (the test
+            // sessions run inside the tester's login and never set it).
+            Quickshell.execDetached(["sh", "-c", 'id="$1"; hyprctl dispatch "hl.dsp.exit()" > /dev/null 2>&1; [ -n "$id" ] || exit 0; sleep 3; exec loginctl terminate-session "$id"',
+                "sh", Quickshell.env("XDG_SESSION_ID") ?? ""]);
             break;
         case "sleep":
             Quickshell.execDetached(["systemctl", "suspend"]);

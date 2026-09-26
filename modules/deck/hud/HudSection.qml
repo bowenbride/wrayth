@@ -25,19 +25,17 @@ Item {
         spacing: 8
 
         NrLabel {
+            id: taggedTitle
+
             anchors.verticalCenter: parent.verticalCenter
             text: root.label
         }
 
-        Text {
+        KanaTag {
             anchors.verticalCenter: parent.verticalCenter
             visible: root.katakana !== ""
             text: root.katakana
-            color: Theme.signal
-            font.family: Appearance.font.accent
-            font.pixelSize: Appearance.size.katakana
-            font.weight: Appearance.font.weightMedium
-            renderType: Text.NativeRendering
+            title: taggedTitle
         }
     }
 

@@ -7,7 +7,7 @@ import qs.services
 
 // The readouts only the HUD shows, so they poll only while the deck is up.
 // Everything the bar ticker also needs lives in SystemStatus and runs all the
-// time; see Polling in DESIGN.md.
+// time; see the decision on polling in SPEC.md.
 Singleton {
     id: root
 

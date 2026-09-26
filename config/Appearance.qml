@@ -49,6 +49,11 @@ Singleton {
         readonly property int netRate: 50
         readonly property int idleValue: 34
         readonly property int btName: 120
+        // The AUDIO readout's device name: fixed, so switching from SPEAKERS
+        // to a headset never moves the bar.
+        readonly property int audioName: 96
+        // The tray's item count.
+        readonly property int trayCount: 16
     }
 
     // letter-spacing, as the em fractions the spec gives.
@@ -116,6 +121,10 @@ Singleton {
         // does not begin a whole word's width further from the left rule than
         // the katakana sits from the right one.
         readonly property int tickerFade: 20
+        // **The ticker never goes below this.** When the readouts would leave
+        // it less, the Bluetooth readout drops to its rune alone -- nothing
+        // else on the bar is squeezed.
+        readonly property int tickerMin: 220
         readonly property real tickerSpeed: 30 // px per second
     }
 

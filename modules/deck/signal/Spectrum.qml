@@ -56,7 +56,8 @@ Item {
     property bool live: Cava.live
     // MUTED animates in `alert` rather than falling flat: something is playing
     // that cannot be heard, and a flat line would say the opposite.
-    readonly property color barColor: Audio.state === "MUTED" ? Theme.alert : Theme.signal
+    // The data colour at every level and in every state -- never the accent.
+    readonly property color barColor: Theme.signal
 
     readonly property real barWidth: Math.max(1, (width - (bars - 1) * spacing) / bars)
     property real spacing: 3

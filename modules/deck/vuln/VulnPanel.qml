@@ -52,14 +52,10 @@ ChamferPanel {
                 text: "VULN WATCH"
             }
 
-            Text {
+            KanaTag {
                 anchors.verticalCenter: parent.verticalCenter
                 text: "脆弱性"
-                color: Theme.signal
-                font.family: Appearance.font.accent
-                font.pixelSize: Appearance.size.katakana
-                font.weight: Appearance.font.weightMedium
-                renderType: Text.NativeRendering
+                title: vulnTitle
             }
         }
         }

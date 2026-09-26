@@ -253,9 +253,15 @@ Variants {
         }
 
         // --- Right ---------------------------------------------------------
+        // **The ticker keeps `tickerMin`.** When the readouts would leave it
+        // less, the Bluetooth readout drops to its rune -- the one thing on
+        // the bar allowed to give way. Decided on the group's full width (name
+        // showing), so shrinking it never undoes the decision.
+        readonly property real tickerRoom: width - bar.edge - right.fullWidth - (left.x + left.width) - Appearance.metrics.dividerGap * 2
         StatusItems {
             id: right
 
+            btCompact: bar.tickerRoom < Appearance.metrics.tickerMin
             anchors.right: parent.right
             anchors.rightMargin: bar.edge
             anchors.verticalCenter: parent.verticalCenter

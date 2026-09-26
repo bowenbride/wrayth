@@ -9,7 +9,7 @@ import qs.services
 Singleton {
     id: root
 
-    // "", "volume" or "brightness".
+    // "", "volume", "brightness" or "media" (the track, on a media key).
     property string showing: ""
     // What was last shown, kept so the panel does not change identity while it
     // is fading out.
@@ -47,6 +47,12 @@ Singleton {
         }
 
         function onMutedChanged(): void {
+            root.flash("volume");
+        }
+
+        // A new output (Super + Shift + A, the AUDIO dropdown, a headset
+        // connecting): the popup names it.
+        function onSinkChanged(): void {
             root.flash("volume");
         }
     }

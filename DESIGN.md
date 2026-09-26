@@ -16,8 +16,12 @@ panel: most of the rules below were learned by getting them wrong first.
 - **Translucent panels:** `panel` / `panel2` fills with Hyprland's blur behind,
   confined to the drawn shape (`ignore_alpha`), so chamfers stay crisp.
 - **Labels over decoration:** small, uppercase, tracked labels —
-  `HOST <name> // UPLINK <ssid>`. The separator is ` // `. Small katakana tags
-  sit beside headers in `signal`.
+  `HOST <name> // UPLINK <ssid>`. The separator is ` // `, and only between a
+  label and its value. Small katakana tags sit beside headers in `signal`, at
+  their own size, **centred vertically on the title's ink**: use
+  `components/KanaTag.qml` and give it the title, never a hand-tuned offset.
+- **Data stays data.** The SIGNAL spectrum is `signal` at every level; a high
+  reading is not a reason to use the accent.
 - **No glow anywhere.** Accent is drawn plain; a halo cost more legibility than
   it bought.
 - **Optical centring, always.** Text and icons are centred on their *ink*, not
@@ -64,6 +68,11 @@ One shared set for every clickable (`components/ActionState.qml`,
 block editor) show progress only by their boxes filling in the accent — no
 caret, no focus frame. Free-text fields (`components/InputField.qml`) keep a
 1 px accent caret.
+
+**Bottom-edge buttons.** A button along a popup's bottom edge (`MIXER`,
+`OPEN COMMS WORKSPACE`, `OPEN KEYBINDS FILE`) takes the panel's bottom-left
+cut. **Full-screen views** (the picker's pages, the keybind list) have `BACK`
+above the header, doing what Escape does.
 
 **Key hints** are keycaps (`components/Keycap.qml`), named (`ENTER`, `ESC`),
 in the surrounding text's colour.
@@ -114,13 +123,16 @@ works with the shell stopped; change both together.
 shell.qml            the root: one of each module per screen
 config/              Theme (tokens), Appearance (sizes, fonts, durations),
                      Profiles, Paths, Customs, Machine
-services/            singletons: system state and actions (Wifi, Audio, Lock,
+services/            singletons: system state and actions (Wifi, Audio, Media,
+                     Tray, Lock, Polkit, Clipboard, Keybinds, Screenshot,
                      Planner, Vuln, Deck, Wallpapers, Effects, Ipc, ...)
 components/          shared pieces: ChamferPanel, NrLabel, Glyph, Keycap,
-                     ActionButton, InputField, PassphraseSlots, Wallpaper, ...
+                     KanaTag, VolumeControl, ActionButton, InputField,
+                     PassphraseSlots, Wallpaper, ...
 modules/             bar, deck (HUD, planner, signal, vuln), dropdowns,
-                     launcher, lock, notifications, picker, popups, session,
-                     background, status
+                     launcher, lock, notifications, picker (with the effects
+                     and privacy pages), popups, session, capture, polkit,
+                     keybinds, clipboard, background, status
 external/            what lives outside Quickshell: the Hyprland rules
                      (hypr-wrayth.lua) and complete config (hyprland.lua), the
                      wrayth-* helpers, kitty and fastfetch configs, the bash
@@ -132,7 +144,7 @@ install.sh           the installer
 **Surfaces.** Every per-screen surface takes its screens from
 `ShellState.screens` (never `Quickshell.screens`), which leaves out the
 temporary output the lockscreen uses to recover keyboard focus. Layer
-namespaces are `wrayth-(bar|deck|deckbg|popup|overlay|notifications|background|scanlines)`,
+namespaces are `wrayth-(bar|deck|deckbg|popup|overlay|notifications|background|scanlines|capture|polkit)`,
 matched by exact string in `hypr-wrayth.lua` — change both together.
 
 **Which screen.** Per-screen surfaces are one per screen, but most things
@@ -140,7 +152,10 @@ appear on one screen only, and each such thing names its screen:
 `ShellState.dropdownScreen` (the bar that was clicked),
 `ShellState.overlayScreen` (the screen focused when a full-screen overlay
 opened), `Deck.monitorName` (the monitor showing `special:deck`) and
-`ShellState.focusedScreen` (the popup and notifications). Anything a bar shows
+`ShellState.focusedScreen` (the popup, notifications, the screenshot selector
+and the admin prompt's panel). The admin prompt is the one thing besides the
+lockscreen that dims every screen; its keyboard grab is on the focused one
+only. Anything a bar shows
 about "the current workspace" comes from its own monitor
 (`services/MonitorSpaces.qml`). Never drive a per-screen surface from one
 global flag, or place it from the focused monitor's coordinates: that's how
@@ -162,7 +177,17 @@ so the partial cells at each end take the neighbouring cell's colour.
 
 **Polling.** Readouts poll only while they are visible, except what the
 always-visible bar ticker needs (firewall, packages, vulnerabilities, planner,
-uplink). Nothing polls faster than it changes.
+uplink). Nothing polls faster than it changes. Audio, media, the tray,
+notifications and the clipboard are event-driven (PipeWire, MPRIS, D-Bus,
+`wl-paste --watch`); only the SIGNAL panel's track position is re-read, once a
+second, while the deck is open.
+
+**Keybinds.** `hypr-wrayth.lua` binds from one catalogue, and every bind's
+description is `wrayth:<id>:<group>:<label>:<default keys>`, which is how the
+keybind list reads Hyprland's live binds. Add a bind to the catalogue, not as a
+bare `hl.bind`, or the list cannot show it. A user's changes are applied by
+`wrayth_apply_keybinds()` (unbind everything, then bind everything, so a swap
+never leaves one action unbound) from `~/.config/wrayth/keybinds.lua`.
 
 **Blur and opacity.** Never fade a subtree containing a blurred `Wallpaper`
 through a parent's `opacity`: Qt's implicit opacity path composites the blur
@@ -196,6 +221,19 @@ around `pam_unix`), so nothing is installed under `/etc`.
 The threat model: the lock protects against someone at the keyboard and other
 local users. It cannot protect against software already running as you.
 
+**The admin prompt** (`services/Polkit.qml`) is Quickshell's polkit agent; the
+password goes to polkit's setuid helper and nowhere else. Polkit allows one
+agent per session and Wrayth never tries to displace another. Test sessions
+set `WRAYTH_POLKIT=off`: a nested shell runs inside your real login session,
+and must never become its agent. Test the prompt with `qs -c wrayth ipc call
+polkit preview`, which is not connected to polkit and can authorise nothing.
+
+**Privacy.** Notification history is memory only. Clipboard history is memory
+only unless the user chooses `SAVE TO DISK` (an owner-only file, deleted when
+they leave that mode), and `external/wrayth-clip` drops a copy marked
+`x-kde-passwordManagerHint` before reading it. Keep all three true, and keep
+the nested test's checks for them passing.
+
 ## Installing and updating
 
 `install.sh` installs the configs a user may edit (`kitty.conf`,
@@ -207,6 +245,10 @@ while it is exactly what Wrayth shipped before; an edited one is kept, with
 the new version saved beside it as `<file>.wrayth-new`. Updating never writes
 to `~/.config/wrayth`, `~/.local/state/wrayth` or `~/.cache/wrayth`. When you
 change a shipped config, bump `VERSION` in the release that carries it.
+
+A user's own Hyprland settings belong in `~/.config/hypr/overrides.lua`,
+which the complete setup's `hyprland.lua` loads last. Point people there rather
+than at `hyprland.lua`: an edited `hyprland.lua` stops taking updates.
 
 ## Testing changes
 

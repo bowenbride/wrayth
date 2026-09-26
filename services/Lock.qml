@@ -8,7 +8,7 @@ import qs.services
 
 // The lockscreen's authentication. PAM reads wrayth's own stack from
 // assets/pam.d, so nothing has to be installed under /etc and no root is
-// needed -- see DESIGN.md.
+// needed -- see the decision in SPEC.md.
 //
 // **Nothing here can block the interface.** Quickshell runs the PAM
 // conversation in a forked child and talks to it over a pipe watched by the

@@ -54,7 +54,7 @@ Variants {
         // **This screen's popup is the one showing the dropdown.** Only it
         // draws the panel and only it takes a focus grab; see
         // `ShellState.dropdownScreen` for why two grabs closed it at once.
-        readonly property bool mine: ShellState.dropdownScreen === modelData.name
+        readonly property bool mine: ShellState.dropdownScreen === modelData?.name
         readonly property string wanted: mine ? ShellState.dropdown : ""
         // A focus grab cleared in the first `spuriousMs` after opening is
         // taken to be spurious -- nothing a person does lands that fast -- and
@@ -73,7 +73,8 @@ Variants {
         color: "transparent"
         visible: current !== ""
 
-        implicitWidth: 380
+        // Each dropdown may give its own width (AUDIO 400, TRAY 360, COMMS 420).
+        implicitWidth: content.item?.panelWidth ?? 380
         // Fixed to the panel. Animating this instead would reconfigure the layer
         // surface on every frame, which Hyprland cannot keep up with — that is
         // what made the slide stutter.
@@ -99,7 +100,7 @@ Variants {
         // the panel off the right edge. Both windows share an origin, so the
         // bar's x maps straight across.
         margins.left: {
-            const avail = ShellState.barOn(popup.modelData.name)?.width ?? popup.screen.width;
+            const avail = ShellState.barOn(popup.modelData?.name ?? "")?.width ?? popup.screen.width;
             return Math.round(Math.max(popup.edge, Math.min(popup.anchorX, avail - popup.implicitWidth - popup.edge)));
         }
 
@@ -197,7 +198,7 @@ Variants {
             const age = Date.now() - ShellState.dropdownOpenedAt;
             if (age < popup.spuriousMs && !popup.regrabbed) {
                 popup.regrabbed = true;
-                ShellState.logDropdown(`${popup.wanted} on ${popup.modelData.name}: focus grab cleared ${age} ms after opening; taken again, dropdown kept open`);
+                ShellState.logDropdown(`${popup.wanted} on ${popup.modelData?.name}: focus grab cleared ${age} ms after opening; taken again, dropdown kept open`);
                 popup.grabHeld = false;
                 Qt.callLater(() => popup.grabHeld = true);
                 return;
@@ -264,6 +265,12 @@ Variants {
                         return bluetoothPanel;
                     case "power":
                         return powerPanel;
+                    case "audio":
+                        return audioPanel;
+                    case "tray":
+                        return trayPanel;
+                    case "comms":
+                        return commsPanel;
                     default:
                         return null;
                     }
@@ -290,6 +297,30 @@ Variants {
                 id: bluetoothPanel
 
                 BluetoothDropdown {
+                    width: holder.width
+                }
+            }
+
+            Component {
+                id: audioPanel
+
+                AudioDropdown {
+                    width: holder.width
+                }
+            }
+
+            Component {
+                id: trayPanel
+
+                TrayDropdown {
+                    width: holder.width
+                }
+            }
+
+            Component {
+                id: commsPanel
+
+                CommsDropdown {
                     width: holder.width
                 }
             }

@@ -516,14 +516,10 @@ Item {
                     }
                 }
 
-                Text {
+                KanaTag {
                     anchors.verticalCenter: parent.verticalCenter
                     text: "壁紙"
-                    color: Theme.signal
-                    font.family: Appearance.font.accent
-                    font.pixelSize: Appearance.size.katakana
-                    font.weight: Appearance.font.weightMedium
-                    renderType: Text.NativeRendering
+                    title: poolsTitle
                 }
             }
 

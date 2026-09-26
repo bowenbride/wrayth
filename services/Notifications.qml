@@ -2,6 +2,7 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Io
 import Quickshell.Services.Notifications
 import qs.config
@@ -46,6 +47,105 @@ Singleton {
 
         interval: 2000
         onTriggered: root.expecting = false
+    }
+
+    // --- COMMS: the history, Do Not Disturb, and the fullscreen hold ----------
+    //
+    // **The history lives in this process's memory and nowhere else.** It is
+    // never written to disk, never sent anywhere, and it is gone when the
+    // session ends (logout, or the shell restarting). Plain text only: summary
+    // and body as the app sent them, the app's name, the time, the urgency.
+    // Newest first, and capped, so a chatty app cannot grow it without bound.
+    readonly property int historyLimit: 200
+    property var history: []
+    // Entries not yet looked at: the message indicator's dot. Opening COMMS
+    // counts as looking.
+    readonly property int unseen: history.filter(e => !e.seen).length
+    property int _nextId: 1
+
+    // In memory too: a new session starts with it off.
+    property bool dnd: false
+
+    function _remember(notification: var, held: bool): void {
+        const entry = {
+            key: root._nextId++,
+            app: (notification.appName || "UNKNOWN").trim(),
+            summary: notification.summary ?? "",
+            body: notification.body ?? "",
+            time: Date.now(),
+            level: root.levelOf(notification),
+            held: held,
+            seen: false
+        };
+        root.history = [entry].concat(root.history).slice(0, root.historyLimit);
+    }
+
+    function markSeen(): void {
+        if (unseen === 0)
+            return;
+        root.history = root.history.map(e => e.seen ? e : Object.assign({}, e, { seen: true }));
+    }
+
+    function clearHistory(): void {
+        root.history = [];
+    }
+
+    function forget(app: string): void {
+        root.history = root.history.filter(e => e.app !== app);
+    }
+
+    // The history grouped by app, the app with the newest entry first.
+    readonly property var groups: {
+        const byApp = {};
+        const order = [];
+        for (const e of history) {
+            if (!byApp[e.app]) {
+                byApp[e.app] = [];
+                order.push(e.app);
+            }
+            byApp[e.app].push(e);
+        }
+        return order.map(app => ({ app: app, entries: byApp[app] }));
+    }
+
+    // **While any window is fullscreen, notifications are silent**: they go
+    // straight to the history, and when fullscreen ends one card says how many
+    // were held and from where. Critical ones still show at once. Read from
+    // Hyprland's own workspace state, refreshed on its `fullscreen` event.
+    readonly property bool fullscreen: {
+        const active = (Hyprland.monitors?.values ?? []).map(m => m.activeWorkspace?.id);
+        return (Hyprland.workspaces?.values ?? []).some(ws => ws && active.indexOf(ws.id) >= 0 && (ws.lastIpcObject?.hasfullscreen ?? false));
+    }
+    property var _heldWhileFullscreen: []
+    onFullscreenChanged: {
+        if (fullscreen || _heldWhileFullscreen.length === 0)
+            return;
+        // "3 notifications held while you played" / "2 from Discord, 1 from
+        // Steam. They're in COMMS."
+        const apps = [];
+        const counts = {};
+        for (const a of _heldWhileFullscreen) {
+            if (!(a in counts)) {
+                apps.push(a);
+                counts[a] = 0;
+            }
+            counts[a]++;
+        }
+        const n = _heldWhileFullscreen.length;
+        _heldWhileFullscreen = [];
+        const parts = apps.slice(0, 4).map(a => `${counts[a]} from ${a}`);
+        const rest = apps.slice(4).reduce((t, a) => t + counts[a], 0);
+        if (rest > 0)
+            parts.push(`${rest} from others`);
+        root.sendSummary(n === 1 ? "1 notification held while you played" : `${n} notifications held while you played`,
+            `${parts.join(", ")}. They're in COMMS.`);
+    }
+    Connections {
+        target: Hyprland
+        function onRawEvent(event: HyprlandEvent): void {
+            if (event.name === "fullscreen" || event.name === "workspace" || event.name === "focusedmon")
+                Hyprland.refreshWorkspaces();
+        }
     }
 
     // Card heights by notification id, published by the windows so each one
@@ -113,6 +213,19 @@ Singleton {
         keepOnReload: false
 
         onNotification: notification => {
+            // The shell's own summary of what was held is not itself history.
+            const internal = (notification.hints?.["x-wrayth-internal"] ?? "") !== "";
+            const critical = root.levelOf(notification) === "CRITICAL";
+            const hold = !critical && !internal && (root.dnd || root.fullscreen) && !Demo.active;
+            if (!internal)
+                root._remember(notification, hold);
+            if (hold) {
+                if (root.fullscreen && !root.dnd)
+                    root._heldWhileFullscreen = root._heldWhileFullscreen.concat([(notification.appName || "UNKNOWN").trim()]);
+                // Silent: straight to the history, no card.
+                notification.expire();
+                return;
+            }
             notification.tracked = true;
 
             if (root.expecting) {
@@ -142,6 +255,12 @@ Singleton {
     // dismiss behaviour with no special case.
     function send(summary: string, body: string): void {
         notifier.exec(["notify-send", "-a", "wrayth", "-u", "normal", summary, body]);
+    }
+
+    // One of the shell's own that is not kept in the history (the fullscreen
+    // summary: what it summarises already is).
+    function sendSummary(summary: string, body: string): void {
+        notifier.exec(["notify-send", "-a", "wrayth", "-u", "normal", "-h", "string:x-wrayth-internal:1", summary, body]);
     }
 
     // The same path, marked as the recording's own so `list` will draw it

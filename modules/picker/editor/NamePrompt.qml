@@ -52,6 +52,8 @@ ChamferPanel {
             spacing: 10
 
             Text {
+                id: taggedTitle
+
                 anchors.verticalCenter: parent.verticalCenter
                 text: `NAME${Appearance.separator}PROFILE`
                 color: Theme.bright
@@ -61,14 +63,10 @@ ChamferPanel {
                 renderType: Text.NativeRendering
             }
 
-            Text {
+            KanaTag {
                 anchors.verticalCenter: parent.verticalCenter
                 text: "名前"
-                color: Theme.signal
-                font.family: Appearance.font.accent
-                font.pixelSize: Appearance.size.katakana
-                font.weight: Appearance.font.weightMedium
-                renderType: Text.NativeRendering
+                title: taggedTitle
             }
         }
 

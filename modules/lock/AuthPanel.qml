@@ -101,14 +101,10 @@ ChamferPanel {
                 text: `AUTH${Appearance.separator}PASSPHRASE`
             }
 
-            Text {
+            KanaTag {
                 anchors.verticalCenter: parent.verticalCenter
                 text: "認証"
-                color: Theme.signal
-                font.family: Appearance.font.accent
-                font.pixelSize: Appearance.size.katakana
-                font.weight: Appearance.font.weightMedium
-                renderType: Text.NativeRendering
+                title: authTitle
             }
         }
         }

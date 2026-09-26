@@ -75,7 +75,7 @@ BASH_LINE='[ -r ~/.config/quickshell/wrayth/external/wrayth.bash ] && . ~/.confi
 # full path, so ~/.local/bin does not have to be on anybody's PATH.
 BIN_SCRIPTS=(wrayth-profile wrayth-deck-reset wrayth-deck-refresh wrayth-fetch
              wrayth-welcome wrayth-daemon wrayth-emblem wrayth-wallpaper
-             wrayth-unread wrayth-shell wrayth-recover wrayth-update)
+             wrayth-unread wrayth-shell wrayth-recover wrayth-update wrayth-clip)
 
 # The configs Wrayth installs as the user's own copies: destination|shipped
 # file|name. They are copies, not links into the checkout, so an edit is made
@@ -99,7 +99,9 @@ OVERRIDE_FILES=("$CONFIG/wrayth/fastfetch.jsonc|external/fastfetch.jsonc|fastfet
 # conflict with what a machine already runs. wrayth works without them.)
 REQUIRED=(quickshell hyprland kitty networkmanager pipewire wireplumber python
           python-pillow python-gobject fontconfig ttf-jetbrains-mono
-          ttf-jetbrains-mono-nerd noto-fonts-cjk)
+          ttf-jetbrains-mono-nerd noto-fonts-cjk
+          grim wl-clipboard polkit
+          xdg-desktop-portal-hyprland xdg-desktop-portal-gtk)
 RECOMMENDED=(cava fastfetch pacman-contrib arch-audit brightnessctl bluez
              bluez-utils hypridle xdg-utils)
 
@@ -723,6 +725,23 @@ for entry in "${CONFIG_FILES[@]}"; do
     IFS='|' read -r dest rel desc <<< "$entry"
     case "$dest" in "$HYPR_DIR"/*) place_config "$dest" "$rel" "$desc" ;; esac
 done
+
+step "8. Screen sharing"
+# xdg-desktop-portal-hyprland ships the setting that makes screen sharing work
+# (Hyprland's portal first, GTK's for the rest); a portals.conf of your own
+# can override it. It is only checked, never changed.
+portal_note=""
+for f in "$CONFIG/xdg-desktop-portal/hyprland-portals.conf" "$CONFIG/xdg-desktop-portal/portals.conf"; do
+    if [ -f "$f" ] && ! grep -q 'hyprland' "$f"; then
+        portal_note="$f"
+    fi
+done
+if [ -n "$portal_note" ]; then
+    warn "$portal_note does not mention hyprland, so screen sharing may not work;"
+    warn "  Hyprland's own setting is: [preferred] default=hyprland;gtk"
+else
+    ok "xdg-desktop-portal-hyprland and -gtk"
+fi
 
 # --------------------------------------------------------------------------
 say ""

@@ -9,6 +9,12 @@ Row {
 
     spacing: Appearance.metrics.dividerGap
 
+    // Set by the bar when it runs short: see `metrics.tickerMin`.
+    property alias btCompact: bt.compact
+    // The group's width with the Bluetooth name showing, whichever way it is
+    // showing -- what the bar decides by.
+    readonly property real fullWidth: implicitWidth - bt.implicitWidth + bt.fullWidth
+
     // The three figures on the left of the group, each its own target and each
     // a number: split and slice, never scramble.
     GlitchFx {
@@ -65,7 +71,15 @@ Row {
     Divider {
         anchors.verticalCenter: parent.verticalCenter
     }
+    AudioReadout {
+        anchors.verticalCenter: parent.verticalCenter
+    }
+    Divider {
+        anchors.verticalCenter: parent.verticalCenter
+    }
     BtReadout {
+        id: bt
+
         anchors.verticalCenter: parent.verticalCenter
     }
     Divider {
@@ -83,20 +97,18 @@ Row {
     Divider {
         anchors.verticalCenter: parent.verticalCenter
     }
-    MessagesReadout {
-        id: messages
-
+    TrayReadout {
         anchors.verticalCenter: parent.verticalCenter
     }
-    // Fenced on both sides like every other readout; without this the bubble
-    // grouped with the time and read as part of the clock. It hides with the
-    // indicator it separates -- a `Row` skips an invisible child and its
-    // spacing, so when the client is not running both go and the bar never
-    // ends up with two dividers side by side. Bound to the indicator's own
-    // visibility rather than re-deriving it, so there is one source of truth.
     Divider {
         anchors.verticalCenter: parent.verticalCenter
-        visible: messages.visible
+    }
+    // The notification centre: always there now, so its divider is too.
+    MessagesReadout {
+        anchors.verticalCenter: parent.verticalCenter
+    }
+    Divider {
+        anchors.verticalCenter: parent.verticalCenter
     }
     // **The clock is a figure, so it never scrambles.** It may split and slice
     // like anything else, but a time that flickers through junk for 150 ms is

@@ -15,6 +15,8 @@ Item {
     id: root
 
     property string text: ""
+    // The face it draws in, for anything measuring it (KanaTag).
+    readonly property alias font: left.font
     property real pixelSize: 28
     property int weight: Appearance.font.weightBold
     property color color: Theme.bright

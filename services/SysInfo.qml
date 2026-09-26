@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import qs.config
+import qs.services
 
 // CPU, memory and network counters for the bar. The HUD (step 5) reuses the
 // per-thread figures, which come free from the same /proc/stat read.
@@ -38,6 +39,23 @@ Singleton {
     // --- CPU ----------------------------------------------------------------
     // Previous cumulative jiffies, keyed by cpu line index (0 = aggregate).
     property var _cpuPrev: []
+
+    // **Published only while something shows them.** The per-thread bars are
+    // the deck's and the uptime is the deck's and the power menu's; set every
+    // second regardless, they re-ran those surfaces' bindings with nothing on
+    // screen. They are still read every second, and catch up the moment
+    // either surface opens.
+    property var _threads: []
+    property real _uptime: 0
+    readonly property bool _uptimeShown: ShellState.deckVisible || ShellState.powerOpen
+    Connections {
+        target: ShellState
+        function onDeckVisibleChanged(): void {
+            if (ShellState.deckVisible)
+                root.cpuThreads = root._threads;
+        }
+    }
+    on_UptimeShownChanged: if (_uptimeShown) uptimeSeconds = _uptime
 
     FileView {
         id: statFile
@@ -80,7 +98,9 @@ Singleton {
                 return Math.max(0, Math.min(100, (dTotal - dIdle) / dTotal * 100));
             });
             cpuPercent = usage[0];
-            cpuThreads = usage.slice(1);
+            _threads = usage.slice(1);
+            if (ShellState.deckVisible)
+                cpuThreads = _threads;
         }
         _cpuPrev = rows;
     }
@@ -110,7 +130,10 @@ Singleton {
         printErrors: false
         onLoaded: {
             const value = parseFloat(text().split(" ")[0]);
-            if (isFinite(value))
+            if (!isFinite(value))
+                return;
+            root._uptime = value;
+            if (root._uptimeShown)
                 root.uptimeSeconds = value;
         }
     }

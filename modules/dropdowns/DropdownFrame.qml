@@ -9,6 +9,9 @@ ChamferPanel {
 
     property string title: ""
     property string katakana: ""
+    // The title's size and tracking (em); the defaults are every dropdown's.
+    property real titleSize: Appearance.size.label
+    property real titleTracking: -1
     default property alias body: content.data
     property alias headerRight: right.data
 
@@ -33,20 +36,19 @@ ChamferPanel {
             spacing: 8
 
             NrLabel {
+                id: taggedTitle
+
                 anchors.verticalCenter: parent.verticalCenter
-                pixelSize: Appearance.size.label
+                pixelSize: root.titleSize
+                font.letterSpacing: root.titleTracking >= 0 ? root.titleSize * root.titleTracking : Appearance.tracking(root.titleSize)
                 color: Theme.bright
                 text: root.title
             }
 
-            Text {
+            KanaTag {
                 anchors.verticalCenter: parent.verticalCenter
                 text: root.katakana
-                color: Theme.signal
-                font.family: Appearance.font.accent
-                font.pixelSize: Appearance.size.katakana
-                font.weight: Appearance.font.weightMedium
-                renderType: Text.NativeRendering
+                title: taggedTitle
             }
         }
 

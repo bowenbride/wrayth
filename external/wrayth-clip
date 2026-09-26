@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+#
+# wrayth-clip -- one clipboard change, for the shell's clipboard history.
+#
+# Run by `wl-paste --watch` (services/Clipboard.qml), once per new selection.
+# It prints one line for the shell and nothing else, anywhere:
+#
+#   SKIP <why>                         not recorded
+#   TEXT <bytes> <base64>              text
+#   IMAGEFILE <mime> <bytes> <path>    an image, stored in <store> (below)
+#   IMAGE <mime> <bytes> <base64>      an image, when no store is given
+#
+# `wrayth-clip <store>`: **an image's bytes never pass through the shell.**
+# They go straight from wl-paste into an owner-only file in <store>, named
+# by its content, and only the path is printed -- a few megabytes of base64
+# held as a JavaScript string (twice over, as UTF-16) for each image was
+# where the shell's memory went. The shell names the store: the runtime
+# directory for MEMORY ONLY, which is in RAM and emptied at logout, and a
+# folder under ~/.local/state/wrayth only for SAVE TO DISK.
+#
+# **Anything a password manager marks as sensitive is never read**: when the
+# selection offers `x-kde-passwordManagerHint` (KeePassXC and others set it
+# on a copied password) this stops before taking the content at all. Nothing
+# is written to disk here; text goes from wl-paste to the shell through a pipe,
+# and an image to the store above.
+#
+# Limits: text up to 1 MiB, images up to 5 MiB (the README says so); anything
+# larger is skipped rather than truncated.
+
+set -u
+store="${1:-}"
+cat > /dev/null # the copy wl-paste hands us; we ask for the type we want
+
+types="$(wl-paste --list-types 2> /dev/null)" || { echo "SKIP no-selection"; exit 0; }
+case "$types" in
+    *x-kde-passwordManagerHint*) echo "SKIP sensitive"; exit 0 ;;
+esac
+
+text_limit=$((1024 * 1024))
+image_limit=$((5 * 1024 * 1024))
+
+for mime in image/png image/jpeg image/webp; do
+    if printf '%s\n' "$types" | grep -qx "$mime"; then
+        if printf '%s\n' "$types" | grep -qE '^(text/plain|UTF8_STRING|text/uri-list)'; then
+            break # a file manager's copy: the text (the path) is what it means
+        fi
+        if [ -n "$store" ]; then
+            umask 077
+            mkdir -p "$store" || { echo "SKIP no-store"; exit 0; }
+            tmp="$(mktemp "$store/.in.XXXXXX")" || { echo "SKIP no-store"; exit 0; }
+            wl-paste --no-newline --type "$mime" 2> /dev/null | head -c $((image_limit + 1)) > "$tmp"
+            bytes="$(stat -c %s "$tmp")"
+            [ "$bytes" -gt "$image_limit" ] && { rm -f "$tmp"; echo "SKIP too-large"; exit 0; }
+            [ "$bytes" -gt 0 ] || { rm -f "$tmp"; echo "SKIP empty"; exit 0; }
+            dest="$store/$(sha256sum < "$tmp" | cut -c1-32).${mime#image/}"
+            mv -f "$tmp" "$dest"
+            printf 'IMAGEFILE %s %s %s\n' "$mime" "$bytes" "$dest"
+            exit 0
+        fi
+        data="$(wl-paste --no-newline --type "$mime" 2> /dev/null | head -c $((image_limit + 1)) | base64 -w0)"
+        bytes=$(( ${#data} * 3 / 4 ))
+        [ "$bytes" -gt "$image_limit" ] && { echo "SKIP too-large"; exit 0; }
+        [ -n "$data" ] || { echo "SKIP empty"; exit 0; }
+        printf 'IMAGE %s %s %s\n' "$mime" "$bytes" "$data"
+        exit 0
+    fi
+done
+
+if printf '%s\n' "$types" | grep -qE '^(text/plain|UTF8_STRING|STRING|TEXT)'; then
+    data="$(wl-paste --no-newline --type text 2> /dev/null | head -c $((text_limit + 1)) | base64 -w0)"
+    bytes=$(( ${#data} * 3 / 4 ))
+    [ "$bytes" -gt "$text_limit" ] && { echo "SKIP too-large"; exit 0; }
+    [ -n "$data" ] || { echo "SKIP empty"; exit 0; }
+    printf 'TEXT %s %s\n' "$bytes" "$data"
+    exit 0
+fi
+echo "SKIP unsupported"

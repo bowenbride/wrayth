@@ -117,29 +117,43 @@ hl.gesture({
 -- ===========================================================================
 local mod = "SUPER"
 
-hl.bind(mod .. " + Q",         hl.dsp.exec_cmd(terminal))
-hl.bind(mod .. " + C",         hl.dsp.window.close())
-hl.bind(mod .. " + V",         hl.dsp.window.float({ action = "toggle" }))
-hl.bind(mod .. " + F",         hl.dsp.window.fullscreen())
-hl.bind(mod .. " + J",         hl.dsp.layout("togglesplit"))
-hl.bind(mod .. " + SHIFT + M", hl.dsp.exit())
+-- Each bind says what it is: the KEYBINDS overlay (Super + /) lists it under
+-- its group, and can move it (your changes go to ~/.config/wrayth/keybinds.lua,
+-- read by hypr-wrayth.lua after this file).
+local function desc(id, group, label, keys)
+    return { description = "wrayth:" .. id .. ":" .. group .. ":" .. label .. ":" .. keys }
+end
+-- The mouse binds: listed in KEYBINDS, but not moved from there.
+local function fixed(group, label, opts)
+    local o = opts or {}
+    o.description = "wrayth-fixed:" .. group .. ":" .. label
+    return o
+end
 
-hl.bind(mod .. " + left",  hl.dsp.focus({ direction = "left" }))
-hl.bind(mod .. " + right", hl.dsp.focus({ direction = "right" }))
-hl.bind(mod .. " + up",    hl.dsp.focus({ direction = "up" }))
-hl.bind(mod .. " + down",  hl.dsp.focus({ direction = "down" }))
+hl.bind(mod .. " + Q",         hl.dsp.exec_cmd(terminal),                          desc("window-terminal", "WINDOWS", "Open a terminal", mod .. " + Q"))
+hl.bind(mod .. " + C",         hl.dsp.window.close(),                              desc("window-close", "WINDOWS", "Close the window", mod .. " + C"))
+hl.bind(mod .. " + V",         hl.dsp.window.float({ action = "toggle" }),         desc("window-float", "WINDOWS", "Float or tile the window", mod .. " + V"))
+hl.bind(mod .. " + F",         hl.dsp.window.fullscreen(),                         desc("window-full", "WINDOWS", "Fullscreen", mod .. " + F"))
+hl.bind(mod .. " + J",         hl.dsp.layout("togglesplit"),                       desc("window-split", "WINDOWS", "Toggle the split", mod .. " + J"))
+hl.bind(mod .. " + SHIFT + M", hl.dsp.exit(),                                     desc("window-exit", "WINDOWS", "Exit Hyprland", mod .. " + SHIFT + M"))
+
+hl.bind(mod .. " + left",  hl.dsp.focus({ direction = "left" }),  desc("focus-left", "WINDOWS", "Focus left", mod .. " + left"))
+hl.bind(mod .. " + right", hl.dsp.focus({ direction = "right" }), desc("focus-right", "WINDOWS", "Focus right", mod .. " + right"))
+hl.bind(mod .. " + up",    hl.dsp.focus({ direction = "up" }),    desc("focus-up", "WINDOWS", "Focus up", mod .. " + up"))
+hl.bind(mod .. " + down",  hl.dsp.focus({ direction = "down" }),  desc("focus-down", "WINDOWS", "Focus down", mod .. " + down"))
 
 -- Super + Shift + number moves the focused window to that workspace.
 -- (Super + number, going to it, is wrayth's: it closes the deck first.)
 for i = 1, 10 do
     local key = i % 10 -- 10 maps to key 0
-    hl.bind(mod .. " + SHIFT + " .. key, hl.dsp.window.move({ workspace = i }))
+    hl.bind(mod .. " + SHIFT + " .. key, hl.dsp.window.move({ workspace = i }),
+        desc("move-" .. i, "WORKSPACES", "Move the window to workspace " .. i, mod .. " + SHIFT + " .. key))
 end
 
-hl.bind(mod .. " + mouse_down", hl.dsp.focus({ workspace = "e+1" }))
-hl.bind(mod .. " + mouse_up",   hl.dsp.focus({ workspace = "e-1" }))
-hl.bind(mod .. " + mouse:272",  hl.dsp.window.drag(),   { mouse = true })
-hl.bind(mod .. " + mouse:273",  hl.dsp.window.resize(), { mouse = true })
+hl.bind(mod .. " + mouse_down", hl.dsp.focus({ workspace = "e+1" }), fixed("WORKSPACES", "Next workspace (scroll)"))
+hl.bind(mod .. " + mouse_up",   hl.dsp.focus({ workspace = "e-1" }), fixed("WORKSPACES", "Previous workspace (scroll)"))
+hl.bind(mod .. " + mouse:272",  hl.dsp.window.drag(),   fixed("WINDOWS", "Move a window (drag)", { mouse = true }))
+hl.bind(mod .. " + mouse:273",  hl.dsp.window.resize(), fixed("WINDOWS", "Resize a window (drag)", { mouse = true }))
 
 -- ===========================================================================
 -- Window rules
@@ -165,6 +179,23 @@ hl.window_rule({
 })
 
 -- ===========================================================================
--- wrayth -- last, so its keys and rules apply over everything above
+-- wrayth -- after the above, so its keys and rules apply over it
 -- ===========================================================================
 require("hypr-wrayth")
+
+-- ===========================================================================
+-- Your own settings -- ~/.config/hypr/overrides.lua, if you make one
+-- ===========================================================================
+-- Loaded last, so anything in it applies over everything above: your own keys,
+-- window rules, input settings, environment and start-up programs. Keep them
+-- there rather than editing this file, and updates can go on replacing this
+-- file with Wrayth's new version. A key of your own that is already bound
+-- here needs `hl.unbind("KEYS")` first, or the key does both. To move one of
+-- Wrayth's own keys, use the KEYBINDS list (Super + /) instead, and give your
+-- binds a `description` so the list can name them.
+local overrides = (os.getenv("XDG_CONFIG_HOME") or (os.getenv("HOME") .. "/.config")) .. "/hypr/overrides.lua"
+local f = io.open(overrides)
+if f then
+    f:close()
+    dofile(overrides)
+end

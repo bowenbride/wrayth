@@ -81,4 +81,17 @@ Singleton {
         const total = Math.floor(seconds);
         return `${pad2(Math.floor(total / 3600))}:${pad2(Math.floor(total / 60) % 60)}:${pad2(total % 60)}`;
     }
+
+    // How long ago, in the shell's short form: NOW under a minute, then 4M,
+    // 2H, 3D. For lists that say when something arrived.
+    function age(ms: real, now: real): string {
+        const s = Math.max(0, Math.floor((now - ms) / 1000));
+        if (s < 60)
+            return "NOW";
+        if (s < 3600)
+            return `${Math.floor(s / 60)}M`;
+        if (s < 86400)
+            return `${Math.floor(s / 3600)}H`;
+        return `${Math.floor(s / 86400)}D`;
+    }
 }

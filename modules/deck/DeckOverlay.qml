@@ -90,7 +90,7 @@ Variants {
         screen: modelData
         color: "transparent"
         // Only on the monitor the deck is showing on.
-        visible: Deck.monitorName === modelData.name
+        visible: Deck.monitorName === modelData?.name
 
         WlrLayershell.layer: WlrLayer.Top
         WlrLayershell.namespace: "wrayth-deck"
@@ -197,7 +197,7 @@ Variants {
             // the deck, or -- while it is closed -- the focused one, which is
             // where Super + E will open it. Every screen's deck used to place
             // it while the deck was open, and the last one to run won.
-            if ((Deck.monitorName || ShellState.focusedScreen) !== deck.modelData.name)
+            if ((Deck.monitorName || ShellState.focusedScreen) !== deck.modelData?.name)
                 return;
             Deck.placeTerminal(originX + margin + border, originY + margin + border, termW - border * 2, termH - border * 2);
         }

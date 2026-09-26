@@ -25,9 +25,10 @@ See [what the installer does](#install-details) and how to
 A desktop shell for [Hyprland](https://hyprland.org), built with
 [Quickshell](https://quickshell.org). It has a top bar and a full-screen
 **deck**: a terminal, system diagnostics, a daily planner and a vulnerability
-watch. It also has dropdowns for Wi-Fi, Bluetooth and power profiles, a
-launcher, a power menu, a PAM lockscreen, notifications, and six colour
-profiles, with custom profiles too.
+watch. It also has dropdowns for Wi-Fi, Bluetooth, audio, the system tray,
+notifications and power profiles, a launcher, a power menu, a PAM lockscreen,
+screenshots, clipboard history, an admin prompt, an editable keybind list, and
+six colour profiles, with custom profiles too.
 
 Wrayth was designed by [bowenbride](https://github.com/bowenbride) and built
 with help from AI. It is a personal project, released in case it is useful to
@@ -37,10 +38,13 @@ someone else. See [Issues](#issues).
 
 - Workspaces, and a scrolling ticker of firewall, profile, failed-service and
   vulnerability status.
-- CPU, memory, network traffic, Bluetooth and power readouts.
+- CPU, memory, network traffic, Bluetooth, audio and power readouts.
+- The system tray: a count of tray apps, opening a list of them with each
+  app's own menu redrawn in the shell's style.
 - A keep-awake toggle that pauses idle locking.
-- An unread-messages marker, which shows only that something is waiting and
-  never reads the message.
+- A message marker, lit when a chat app shows something unread or a
+  notification hasn't been seen. It opens COMMS: the notification history,
+  do not disturb, and the chat workspace.
 - A clock with seconds and the date.
 
 **The deck** (`Super + E`)
@@ -55,7 +59,9 @@ someone else. See [Issues](#issues).
 - The planner: a daily list of tagged tasks, edited in place.
 - VULN WATCH: `arch-audit` results by severity, linked to the Arch security
   tracker.
-- SIGNAL: a live audio spectrum from `cava`.
+- SIGNAL: a live audio spectrum from `cava`, and the media playing: title,
+  artist, progress and play controls, or a voice call with its duration. With
+  more than one source, pick which one the spectrum follows.
 
 **Profiles**
 
@@ -76,12 +82,40 @@ someone else. See [Issues](#issues).
 - Six scanline treatments, on panels only or on everything.
 - Occasional glitch effects on a schedule you set, or off.
 
+**Audio**
+
+- Output and input devices, with a 20-step volume and mute for each, and a
+  mixer with every app playing sound.
+- `Super + Shift + A` switches to the next output and names it on screen.
+- Media keys control whatever is playing, and the popup shows the track.
+
+**Screenshots** (`Print`)
+
+- A region, the focused window (`Alt + Print`) or the whole screen
+  (`Shift + Print`), saved to `~/Pictures/Screenshots` and copied to the
+  clipboard. A notification shows it, with OPEN, COPY and DELETE.
+
+**Clipboard history** (`Super + Shift + V`)
+
+- Text and images you copied, with a filter and pinning. `Enter` pastes into
+  the window you were in. Kept in memory only by default; see
+  [Security](#security).
+
+**Keybinds** (`Super + /`)
+
+- Every key, grouped and searchable, read from Hyprland itself. Click one to
+  change it; your changes go in `~/.config/wrayth/keybinds.lua`.
+
 **Everything else**
 
-- Wi-Fi, Bluetooth, power-profile and identity dropdowns from the bar.
-- A launcher (tap `Super`) for apps and profiles, listing your most-used
-  first.
-- Notifications, and an on-screen display for volume and brightness.
+- Wi-Fi, Bluetooth, audio, tray, notification, power-profile and identity
+  dropdowns from the bar.
+- A launcher (tap `Super`) for apps, profiles, the keybind list and the
+  clipboard, listing your most-used first.
+- Notifications, held back while a window is fullscreen, and an on-screen
+  display for volume, brightness and media.
+- An admin prompt in the lockscreen's style, when an app asks for your
+  password to do something as root.
 - A power menu: lock, sleep, log out, reboot and power off.
 
 ## Keybinds
@@ -95,12 +129,26 @@ Wrayth's own keys, from `external/hypr-wrayth.lua`:
 | `Super + Shift + E` | refresh the deck terminal |
 | `Super + P` | power menu |
 | `Super + L` | lock the screen |
+| `Super + /` | the keybind list |
+| `Super + Shift + V` | clipboard history |
+| `Super + Shift + A` | next audio output |
+| `Print` | screenshot of a region |
+| `Alt + Print` | screenshot of the focused window |
+| `Shift + Print` | screenshot of the whole screen |
 | `Super + 1` … `0` | go to workspace 1–10 (closes the deck first) |
 | brightness keys | brightness ±5% |
 | volume keys, mute | volume |
+| play/pause, next, previous | the media playing |
 
 Wrayth's keys replace any earlier bind on the same key, so no key does two
-things. `external/hypridle.conf` locks the screen on idle and before sleep.
+things. **To change a key,** press `Super + /`, click the key shown beside an
+action and press the new keys. `Escape` cancels. If the new keys are already
+in use, the list says by what and offers `SWAP`. A changed key shows in the
+accent colour with `RESET` beside it. Changes are saved in
+`~/.config/wrayth/keybinds.lua`, which updates never touch; `OPEN KEYBINDS
+FILE` opens it in your editor. Keys set in your own Hyprland config are listed
+as `FROM YOUR CONFIG` and changed there, not here. The list warns you before
+you leave the lockscreen or the power menu without a key. `external/hypridle.conf` locks the screen on idle and before sleep.
 The everyday [window keys](#window-keys) come with Wrayth's complete Hyprland
 config. Some things, like the profile picker, have no key; see
 [Finding your way around](#finding-your-way-around).
@@ -123,6 +171,8 @@ ones that are easy to miss.
 - Click the same card again, press `Enter` or press `APPLY` to keep it.
 - `Escape` or `REVERT AND CLOSE` closes the picker and undoes the preview.
 - `+ NEW CUSTOM` (the last card) makes a custom profile.
+- **PRIVACY** (clipboard history) is a button beside EFFECTS; see
+  [Security](#security).
 - Custom profiles have edit and delete buttons on their card; presets don't.
   `Delete` also removes the selected custom profile after asking.
 - **EFFECTS** (scanlines and glitches) is a button in the picker.
@@ -138,15 +188,21 @@ ones that are easy to miss.
 | a workspace number | that workspace |
 | the network readout | the Wi-Fi dropdown (networks, then `WI-FI SETTINGS`) |
 | the Bluetooth readout | the Bluetooth dropdown (devices, `DISCOVERY`) |
+| the speaker readout | the audio dropdown: outputs, inputs, volume and `MIXER` |
+| the tray readout | the tray dropdown: click an app for its menu, `OPEN` for its window |
 | `PWR` | the power-profile dropdown |
 | `IDLE // AUTO` / `IDLE // HOLD` | toggles keep-awake: `HOLD` stops idle locking |
-| the message icon | the `communication` special workspace (see below) |
+| the message icon | COMMS: notification history, `DO NOT DISTURB`, `CLEAR ALL` |
 | empty bar space, or `Escape` | closes an open dropdown |
 
-The message icon only appears while Discord, Vesktop, WebCord or Equibop is
-running, and shows only that something is unread. Clicking it toggles a
-Hyprland special workspace named `communication`. Wrayth doesn't move your
-chat client there, so add a window rule if you want this to work.
+The message icon's dot means a chat app (Discord, Vesktop, WebCord or
+Equibop) shows something unread, or a notification hasn't been seen yet. It
+never reads the message. `OPEN COMMS WORKSPACE` in COMMS toggles a Hyprland
+special workspace named `communication`. Wrayth doesn't move your chat client
+there, so add a window rule if you want this to work.
+
+When the bar runs short of room, the Bluetooth readout shrinks to its icon
+first, so the ticker keeps a readable width.
 
 **The deck** (`Super + E`):
 
@@ -169,6 +225,11 @@ chat client there, so add a window rule if you want this to work.
   - `REMOVE` uninstalls the package in a terminal, with pacman's own prompt.
     It's only offered when nothing depends on the package.
   - `SWEEP` re-runs the audit.
+- **SIGNAL:** click the device name for the audio dropdown. With more than
+  one player or call, chips at the top choose which one is shown and which
+  one the spectrum follows. A call shows `OPEN CALL`, which brings its window
+  forward; mute and leave stay in the app, so you're never muted without the
+  app knowing.
 
 **The power menu** (`Super + P`): use the arrow keys and `Enter`, or press the
 letter shown on a tile. Reboot and power off need a second press to confirm.
@@ -177,6 +238,15 @@ menu.
 
 **The lockscreen:** type your password and press `Enter`. `Escape` clears
 what you've typed.
+
+**Screenshots:** `Print` dims the screen. Drag a box, or press `Tab` to
+switch between `REGION`, `WINDOW` (click a window) and `SCREEN`. `Enter`
+captures, `Escape` cancels. The selector is never in the image.
+
+**The admin prompt** (`ADMIN ACCESS`) appears when an app asks polkit for
+your password: installing software, changing system settings. It names the
+program and the permission it wants. `Enter` or `AUTHENTICATE` sends your
+password to polkit; `Escape` or `CANCEL` refuses.
 
 ## More screenshots
 
@@ -198,7 +268,9 @@ the SIGNAL spectrum.*
   setup is not edited in place. The installer replaces it with Wrayth's
   complete Lua config instead, after backing it up.
 - **Quickshell 0.3.1 or newer** (`quickshell` in `extra`). The installer
-  installs it for you.
+  installs it for you, with `grim` and `wl-clipboard` for screenshots and the
+  clipboard, `polkit`, and the Hyprland and GTK desktop portals for screen
+  sharing and file dialogs.
 - **A screen of at least 1920×1080 logical pixels.** The deck is laid out for
   1080p. On shorter screens it is clipped, not reflowed, and Wrayth shows a
   one-time notice.
@@ -319,7 +391,7 @@ Each of these features degrades gracefully without its package:
 | `bluez`, `bluez-utils` | the Bluetooth dropdown | no Bluetooth |
 | `hypridle` | lock on idle and before sleep | no automatic lock |
 | a firewall (`ufw`, `nftables`, `firewalld`) | the SHIELD readout | `NOT CONFIGURED` |
-| `xdg-utils` | opening the wallpaper folder | the button does nothing |
+| `xdg-utils` | opening the wallpaper folder and screenshots | the buttons do nothing |
 
 ## Profiles
 
@@ -368,6 +440,28 @@ installed only when you had no config of your own):
 | `Super` + left drag / right drag | move / resize a window |
 | `Super` + scroll | next / previous workspace |
 | `Super + Shift + M` | exit Hyprland |
+
+## Your own Hyprland settings
+
+With Wrayth's complete setup, keep your own keys, window rules, input settings
+and start-up programs in `~/.config/hypr/overrides.lua`. Create it if it's not
+there. It's loaded last, so it applies over Wrayth's config, and updates never
+touch it. Leave `hyprland.lua` itself unedited, so updates can keep replacing
+it with Wrayth's new version.
+
+```lua
+-- ~/.config/hypr/overrides.lua
+hl.config({ input = { kb_layout = "gb", follow_mouse = 0 } })
+hl.bind("SUPER + W", hl.dsp.exec_cmd("firefox"), { description = "Open Firefox" })
+hl.window_rule({ match = { class = "pavucontrol" }, float = true })
+hl.on("hyprland.start", function() hl.exec_cmd("nm-applet") end)
+```
+
+- A key that Wrayth's config already uses needs `hl.unbind("KEYS")` first,
+  or pressing it does both.
+- To move one of Wrayth's own keys, use the keybind list (`Super + /`) instead.
+- Give your binds a `description`. The keybind list shows them under that
+  name, as `FROM YOUR CONFIG`.
 
 ## Effects
 
@@ -426,6 +520,29 @@ While it lasts, `sudo` and console logins refuse your *correct* password too.
 The lockscreen shows `ACCOUNT LOCKED // RETRY IN m:ss` and does not send
 passwords to PAM during the countdown. Wait it out **without typing passwords
 anywhere**, because every wrong attempt can restart the ten minutes.
+
+**The admin prompt** is Wrayth acting as your session's polkit agent. It
+only draws the question: the password goes to polkit's own helper, exactly as
+with any other agent, and Wrayth never sees whether it was right. Only one
+agent can be registered per session. If another (such as `polkit-gnome` or
+`hyprpolkitagent`) is already running, Wrayth says so once and leaves that one
+in charge.
+
+**Notification history** is kept in memory only and never written to disk.
+It's cleared when you log out, or with `CLEAR ALL`. While a window is
+fullscreen, notifications go quietly to the history, and you get one summary
+afterwards. Critical ones still appear.
+
+**Clipboard history** is set in the profile picker's `PRIVACY` page:
+
+- `HISTORY`: `MEMORY ONLY` (the default: gone at logout, never on disk),
+  `SAVE TO DISK` (kept in `~/.local/state/wrayth/clipboard.json`, readable
+  only by you) or `OFF`. Leaving `SAVE TO DISK` deletes the file.
+- `ON LOCK`: `KEEP` or `CLEAR` the history when the screen locks.
+- Copies a password manager marks as sensitive are never recorded. The
+  content isn't even read.
+- Limits: 100 entries, 20 of them pinned; text up to 1 MiB each; images up
+  to 5 MiB each, 20 at most. Larger copies are skipped.
 
 **Everything else:**
 
@@ -511,10 +628,12 @@ those too:
   - the deck;
   - the launcher, power menu and profile picker;
   - the bar dropdowns;
+  - the keybind list, the clipboard and the screenshot selector;
   - notifications;
   - the volume and brightness popup.
 
   The lockscreen covers every screen, including one plugged in while locked.
+  The admin prompt dims every screen and asks on the focused one.
 - CPU temperature needs an Intel `coretemp`, AMD `k10temp`/`zenpower` or ARM
   `cpu_thermal` sensor. Without one, no temperature is shown.
 
