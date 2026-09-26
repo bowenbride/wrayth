@@ -22,6 +22,9 @@ Item {
                 : SystemStatus.shieldState === "down" ? "SHIELD DOWN" : "SHIELD UNKNOWN",
             `PROFILE ${Theme.profile.toUpperCase()}`
         ];
+        // The WEATHER daemon's optional entry.
+        if (Weather.enabled && Weather.ticker && Weather.line !== "")
+            segments.push(`WEATHER ${Weather.line}`);
         // While something plays, it leads the loop: its title, and who by.
         const track = Media.playing ? Media.players.find(p => p.isPlaying) : null;
         if (track && track.trackTitle)
@@ -46,8 +49,22 @@ Item {
     // keep the three gaps looking alike -- see `metrics.tickerFade`. Air plus a
     // ramp can never measure exactly the same as air alone; a short ramp is what
     // brings it close.
-    Ticker {
+    // Privacy chips, only while active, taking their room from the ticker.
+    PrivacyChips {
+        id: chips
+
         anchors.left: leftRule.right
+        anchors.leftMargin: chips.any ? Appearance.metrics.dividerGap : 0
+        anchors.verticalCenter: parent.verticalCenter
+        visible: chips.any
+        // Never past the ticker's own room: on a narrow bar the last chips
+        // are clipped rather than drawn over the next readout.
+        width: chips.any ? Math.min(implicitWidth, Math.max(0, rightRule.x - leftRule.x - leftRule.width - 2 * Appearance.metrics.dividerGap)) : 0
+        clip: true
+    }
+
+    Ticker {
+        anchors.left: chips.right
         anchors.leftMargin: Appearance.metrics.dividerGap
         anchors.right: rightRule.left
         anchors.rightMargin: Appearance.metrics.dividerGap

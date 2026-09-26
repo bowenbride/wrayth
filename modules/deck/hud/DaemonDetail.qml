@@ -183,4 +183,100 @@ Column {
             }
         }
     }
+
+    // --- WEATHER: the city, the unit, the next hours, the ticker ------------------
+    Column {
+        width: parent.width
+        spacing: 10
+        visible: root.entry.id === "weather"
+
+        Row {
+            spacing: 8
+            NrLabel {
+                anchors.verticalCenter: parent.verticalCenter
+                color: Theme.dim
+                text: "CITY"
+            }
+            InputField {
+                id: cityField
+                anchors.verticalCenter: parent.verticalCenter
+                width: 180
+                pixelSize: 11
+                placeholder: "Type a city, then Enter"
+                text: Weather.city
+                onAccepted: Weather.setCity(text)
+            }
+            NrLabel {
+                anchors.verticalCenter: parent.verticalCenter
+                color: Weather.error !== "" ? Theme.alert : Theme.dim
+                text: Weather.busy ? "LOOKING UP" : Weather.error
+            }
+        }
+
+        Row {
+            spacing: 6
+            NrLabel {
+                anchors.verticalCenter: parent.verticalCenter
+                width: 48
+                color: Theme.dim
+                text: "UNIT"
+            }
+            Repeater {
+                model: [["c", "°C"], ["f", "°F"], ["ticker", "TICKER"]]
+                Rectangle {
+                    id: wchip
+                    required property var modelData
+                    readonly property bool on: modelData[0] === "ticker" ? Weather.ticker : Weather.unit === modelData[0]
+                    width: wLabel.implicitWidth + 16
+                    height: 20
+                    color: on ? Theme.alpha(Theme.accent, 0.18) : "transparent"
+                    border.width: 1
+                    border.color: on ? Theme.accent : Theme.hair
+                    NrLabel {
+                        id: wLabel
+                        anchors.centerIn: parent
+                        centred: true
+                        color: wchip.on ? Theme.accent : Theme.text
+                        text: wchip.modelData[1]
+                    }
+                    HoverHandler {
+                        cursorShape: Qt.PointingHandCursor
+                    }
+                    TapHandler {
+                        onTapped: wchip.modelData[0] === "ticker" ? Weather.setTicker(!Weather.ticker) : Weather.setUnit(wchip.modelData[0])
+                    }
+                }
+            }
+        }
+
+        // The next hours: time, temperature, condition.
+        Flow {
+            width: parent.width
+            spacing: 4
+            Repeater {
+                model: Weather.hours
+                Column {
+                    required property var modelData
+                    width: 58
+                    spacing: 2
+                    NrLabel {
+                        color: Theme.dim
+                        pixelSize: 9
+                        text: modelData.time
+                    }
+                    NrLabel {
+                        color: Theme.bright
+                        text: Weather.temp(modelData.temp)
+                    }
+                    NrLabel {
+                        width: parent.width
+                        elide: Text.ElideRight
+                        color: Theme.signal
+                        pixelSize: 8
+                        text: Weather.condition(modelData.code)
+                    }
+                }
+            }
+        }
+    }
 }

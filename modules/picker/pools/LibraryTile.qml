@@ -51,9 +51,11 @@ Item {
         opacity: root.revealed ? 1 : 0.86
     }
 
+    // DEFAULT and GENERATED at the top left; LIVE (a video) at the top right.
     NrLabel {
         anchors.top: parent.top
-        anchors.left: parent.left
+        anchors.left: root.entry.tag === "LIVE" ? undefined : parent.left
+        anchors.right: root.entry.tag === "LIVE" ? parent.right : undefined
         anchors.margins: 5
         visible: root.entry.tag.length > 0
         pixelSize: 10

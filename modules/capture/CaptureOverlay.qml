@@ -322,7 +322,10 @@ Variants {
 
             anchors.fill: parent
             active: overlay.shown
-            onEscaped: ShellState.captureOpen = false
+            onEscaped: {
+                Screenshot.forRecording = false;
+                ShellState.captureOpen = false;
+            }
             Keys.onReturnPressed: overlay.capture()
             Keys.onEnterPressed: overlay.capture()
             Keys.onTabPressed: event => {

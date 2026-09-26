@@ -52,10 +52,11 @@ someone else. See [Issues](#issues).
 - A kitty terminal with a fastfetch banner in the profile's colours.
 - SYS.DIAG: host, uplink, per-thread CPU bars, load, temperature, frequency,
   memory and a network graph.
-- Daemons: small probes you choose from a library of 20. They cover network
+- Daemons: small probes you choose from a library of 21. They cover network
   (ping, DNS, VPN, open ports), security (firewall, failed logins, SSH,
-  USB, microphone and camera) and system (battery wear, disk, clock sync,
-  pending reboot).
+  USB, microphone and camera), system (battery wear, disk, clock sync,
+  pending reboot) and WEATHER for a city you type (off by default; see
+  [Security](#security)).
 - The planner: a daily list of tagged tasks, edited in place.
 - VULN WATCH: `arch-audit` results by severity, linked to the Arch security
   tracker.
@@ -105,6 +106,27 @@ someone else. See [Issues](#issues).
 
 - Every key, grouped and searchable, read from Hyprland itself. Click one to
   change it; your changes go in `~/.config/wrayth/keybinds.lua`.
+
+**Screen recording** (`Super + Shift + R`, or RECORD in the launcher)
+
+- REGION (the screenshot selector), WINDOW or SCREEN; sound OFF (the
+  default), SYSTEM, or SYSTEM + MIC; 30 or 60 frames. Saved to
+  `~/Videos/Recordings` and announced with OPEN and DELETE. Stop with the REC
+  chip on the bar or the same key.
+
+**Privacy chips**
+
+- At the ticker's left edge, only while active: REC (with the time), and
+  SHARE, MIC and CAM while an app is capturing the screen, the microphone or
+  the camera. Click SHARE, MIC or CAM to see which app.
+
+**Wallpapers per screen, and video**
+
+- In MANAGE WALLPAPER POOLS each profile has SCREENS: SAME ON ALL, or PER
+  SCREEN with a tile per monitor. Video files (`.mp4`, `.webm`, `.mkv`,
+  `.mov`) join the library tagged LIVE; they play muted on an empty
+  workspace, pause when a window covers them or anything is fullscreen, and
+  hold their first frame on battery.
 
 **Overview** (`Super + Tab`) and **window switcher** (`Alt + Tab`)
 
@@ -165,6 +187,7 @@ Wrayth's own keys, from `external/hypr-wrayth.lua`:
 | `Super + Shift + V` | clipboard history |
 | `Super + Shift + A` | next audio output |
 | `Super + Tab` | overview of the workspaces |
+| `Super + Shift + R` | record the screen, or stop recording |
 | `Alt + Tab`, `Alt + Shift + Tab` | switch windows (hold Alt) |
 | `Super + Space` | next keyboard layout or input method |
 | `Print` | screenshot of a region |
@@ -429,6 +452,8 @@ Each of these features degrades gracefully without its package:
 | `bluez`, `bluez-utils` | the Bluetooth dropdown | no Bluetooth |
 | `hypridle` | lock on idle and before sleep | no automatic lock |
 | `hyprsunset` | NIGHT LIGHT | the switch does nothing |
+| `wf-recorder` | screen recording | RECORD says it is not installed |
+| `inotify-tools` | the CAM chip for apps that open the camera directly | CAM shows only PipeWire camera streams |
 | a firewall (`ufw`, `nftables`, `firewalld`) | the SHIELD readout | `NOT CONFIGURED` |
 | `xdg-utils` | opening the wallpaper folder and screenshots | the buttons do nothing |
 
@@ -593,7 +618,12 @@ afterwards. Critical ones still appear.
   - the PING readout, which measures latency to a cloud endpoint you choose
     (default: AWS `us-east-1`);
   - a ping to your router for the uplink readout;
-  - `checkupdates` and `arch-audit` if they are installed.
+  - `checkupdates` and `arch-audit` if they are installed;
+  - **only if you add the WEATHER daemon** (it is off by default): the city
+    you type, sent once to Open-Meteo's geocoding API
+    (`geocoding-api.open-meteo.com`), then its coordinates to Open-Meteo's
+    forecast API (`api.open-meteo.com`) every 30 minutes. No account or key,
+    and your location is never looked up. Removing the daemon stops it.
 
   The installer and `wrayth-update` contact only this repository and pacman's
   mirrors, and only when you run them.

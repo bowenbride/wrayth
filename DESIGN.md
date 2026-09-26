@@ -85,6 +85,17 @@ check it too.
 second in the overview, one on open in the switcher), inside a `Loader` that is
 only active while the surface is shown, so closing it ends every capture.
 
+**Privacy chips** sit at the ticker's left edge and take their width from the
+ticker only; on a narrow bar they are clipped, never drawn over a readout.
+Their sources are event-driven (PipeWire nodes, inotify on `/dev/video*`);
+REC's clock ticks only while recording. Anything that reports a device in use
+belongs here, in the alert colour; the accent is for the shell's own REC.
+
+**Video wallpapers** play only on the desktop background, and only while
+nothing covers them, nothing is fullscreen and the machine is on AC; every
+other surface shows the video's first frame (made once with ffmpeg into
+`~/.cache/wrayth/stills`).
+
 **Key hints** are keycaps (`components/Keycap.qml`), named (`ENTER`, `ESC`),
 in the surrounding text's colour.
 

@@ -36,6 +36,7 @@ Singleton {
         { id: "disk", category: "SYSTEM", name: "DISK", description: "Free space on the root filesystem" },
         { id: "time", category: "SYSTEM", name: "TIME", description: "Whether the clock is synchronised" },
         { id: "reboot", category: "SYSTEM", name: "REBOOT", description: "Whether a kernel update is waiting on a restart" },
+        { id: "weather", category: "WORLD", name: "WEATHER", description: "The weather in a city you type, from Open-Meteo (no account, no key). Your location is never looked up." },
         { id: "docker", category: "LAB", name: "DOCKER", description: "Running containers" },
         { id: "lab", category: "LAB", name: "LAB TARGETS", description: "Whether your practice environments answer" }
     ]
@@ -103,8 +104,17 @@ Singleton {
                 expanded = "";
         } else if (!atCap()) {
             selected = selected.concat([id]);
+            // WEATHER asks for its city the moment it is added.
+            if (id === "weather" && !Weather.located)
+                expanded = "weather";
         }
         _save();
+    }
+
+    // For daemons that read themselves rather than through the script
+    // (WEATHER): a reading as the script's `value|tone|detail` would give it.
+    function setReading(id: string, value: string, tone: string): void {
+        _record(id, `${value}|${tone}|`);
     }
 
     function setPingTarget(host: string): void {
@@ -244,7 +254,8 @@ Singleton {
                 triggeredOnStart: true
                 // Never stacked: a probe that has not finished is left alone
                 // rather than started again beside itself.
-                onTriggered: if (!probe.running) probe.running = true
+                // WEATHER keeps its own 30-minute clock (Weather.qml).
+                onTriggered: if (slot.modelData !== "weather" && !probe.running) probe.running = true
             }
         }
     }

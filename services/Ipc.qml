@@ -998,4 +998,59 @@ Scope {
             ShellState.switcherOpen = false;
         }
     }
+
+    // RECORD, Super + Shift + R: opens the panel, or stops a recording.
+    // `region` records a given area at once (for tests: "x,y wxh"), audio
+    // off, whatever the panel is set to.
+    IpcHandler {
+        target: "record"
+
+        function toggle(): void {
+            Recorder.toggle();
+        }
+        function stop(): void {
+            Recorder.stop();
+        }
+        function state(): string {
+            return JSON.stringify({ recording: Recorder.recording, file: Recorder.file, capture: Recorder.capture, audio: Recorder.audio, fps: Recorder.fps, available: Recorder.available });
+        }
+        function region(geometry: string): string {
+            Recorder.audio = "off";
+            Recorder.begin(geometry, "");
+            return Recorder.file;
+        }
+    }
+
+    // The privacy chips' sources, for tests: `simulate '{"mic":["Discord"]}'`,
+    // and `simulate ""` for the real ones.
+    IpcHandler {
+        target: "privacy"
+
+        function state(): string {
+            return JSON.stringify({ mic: Privacy.mic, cam: Privacy.cam, share: Privacy.share, simulated: Privacy.simulated !== null });
+        }
+        function simulate(json: string): string {
+            try {
+                Privacy.simulated = json === "" ? null : JSON.parse(json);
+            } catch (e) {
+                return "bad json";
+            }
+            return "ok";
+        }
+    }
+
+    // WEATHER: its state, and a city to look up (as typing it does).
+    IpcHandler {
+        target: "weather"
+
+        function state(): string {
+            return JSON.stringify({ enabled: Weather.enabled, city: Weather.city, lat: Weather.lat, lon: Weather.lon, unit: Weather.unit, line: Weather.line, hours: Weather.hours.length, error: Weather.error });
+        }
+        function city(name: string): void {
+            Weather.setCity(name);
+        }
+        function forget(): void {
+            Weather.forget();
+        }
+    }
 }

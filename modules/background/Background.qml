@@ -34,6 +34,12 @@ Variants {
 
         Wallpaper {
             anchors.fill: parent
+            // This screen's own wallpaper when the pool is PER SCREEN.
+            source: Wallpapers.displayedFor(background.modelData?.name ?? "")
+            // A video plays only on an empty workspace, with nothing
+            // fullscreen, on AC; otherwise it holds its frame.
+            allowVideo: true
+            videoPlaying: !background.occupied && !SystemSettings.fullscreen && !Power.onBattery
 
             // Crisp on an empty workspace, the lockscreen's treatment once
             // something is open. Wallpaper animates both over 250 ms.

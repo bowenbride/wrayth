@@ -108,9 +108,16 @@ Singleton {
 
     // From the selector: global layout geometry, taken after it has gone.
     property var pending: null
+    // Set by RECORD: the next region chosen starts a recording instead.
+    property bool forRecording: false
     function captureFromSelector(geometry: string, scale: real): void {
-        pending = { geometry: geometry, scale: scale };
         ShellState.captureOpen = false;
+        if (forRecording) {
+            forRecording = false;
+            Recorder.begin(geometry, "");
+            return;
+        }
+        pending = { geometry: geometry, scale: scale };
         settle.restart();
     }
     // Long enough for the unmapped selector to leave the next frame.

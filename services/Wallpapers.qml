@@ -296,7 +296,70 @@ Singleton {
     // re-read after the shell has written to either.
     property int stamp: 0
 
-    readonly property var imageSuffixes: ["*.png", "*.jpg", "*.jpeg", "*.webp", "*.bmp"]
+    // Video files join the library too (tagged LIVE); see `stillOf`.
+    readonly property var imageSuffixes: ["*.png", "*.jpg", "*.jpeg", "*.webp", "*.bmp", "*.mp4", "*.webm", "*.mkv", "*.mov"]
+
+    // --- Video wallpapers ---------------------------------------------------
+    // A video plays only on the desktop background (Background.qml), muted,
+    // and only while its workspace is empty, nothing is fullscreen and the
+    // machine is on AC. Everywhere else -- the lockscreen, the blurred
+    // backdrops, the picker's tiles -- and whenever it is paused, it is its
+    // first frame: a still made once with ffmpeg into ~/.cache/wrayth/stills.
+    readonly property string stillsFolder: `${Quickshell.env("HOME")}/.cache/wrayth/stills`
+    function isVideo(path: string): bool {
+        return /\.(mp4|webm|mkv|mov)$/i.test(String(path));
+    }
+    function stillPath(path: string): string {
+        const clean = String(path).replace(/^file:\/\//, "");
+        return `${stillsFolder}/${clean.replace(/[^A-Za-z0-9._-]/g, "_")}.png`;
+    }
+    // What an Image can show for a source: itself, or a video's still.
+    function stillOf(source: url): url {
+        const s = String(source);
+        return isVideo(s) ? Paths.url(stillPath(s)) : source;
+    }
+    function makeStills(): void {
+        const videos = library.filter(e => isVideo(e.file)).map(e => absolute(e.file));
+        if (videos.length === 0 || stiller.running)
+            return;
+        stiller.command = ["sh", "-c", 'dir="$1"; shift; mkdir -p "$dir"; for v in "$@"; do s="$dir/$(printf %s "$v" | sed "s/[^A-Za-z0-9._-]/_/g").png"; [ -s "$s" ] || ffmpeg -loglevel error -y -i "$v" -frames:v 1 "$s"; done', "sh", stillsFolder].concat(videos);
+        stiller.running = true;
+    }
+    Process {
+        id: stiller
+        onExited: root.stamp++
+    }
+
+    // --- Per screen ---------------------------------------------------------
+    // A pool's `screens` is "same" (every screen shows the one wallpaper, as
+    // before) or "per"; with "per", `perScreen` maps a monitor's name to a
+    // file of that pool.
+    function displayedFor(screen: string): url {
+        const pool = poolFor(Theme.profile);
+        if (!dynamic || pool.screens !== "per")
+            return displayed;
+        const file = (pool.perScreen ?? {})[screen];
+        const own = file ? imageOf(file) : "";
+        return String(own) !== "" ? own : displayed;
+    }
+    function setScreens(name: string, mode: string): void {
+        const next = Object.assign({}, pools);
+        next[name] = Object.assign({}, poolFor(name), { screens: mode === "per" ? "per" : "same" });
+        setPools(next);
+    }
+    // PER SCREEN: a screen takes the next wallpaper of the pool.
+    function nextForScreen(name: string, screen: string): void {
+        const pool = poolFor(name);
+        const ticked = tickedOf(pool);
+        if (ticked.length === 0)
+            return;
+        const per = Object.assign({}, pool.perScreen ?? {});
+        const at = ticked.findIndex(i => i.file === per[screen]);
+        per[screen] = ticked[(at + 1) % ticked.length].file;
+        const next = Object.assign({}, pools);
+        next[name] = Object.assign({}, pool, { perScreen: per });
+        setPools(next);
+    }
 
     // `FolderListModel` reads its directory once and does not watch it, and it
     // has no reload method -- so a re-read is a nudge of `folder` through the
@@ -356,7 +419,7 @@ Singleton {
                 out.push({
                     file: relative,
                     name: fileName,
-                    tag: root.tagFor(relative)
+                    tag: root.isVideo(relative) ? "LIVE" : root.tagFor(relative)
                 });
             }
         };
@@ -364,6 +427,7 @@ Singleton {
         take(netFiles, "wrayth/");
         library = out;
         listed = true;
+        makeStills();
     }
 
     onFolderChanged: root.rescan()

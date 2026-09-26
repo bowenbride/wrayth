@@ -32,7 +32,9 @@ ChamferPanel {
     // A screenshot's card: the file it is about, from the shell's own hint.
     // It shows the thumbnail and OPEN, COPY and DELETE instead of VIEW.
     readonly property string shot: notification?.hints?.["x-wrayth-screenshot"] ?? ""
-    readonly property int lifetime: critical ? 0 : (shot !== "" ? 10000 : 6000)
+    // A recording's card: OPEN and DELETE (which confirms), no thumbnail.
+    readonly property string video: notification?.hints?.["x-wrayth-recording"] ?? ""
+    readonly property int lifetime: critical ? 0 : (shot !== "" || video !== "" ? 10000 : 6000)
     // DELETE asks first: the first press arms it, a second deletes, and it
     // stands down on its own after three seconds.
     property bool deleteArmed: false
@@ -246,7 +248,7 @@ ChamferPanel {
                 }
 
                 ActionButton {
-                    visible: root.action !== null && root.shot === ""
+                    visible: root.action !== null && root.shot === "" && root.video === ""
                     text: "VIEW"
                     accented: true
                     // The app opens or raises its own window in answer, so
@@ -259,7 +261,32 @@ ChamferPanel {
                 }
 
                 ActionButton {
-                    visible: root.shot === ""
+                    visible: root.video !== ""
+                    text: "OPEN"
+                    accented: true
+                    onClicked: {
+                        Recorder.open(root.video);
+                        root.dismissed();
+                    }
+                }
+                ActionButton {
+                    visible: root.video !== ""
+                    text: root.deleteArmed ? "CONFIRM" : "DELETE"
+                    alsoText: ["CONFIRM", "DELETE"]
+                    accented: root.deleteArmed
+                    onClicked: {
+                        if (!root.deleteArmed) {
+                            root.deleteArmed = true;
+                            disarm.restart();
+                            return;
+                        }
+                        Recorder.remove(root.video);
+                        root.dismissed();
+                    }
+                }
+
+                ActionButton {
+                    visible: root.shot === "" && root.video === ""
                     text: "DISMISS"
                     textColor: Theme.dim
                     onClicked: root.dismissed()

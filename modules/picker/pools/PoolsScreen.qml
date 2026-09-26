@@ -704,6 +704,16 @@ Item {
                             focusedChip: root.focusRow === index ? root.focusChip : -1
 
                             onModeRequested: mode => root.edit(modelData, pool => pool.mode = mode)
+                            onScreensRequested: mode => root.edit(modelData, pool => pool.screens = mode)
+                            // The next ticked wallpaper of the pool, for one screen.
+                            onScreenNextRequested: screen => root.edit(modelData, pool => {
+                                const ticked = (pool.items ?? []).filter(i => i.on);
+                                if (ticked.length === 0)
+                                    return;
+                                pool.perScreen = Object.assign({}, pool.perScreen ?? {});
+                                const at = ticked.findIndex(i => i.file === pool.perScreen[screen]);
+                                pool.perScreen[screen] = ticked[(at + 1) % ticked.length].file;
+                            })
                             onEveryChanged: minutes => root.edit(modelData, pool => pool.every = minutes)
                             onFadeChanged: seconds => root.edit(modelData, pool => pool.fade = seconds)
                             onChipToggled: at => root.edit(modelData, pool => pool.items[at].on = !pool.items[at].on)

@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell
 import qs.components
 import qs.config
 import qs.services
@@ -16,6 +17,8 @@ Item {
     required property bool canRestore
 
     signal modeRequested(string mode)
+    signal screensRequested(string mode)
+    signal screenNextRequested(string screen)
     signal everyChanged(int minutes)
     signal fadeChanged(real seconds)
     signal chipToggled(int index)
@@ -299,6 +302,100 @@ Item {
                 color: Theme.dim
                 pixelSize: 10
                 text: "SEC"
+            }
+        }
+
+        // SCREENS: one wallpaper on every screen, or one each.
+        Row {
+            spacing: 8
+
+            NrLabel {
+                anchors.verticalCenter: parent.verticalCenter
+                color: Theme.dim
+                text: "SCREENS"
+            }
+            Repeater {
+                model: [["same", "SAME ON ALL"], ["per", "PER SCREEN"]]
+
+                Rectangle {
+                    required property var modelData
+                    readonly property bool current: (root.pool.screens ?? "same") === modelData[0]
+
+                    width: screensLabel.implicitWidth + 14
+                    height: 20
+                    color: current ? Theme.alpha(Theme.accent, 0.18) : "transparent"
+                    border.width: Appearance.metrics.hairline
+                    border.color: current ? Theme.accent : Theme.hair
+
+                    NrLabel {
+                        id: screensLabel
+                        anchors.centerIn: parent
+                        centred: true
+                        pixelSize: 10
+                        color: parent.current ? Theme.accent : Theme.text
+                        text: parent.modelData[1]
+                    }
+                    HoverHandler {
+                        cursorShape: Qt.PointingHandCursor
+                    }
+                    TapHandler {
+                        onTapped: root.screensRequested(parent.modelData[0])
+                    }
+                }
+            }
+        }
+
+        // PER SCREEN: a tile per monitor, its name and resolution, showing
+        // the wallpaper it takes from the pool. Click for the next one.
+        Row {
+            visible: (root.pool.screens ?? "same") === "per"
+            spacing: 8
+
+            Repeater {
+                model: Quickshell.screens
+
+                Rectangle {
+                    id: screenTile
+
+                    required property var modelData
+                    readonly property string file: (root.pool.perScreen ?? {})[modelData.name] ?? ""
+
+                    width: 88
+                    height: 58
+                    color: Theme.alpha(Theme.ground, 0.6)
+                    border.width: 1
+                    border.color: screenHover.hovered ? Theme.accent : Theme.hair
+                    clip: true
+
+                    Image {
+                        anchors.fill: parent
+                        anchors.margins: 1
+                        source: Wallpapers.stillOf(screenTile.file !== "" ? Wallpapers.imageOf(screenTile.file) : Wallpapers.cardImage(root.name))
+                        sourceSize: Qt.size(176, 116)
+                        fillMode: Image.PreserveAspectCrop
+                        asynchronous: true
+                    }
+                    Rectangle {
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.bottom: parent.bottom
+                        height: 16
+                        color: Theme.alpha(Theme.ground, 0.85)
+                        NrLabel {
+                            anchors.centerIn: parent
+                            pixelSize: 8
+                            color: Theme.text
+                            text: `${screenTile.modelData.name} ${screenTile.modelData.width * (screenTile.modelData.devicePixelRatio ?? 1)}x${screenTile.modelData.height * (screenTile.modelData.devicePixelRatio ?? 1)}`
+                        }
+                    }
+                    HoverHandler {
+                        id: screenHover
+                        cursorShape: Qt.PointingHandCursor
+                    }
+                    TapHandler {
+                        onTapped: root.screenNextRequested(screenTile.modelData.name)
+                    }
+                }
             }
         }
     }

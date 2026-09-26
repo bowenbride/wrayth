@@ -12,6 +12,7 @@ import qs.modules.notifications
 import qs.modules.keybinds
 import qs.modules.overview
 import qs.modules.switcher
+import qs.modules.record
 import qs.modules.launcher
 import qs.modules.lock
 import qs.modules.picker
@@ -36,6 +37,7 @@ ShellRoot {
     KeybindsOverlay {}
     OverviewOverlay {}
     WindowSwitcher {}
+    RecordPanel {}
     ClipboardOverlay {}
     DaemonLibrary {}
     LockScreen {}

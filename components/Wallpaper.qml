@@ -21,6 +21,12 @@ Item {
     // 0 = full brightness, 0.58 gives the spec's "about 42% brightness".
     property real dim: 0
 
+    // Video wallpapers: only a surface that allows it plays one (the desktop
+    // background), and only while `videoPlaying`; everything else shows the
+    // video's first frame.
+    property bool allowVideo: false
+    property bool videoPlaying: false
+
     // The pool's own fade, so a slow shuffle drifts rather than cuts.
     property int fadeDuration: Wallpapers.fadeDuration
 
@@ -79,7 +85,7 @@ Item {
 
         Image {
             anchors.fill: parent
-            source: root.backSource
+            source: Wallpapers.stillOf(root.backSource)
             fillMode: Image.PreserveAspectCrop
             sourceSize: Qt.size(root.width, root.height)
             asynchronous: true
@@ -90,7 +96,7 @@ Item {
             id: front
 
             anchors.fill: parent
-            source: root.frontSource
+            source: Wallpapers.stillOf(root.frontSource)
             fillMode: Image.PreserveAspectCrop
             sourceSize: Qt.size(root.width, root.height)
             asynchronous: true
@@ -105,6 +111,17 @@ Item {
                 if ((status === Image.Ready || status === Image.Error) && root.mix < 1)
                     fade.restart();
             }
+        }
+    }
+
+    // The video itself, over its still once the crossfade is done. Muted,
+    // looping, paused (on its current frame) whenever it should not play.
+    Loader {
+        anchors.fill: parent
+        active: root.allowVideo && Wallpapers.isVideo(root.frontSource) && root.mix >= 1
+        sourceComponent: VideoWall {
+            source: root.frontSource
+            playing: root.videoPlaying
         }
     }
 

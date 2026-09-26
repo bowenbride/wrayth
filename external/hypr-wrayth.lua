@@ -242,6 +242,7 @@ local catalogue = {
     { id = "overview",      group = "SHELL", label = "Overview of the workspaces",    keys = "SUPER + Tab",       run = hl.dsp.exec_cmd(IPC .. "overview toggle") },
     { id = "switcher-next", group = "WINDOWS", label = "Switch windows (hold Alt)",     keys = "ALT + Tab",         run = hl.dsp.exec_cmd(IPC .. "switcher next") },
     { id = "switcher-prev", group = "WINDOWS", label = "Switch windows, backwards",     keys = "ALT + SHIFT + Tab", run = hl.dsp.exec_cmd(IPC .. "switcher prev") },
+    { id = "record",        group = "MEDIA AND CAPTURE", label = "Record the screen, or stop", keys = "SUPER + SHIFT + R", run = hl.dsp.exec_cmd(IPC .. "record toggle") },
     { id = "input-next",    group = "SHELL", label = "Next keyboard layout or input method", keys = "SUPER + space", run = hl.dsp.exec_cmd(IPC .. "input next") },
     { id = "audio-next",    group = "MEDIA AND CAPTURE", label = "Next audio output", keys = "SUPER + SHIFT + A", run = hl.dsp.exec_cmd(IPC .. "audio next") },
     { id = "shot-region",   group = "MEDIA AND CAPTURE", label = "Screenshot of a region",          keys = "Print",         run = hl.dsp.exec_cmd(IPC .. "screenshot region") },

@@ -148,7 +148,8 @@ Singleton {
 
     readonly property var shellViews: [
         { name: "KEYBINDS", open: "keybinds", words: ["keybinds", "keys", "shortcuts", "hotkeys"] },
-        { name: "CLIPBOARD", open: "clipboard", words: ["clipboard", "paste", "history"] }
+        { name: "CLIPBOARD", open: "clipboard", words: ["clipboard", "paste", "history"] },
+        { name: "RECORD", open: "record", words: ["record", "recording", "screen recorder", "capture video"] }
     ]
 
     readonly property var results: {
