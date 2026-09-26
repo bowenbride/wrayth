@@ -566,7 +566,6 @@ DropdownFrame {
                 Column {
                     width: parent.width
                     spacing: 0
-                    visible: Radio.vpns.length > 0
 
                     Rectangle {
                         width: parent.width
@@ -583,6 +582,30 @@ DropdownFrame {
                         font.weight: Appearance.font.weightSemi
                         font.letterSpacing: 10 * 0.14
                         renderType: Text.NativeRendering
+                    }
+                    // None configured: say so, and how to add one.
+                    Column {
+                        visible: Radio.vpns.length === 0
+                        width: parent.width
+                        spacing: 4
+                        bottomPadding: 6
+                        Text {
+                            text: "NO VPNS SET UP"
+                            color: Theme.dim
+                            font.family: Appearance.font.data
+                            font.pixelSize: 10
+                            font.letterSpacing: 10 * 0.14
+                            renderType: Text.NativeRendering
+                        }
+                        Text {
+                            width: parent.width
+                            elide: Text.ElideRight
+                            text: "Add one in NetworkManager: nm-connection-editor, or import a .conf / .ovpn file."
+                            color: Theme.dim
+                            font.family: Appearance.font.data
+                            font.pixelSize: 9
+                            renderType: Text.NativeRendering
+                        }
                     }
                     Repeater {
                         model: Radio.vpns

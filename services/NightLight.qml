@@ -99,13 +99,22 @@ Singleton {
         if (active)
             applier.exec(["sh", "-c", 'if pgrep -x hyprsunset >/dev/null; then hyprctl hyprsunset temperature "$1" >/dev/null; else setsid -f hyprsunset -t "$1" >/dev/null 2>&1; fi', "sh", String(kelvin)]);
         else
-            applier.exec(["sh", "-c", 'pgrep -x hyprsunset >/dev/null && hyprctl hyprsunset identity >/dev/null; exit 0']);
+            // Off: hyprsunset stopped, which puts the screen's own colour back
+            // (asking it for identity left it reporting the warm value).
+            applier.exec(["sh", "-c", 'pkill -x hyprsunset; exit 0']);
     }
     Process {
         id: applier
     }
 
+    // Asked again whenever the power dropdown opens, so installing hyprsunset
+    // needs no reload.
+    function recheck(): void {
+        if (!probe.running)
+            probe.running = true;
+    }
     Process {
+        id: probe
         running: true
         command: ["sh", "-c", "command -v hyprsunset"]
         onExited: code => root.available = code === 0

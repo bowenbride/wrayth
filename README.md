@@ -130,11 +130,12 @@ someone else. See [Issues](#issues).
 
 **Overview** (`Super + Tab`) and **window switcher** (`Alt + Tab`)
 
-- OVERVIEW shows the current page's five workspaces with live previews of
-  their windows, laid out as they are; drag a window onto another workspace to
-  move it. Open special workspaces sit on a second row.
+- OVERVIEW shows the current page's five workspaces as cards, each window
+  drawn where it is with its badge and title; drag a window onto another
+  workspace to move it. Open special workspaces are chips in the sixth place.
 - Hold `Alt` and tap `Tab` to go through every window, most recent first;
-  `Shift + Tab` goes back; let go to focus.
+  `Shift + Tab` goes back; let go to focus. Choosing a window on a regular
+  workspace closes the deck (or any special workspace) first.
 
 **Launcher modes**
 
@@ -247,13 +248,13 @@ ones that are easy to miss.
 | a workspace number | that workspace |
 | the network readout | the Wi-Fi dropdown (networks, then `WI-FI SETTINGS`) |
 | the Bluetooth readout | the Bluetooth dropdown (devices, `DISCOVERY`) |
-| the speaker readout | the audio dropdown: outputs, inputs, volume and `MIXER` |
-| the tray readout | the tray dropdown: click an app for its menu, `OPEN` for its window |
+| the speaker readout (`SPKR`, `HEAD`, `HDMI`, a headset's model code) | the audio dropdown: outputs, inputs, volume, mute and `MIXER` |
+| the tray icon | the tray dropdown: click an app to open it, right-click for its menu |
 | `PWR` | the power-profile dropdown, with NIGHT LIGHT |
 | the clock | CALENDAR |
 | the input mode (`EN`, `あ`) | INPUT: layouts and input methods |
 | `IDLE // AUTO` / `IDLE // HOLD` | toggles keep-awake: `HOLD` stops idle locking |
-| the message icon | COMMS: notification history, `DO NOT DISTURB`, `CLEAR ALL` |
+| the message icon | COMMS: one row per app; click a notification to open it; the bell is Do Not Disturb |
 | empty bar space, or `Escape` | closes an open dropdown |
 
 The message icon's dot means a chat app (Discord, Vesktop, WebCord or
@@ -308,6 +309,12 @@ captures, `Escape` cancels. The selector is never in the image.
 your password: installing software, changing system settings. It names the
 program and the permission it wants. `Enter` or `AUTHENTICATE` sends your
 password to polkit; `Escape` or `CANCEL` refuses.
+
+## Credits
+
+Small icons are [Material Symbols](https://fonts.google.com/icons) (Sharp),
+by Google, under the Apache License 2.0; the SVGs and the licence are in
+`assets/icons/material-symbols-sharp/`.
 
 ## More screenshots
 

@@ -58,15 +58,31 @@ Singleton {
     // Newest first, and capped, so a chatty app cannot grow it without bound.
     readonly property int historyLimit: 200
     property var history: []
-    // Entries not yet looked at: the message indicator's dot. Opening COMMS
-    // counts as looking.
+    // Entries not yet read: the message indicator's dot. An entry is read when
+    // it is opened from COMMS, when its app's window gains focus, or when the
+    // app withdraws it; the dot clears on its own once nothing is unread.
     readonly property int unseen: history.filter(e => !e.seen).length
+    // The live notification objects by entry key, while the server still has
+    // them: what OPEN invokes, and how a withdrawal is heard.
+    property var _objects: ({})
     property int _nextId: 1
 
     // In memory too: a new session starts with it off.
     property bool dnd: false
 
     function _remember(notification: var, held: bool): void {
+        const key = root._nextId;
+        const objs = Object.assign({}, root._objects);
+        objs[key] = notification;
+        root._objects = objs;
+        // An app withdrawing its notification (it was read there) removes it.
+        notification.closed.connect(reason => {
+            if (reason === NotificationCloseReason.CloseRequested)
+                root.remove(key);
+            const o = Object.assign({}, root._objects);
+            delete o[key];
+            root._objects = o;
+        });
         const entry = {
             key: root._nextId++,
             app: (notification.appName || "UNKNOWN").trim(),
@@ -88,6 +104,48 @@ Singleton {
 
     function clearHistory(): void {
         root.history = [];
+    }
+
+    function remove(key: int): void {
+        root.history = root.history.filter(e => e.key !== key);
+    }
+
+    // Every notification of an app read: its window has the focus.
+    function markAppRead(app: string): void {
+        const want = norm(app);
+        if (want === "" || !root.history.some(e => !e.seen && norm(e.app) === want))
+            return;
+        root.history = root.history.map(e => !e.seen && norm(e.app) === want ? Object.assign({}, e, { seen: true }) : e);
+    }
+    function norm(s: string): string {
+        return String(s ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
+    }
+
+    // OPEN: the notification's default action if the app still offers one,
+    // otherwise the app's window; then it leaves the list.
+    function open(entry: var): void {
+        const n = root._objects[entry.key];
+        const action = n ? ((n.actions ?? []).find(a => a.identifier === "default") ?? (n.actions ?? [])[0] ?? null) : null;
+        Deck.leave();
+        if (action)
+            action.invoke();
+        else
+            focusApp(entry.app);
+        root.remove(entry.key);
+    }
+    function focusApp(app: string): void {
+        const a = norm(app);
+        if (a === "")
+            return;
+        Hyprland.dispatch(`(function() for _, w in ipairs(hl.get_windows()) do local c = string.lower(w.class or ""):gsub("[^a-z0-9]", "") if c == "${a}" or c:find("${a}", 1, true) then return hl.dsp.focus({ window = w }) end end return hl.dsp.no_op() end)()`);
+    }
+    Connections {
+        target: Hyprland
+        function onActiveToplevelChanged(): void {
+            const cls = Hyprland.activeToplevel?.lastIpcObject?.class ?? "";
+            if (cls !== "")
+                root.markAppRead(cls);
+        }
     }
 
     function forget(app: string): void {

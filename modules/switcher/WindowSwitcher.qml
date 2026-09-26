@@ -53,8 +53,7 @@ Variants {
                 function commit(): void {
                     const t = windows[selected];
                     ShellState.switcherOpen = false;
-                    if (t)
-                        Hyprland.dispatch(`hl.dsp.focus({ window = "address:0x${t.address}" })`);
+                    Switcher.focusWindow(t);
                 }
                 Connections {
                     target: Switcher
@@ -63,24 +62,69 @@ Variants {
                     }
                 }
 
+                readonly property int tileW: 240
+                readonly property int gap: 10
+                readonly property int shown: Math.min(5, Math.max(1, count))
+
                 ChamferPanel {
+                    id: panel
+
                     anchors.centerIn: parent
-                    width: Math.min(parent.width - 80, tiles.implicitWidth + 32)
-                    height: tiles.implicitHeight + 32
+                    width: view.shown * view.tileW + (view.shown - 1) * view.gap + 36
+                    height: body.implicitHeight + 36
                     chamfer: Appearance.chamfer.panel
                     fillColor: Theme.panel2
 
-                    Flow {
-                        id: tiles
+                    Column {
+                        id: body
 
-                        anchors.centerIn: parent
-                        width: Math.min(view.width - 112, view.count * 158 - 8)
-                        spacing: 8
+                        x: 18
+                        y: 18
+                        width: parent.width - 36
+                        spacing: 12
 
-                        Repeater {
+                        Column {
+                            spacing: 6
+                            Row {
+                                spacing: 8
+                                NrLabel {
+                                    id: winTitle
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    color: Theme.bright
+                                    text: "WINDOWS"
+                                }
+                                KanaTag {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: "窓"
+                                    title: winTitle
+                                }
+                            }
+                            Text {
+                                text: "TAB NEXT · SHIFT+TAB BACK · RELEASE ALT TO SWITCH"
+                                color: Theme.dim
+                                font.family: Appearance.font.data
+                                font.pixelSize: 9
+                                font.letterSpacing: 9 * 0.12
+                                renderType: Text.NativeRendering
+                            }
+                        }
+
+                        // More than five scroll with the selection.
+                        ListView {
+                            id: strip
+
+                            width: parent.width
+                            height: 128 + 46 + 4
+                            orientation: ListView.Horizontal
+                            spacing: view.gap
+                            interactive: false
+                            clip: true
                             model: view.windows
+                            currentIndex: view.selected
+                            highlightFollowsCurrentItem: false
+                            onCurrentIndexChanged: positionViewAtIndex(currentIndex, ListView.Contain)
 
-                            Rectangle {
+                            delegate: Item {
                                 id: tile
 
                                 required property var modelData
@@ -88,82 +132,112 @@ Variants {
                                 readonly property bool sel: index === view.selected
                                 readonly property string cls: modelData.lastIpcObject?.class ?? ""
 
-                                width: 150
-                                height: 70 + 42
-                                color: sel ? Theme.alpha(Theme.accent, 0.08) : "transparent"
-                                border.width: 1
-                                border.color: sel ? Theme.accent : Theme.hair
+                                width: view.tileW
+                                height: strip.height
 
-                                Rectangle {
-                                    id: preview
+                                ChamferPanel {
+                                    id: frame
 
-                                    x: 1
-                                    y: 1
-                                    width: parent.width - 2
-                                    height: 70
-                                    color: Theme.alpha(Theme.ground, 0.6)
-                                    clip: true
+                                    // The selected tile lifts 4 px.
+                                    y: tile.sel ? 0 : 4
+                                    width: parent.width
+                                    height: parent.height - 4
+                                    chamfer: 0
+                                    chamferTopLeft: 0
+                                    chamferTopRight: 0
+                                    chamferBottomRight: 0
+                                    // The leftmost tile echoes the panel's
+                                    // bottom-left chamfer.
+                                    chamferBottomLeft: tile.index === 0 ? 10 : 0
+                                    scanlines: false
+                                    fillColor: tile.sel ? Theme.alpha(Theme.accent, 0.08) : "transparent"
+                                    borderColor: tile.sel ? Theme.accent : Theme.hair
 
-                                    ScreencopyView {
-                                        id: shot
-                                        anchors.fill: parent
-                                        captureSource: tile.modelData.wayland
-                                        live: false
-                                    }
-                                    Timer {
-                                        interval: 120
-                                        running: !shot.hasContent
-                                        repeat: true
-                                        onTriggered: shot.captureFrame()
-                                    }
-
-                                    // The app's two-letter badge.
-                                    Rectangle {
-                                        anchors.left: parent.left
-                                        anchors.bottom: parent.bottom
-                                        anchors.margins: 5
-                                        width: 22
-                                        height: 16
-                                        color: tile.sel ? Theme.accent : Theme.alpha(Theme.ground, 0.85)
-                                        border.width: tile.sel ? 0 : 1
-                                        border.color: Theme.hair
-
-                                        Text {
-                                            anchors.centerIn: parent
-                                            text: (tile.cls.replace(/^.*\./, "") || "??").slice(0, 2).toUpperCase()
-                                            color: tile.sel ? Theme.ground : Theme.text
-                                            font.family: Appearance.font.data
-                                            font.pixelSize: 9
-                                            font.weight: Appearance.font.weightBold
-                                            renderType: Text.NativeRendering
+                                    Behavior on y {
+                                        NumberAnimation {
+                                            duration: Appearance.duration.state
+                                            easing.type: Easing.OutCubic
                                         }
                                     }
-                                }
 
-                                Text {
-                                    anchors.left: parent.left
-                                    anchors.leftMargin: 8
-                                    anchors.right: parent.right
-                                    anchors.rightMargin: 8
-                                    y: 78
-                                    elide: Text.ElideRight
-                                    text: tile.modelData.title || tile.cls
-                                    textFormat: Text.PlainText
-                                    color: tile.sel ? Theme.bright : Theme.text
-                                    font.family: Appearance.font.data
-                                    font.pixelSize: 11
-                                    renderType: Text.NativeRendering
-                                }
-                                Text {
-                                    anchors.left: parent.left
-                                    anchors.leftMargin: 8
-                                    y: 96
-                                    text: (tile.modelData.workspace?.id ?? 0) > 0 ? `WS ${tile.modelData.workspace.id}` : (tile.modelData.workspace?.name ?? "").replace(/^special:/, "").toUpperCase()
-                                    color: Theme.dim
-                                    font.family: Appearance.font.data
-                                    font.pixelSize: 9
-                                    font.letterSpacing: 9 * 0.12
-                                    renderType: Text.NativeRendering
+                                    // The 128 px live preview, one frame a
+                                    // second while open, with its WS tag.
+                                    Rectangle {
+                                        x: 1
+                                        y: 1
+                                        width: parent.width - 2
+                                        height: 128
+                                        color: Theme.alpha(Theme.ground, 0.6)
+                                        clip: true
+
+                                        ScreencopyView {
+                                            id: shot
+                                            anchors.fill: parent
+                                            captureSource: tile.modelData.wayland
+                                            live: false
+                                        }
+                                        Timer {
+                                            interval: shot.hasContent ? 1000 : 120
+                                            running: true
+                                            repeat: true
+                                            onTriggered: shot.captureFrame()
+                                        }
+                                        Rectangle {
+                                            anchors.right: parent.right
+                                            anchors.bottom: parent.bottom
+                                            anchors.margins: 5
+                                            width: wsTag.implicitWidth + 10
+                                            height: 16
+                                            color: Theme.alpha(Theme.ground, 0.85)
+                                            border.width: 1
+                                            border.color: Theme.hair
+                                            Text {
+                                                id: wsTag
+                                                anchors.centerIn: parent
+                                                text: (tile.modelData.workspace?.id ?? 0) > 0 ? `WS ${tile.modelData.workspace.id}` : (tile.modelData.workspace?.name ?? "").replace(/^special:/, "").toUpperCase()
+                                                color: Theme.text
+                                                font.family: Appearance.font.data
+                                                font.pixelSize: 9
+                                                font.letterSpacing: 9 * 0.12
+                                                renderType: Text.NativeRendering
+                                            }
+                                        }
+                                    }
+
+                                    // Badge, app name, title.
+                                    AppBadge {
+                                        x: 8
+                                        y: 128 + 10
+                                        size: 22
+                                        pixelSize: 10
+                                        name: tile.cls
+                                        selected: tile.sel
+                                    }
+                                    Text {
+                                        x: 38
+                                        y: 128 + 7
+                                        width: parent.width - 46
+                                        elide: Text.ElideRight
+                                        text: tile.cls.replace(/^.*\./, "") || "APP"
+                                        textFormat: Text.PlainText
+                                        color: tile.sel ? Theme.bright : Theme.text
+                                        font.family: Appearance.font.data
+                                        font.pixelSize: 11
+                                        font.weight: Appearance.font.weightSemi
+                                        renderType: Text.NativeRendering
+                                    }
+                                    Text {
+                                        x: 38
+                                        y: 128 + 23
+                                        width: parent.width - 46
+                                        elide: Text.ElideRight
+                                        text: tile.modelData.title
+                                        textFormat: Text.PlainText
+                                        color: Theme.dim
+                                        font.family: Appearance.font.data
+                                        font.pixelSize: 9
+                                        renderType: Text.NativeRendering
+                                    }
                                 }
 
                                 TapHandler {

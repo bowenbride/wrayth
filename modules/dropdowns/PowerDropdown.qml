@@ -23,6 +23,9 @@ DropdownFrame {
         }
     }
 
+    // Anything "not installed" is asked again as the dropdown opens.
+    Component.onCompleted: NightLight.recheck()
+
     title: "PWR // PROFILE"
     katakana: "電力"
 

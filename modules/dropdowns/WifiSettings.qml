@@ -36,7 +36,9 @@ Item {
         spacing: 14
 
         // --- Back -----------------------------------------------------------
-        BackButton {
+        // Quiet, as every BACK inside a dropdown is.
+        QuietBack {
+            label: "UPLINK"
             onActivated: root.back()
         }
 

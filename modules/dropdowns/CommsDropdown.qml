@@ -5,12 +5,10 @@ import qs.config
 import qs.services
 import qs.utils
 
-// COMMS: the notification centre. Notification history grouped by app, Do Not
-// Disturb, CLEAR ALL, and OPEN COMMS WORKSPACE (what clicking the indicator
-// used to do). Opening it counts as looking: the indicator's dot clears.
-//
-// The history is in memory only -- the dropdown says so, because it is the
-// thing a person would want to know before trusting it with a message.
+// COMMS: one row per app, its latest notification underneath, unread ones
+// marked; a chevron shows the rest. Clicking a notification opens it (its
+// default action, else the app's window) and takes it off the list. Reading
+// in the app clears it too: see Notifications.qml. Do Not Disturb is the bell.
 DropdownFrame {
     id: root
 
@@ -19,10 +17,8 @@ DropdownFrame {
     // Read by Dropdowns: this dropdown is 420 px wide.
     readonly property int panelWidth: 420
 
-    readonly property int buttonCut: 8
     // Refreshed while open, for the ages; nothing ticks while it is closed.
     property real now: Date.now()
-
     Timer {
         interval: 30000
         running: true
@@ -30,63 +26,56 @@ DropdownFrame {
         onTriggered: root.now = Date.now()
     }
 
-    // What was unread when it opened keeps its accent edge while it is open;
-    // everything else has the hairline. Opening it counts as looking.
-    property var unread: ({})
-    Component.onCompleted: {
-        const u = {};
-        for (const e of Notifications.history)
-            if (!e.seen)
-                u[e.key] = true;
-        root.unread = u;
-        Notifications.markSeen();
-    }
-    // Anything arriving while it is open is being looked at too.
-    Connections {
-        target: Notifications
-        function onUnseenChanged(): void {
-            Qt.callLater(Notifications.markSeen);
-        }
-    }
+    // Which apps are expanded to show all their notifications.
+    property var open: ({})
 
-    // NOTIFY, or DO NOT DISTURB in the accent: 22 px.
-    headerRight: Rectangle {
-        implicitWidth: dndLabel.implicitWidth + 20
-        implicitHeight: 22
-        color: Notifications.dnd ? Theme.alpha(Theme.accent, 0.12) : "transparent"
-        border.width: 1
-        border.color: Notifications.dnd ? Theme.accent : Theme.hair
-
-        Behavior on color {
-            ColorAnimation {
-                duration: Appearance.duration.state
-                easing.type: Easing.OutCubic
-            }
-        }
+    // Do Not Disturb: a quiet bell; crossed out and labelled in the accent
+    // only while on.
+    headerRight: Row {
+        spacing: 6
 
         Text {
-            id: dndLabel
-
-            anchors.centerIn: parent
-            text: Notifications.dnd ? "DO NOT DISTURB" : "NOTIFY"
-            color: Notifications.dnd ? Theme.accent : Theme.dim
+            anchors.verticalCenter: parent.verticalCenter
+            visible: Notifications.dnd
+            text: "DO NOT DISTURB"
+            color: Theme.accent
             font.family: Appearance.font.data
             font.pixelSize: 9
             font.weight: Appearance.font.weightSemi
-            font.letterSpacing: 9 * 0.12
+            font.letterSpacing: 9 * 0.14
             renderType: Text.NativeRendering
         }
-        HoverHandler {
-            cursorShape: Qt.PointingHandCursor
+        Item {
+            anchors.verticalCenter: parent.verticalCenter
+            width: 22
+            height: 22
+            Icon {
+                anchors.centerIn: parent
+                name: Notifications.dnd ? "notifications_off" : "notifications"
+                size: 16
+                color: Notifications.dnd ? Theme.accent : (bellHover.hovered ? Theme.text : Theme.dim)
+            }
+            HoverHandler {
+                id: bellHover
+                cursorShape: Qt.PointingHandCursor
+            }
+            TapHandler {
+                onTapped: Notifications.dnd = !Notifications.dnd
+            }
         }
-        TapHandler {
-            onTapped: Notifications.dnd = !Notifications.dnd
-        }
+    }
+
+    component Small: Text {
+        color: Theme.dim
+        font.family: Appearance.font.data
+        font.pixelSize: 9
+        font.letterSpacing: 9 * 0.14
+        renderType: Text.NativeRendering
     }
 
     Column {
         width: parent.width
-        spacing: 10
+        spacing: 8
 
         // A message waiting in the chat client: the other half of the dot.
         Item {
@@ -110,11 +99,16 @@ DropdownFrame {
             }
         }
 
-        // --- History ---------------------------------------------------------
-        NrLabel {
+        // Empty: a calm ALL CLEAR.
+        Item {
+            width: parent.width
+            height: 60
             visible: Notifications.history.length === 0
-            color: Theme.dim
-            text: "NOTHING HERE YET"
+            Small {
+                anchors.centerIn: parent
+                text: "ALL CLEAR"
+                font.pixelSize: 10
+            }
         }
 
         Flickable {
@@ -122,16 +116,16 @@ DropdownFrame {
 
             visible: Notifications.history.length > 0
             width: parent.width
-            height: Math.min(contentHeight, 340)
-            contentHeight: groups.implicitHeight
+            height: Math.min(contentHeight, 360)
+            contentHeight: apps.implicitHeight
             clip: true
             boundsBehavior: Flickable.StopAtBounds
 
             Column {
-                id: groups
+                id: apps
 
                 width: list.width - (scroll.visible ? 10 : 0)
-                spacing: 0
+                spacing: 2
 
                 Repeater {
                     model: Notifications.groups
@@ -140,133 +134,144 @@ DropdownFrame {
                         id: group
 
                         required property var modelData
-                        required property int index
+                        readonly property var latest: modelData.entries[0]
+                        readonly property int unread: modelData.entries.filter(e => !e.seen).length
+                        readonly property bool expanded: !!root.open[modelData.app]
 
                         width: parent.width
-                        spacing: 6
-                        bottomPadding: 10
 
-                        // Groups are separated by hairlines.
-                        Rectangle {
-                            width: parent.width
-                            height: Appearance.metrics.hairline
-                            color: Theme.hair
-                        }
-
-                        // The app: 10 px dim, 0.14em, its count on the right.
+                        // The app's row: the latest notification.
                         Item {
                             width: parent.width
-                            height: 16
+                            height: 44
 
-                            Text {
-                                anchors.left: parent.left
-                                anchors.right: count.left
-                                anchors.rightMargin: 8
-                                anchors.verticalCenter: parent.verticalCenter
-                                elide: Text.ElideRight
-                                text: group.modelData.app.toUpperCase()
-                                textFormat: Text.PlainText
-                                color: Theme.dim
-                                font.family: Appearance.font.data
-                                font.pixelSize: 10
-                                font.weight: Appearance.font.weightSemi
-                                font.letterSpacing: 10 * 0.14
-                                renderType: Text.NativeRendering
+                            Rectangle {
+                                anchors.fill: parent
+                                color: rowHover.hovered ? Theme.cell : "transparent"
+                            }
+                            Rectangle {
+                                width: 2
+                                height: parent.height
+                                color: Theme.accent
+                                visible: group.unread > 0
+                            }
+
+                            Row {
+                                x: 10
+                                y: 7
+                                spacing: 6
+                                Small {
+                                    text: group.modelData.app.toUpperCase()
+                                }
+                                Small {
+                                    text: `${group.modelData.entries.length}`
+                                    color: group.unread > 0 ? Theme.accent : Theme.dim
+                                }
+                            }
+                            Small {
+                                anchors.right: chevron.left
+                                anchors.rightMargin: 4
+                                y: 7
+                                text: Fmt.age(group.latest.time, root.now)
                             }
                             Text {
-                                id: count
+                                x: 10
+                                y: 22
+                                width: parent.width - 10 - 34
+                                elide: Text.ElideRight
+                                text: group.latest.body ? `${group.latest.summary} · ${group.latest.body.replace(/\s+/g, " ")}` : group.latest.summary
+                                textFormat: Text.PlainText
+                                color: group.latest.seen ? Theme.text : Theme.bright
+                                font.family: Appearance.font.data
+                                font.pixelSize: 11
+                                renderType: Text.NativeRendering
+                            }
+                            HoverHandler {
+                                id: rowHover
+                                cursorShape: Qt.PointingHandCursor
+                            }
+                            TapHandler {
+                                onTapped: {
+                                    ShellState.closeDropdown("a notification opened");
+                                    Notifications.open(group.latest);
+                                }
+                            }
+
+                            // The rest of this app's notifications.
+                            Item {
+                                id: chevron
 
                                 anchors.right: parent.right
                                 anchors.verticalCenter: parent.verticalCenter
-                                text: `${group.modelData.entries.length}`
-                                color: Theme.dim
-                                font.family: Appearance.font.data
-                                font.pixelSize: 10
-                                renderType: Text.NativeRendering
+                                width: 24
+                                height: 24
+                                visible: group.modelData.entries.length > 1
+
+                                Icon {
+                                    anchors.centerIn: parent
+                                    name: group.expanded ? "expand_more" : "chevron_right"
+                                    size: 16
+                                    color: chevHover.hovered ? Theme.text : Theme.dim
+                                }
+                                HoverHandler {
+                                    id: chevHover
+                                    cursorShape: Qt.PointingHandCursor
+                                }
+                                TapHandler {
+                                    onTapped: {
+                                        const next = Object.assign({}, root.open);
+                                        next[group.modelData.app] = !group.expanded;
+                                        root.open = next;
+                                    }
+                                }
                             }
                         }
 
+                        // Expanded: the others, one 10 px line each with its time.
                         Repeater {
-                            model: group.modelData.entries.slice(0, 5)
+                            model: group.expanded ? group.modelData.entries.slice(1, 12) : []
 
-                            // One notification: a 2 px left edge (the accent
-                            // while unread, a hairline once seen), 8 px padding.
                             Item {
-                                id: entry
+                                id: older
 
                                 required property var modelData
 
-                                width: parent.width
-                                height: lines.implicitHeight + 16
+                                width: group.width
+                                height: 20
 
                                 Rectangle {
-                                    anchors.left: parent.left
-                                    anchors.top: parent.top
-                                    anchors.bottom: parent.bottom
-                                    width: 2
-                                    color: root.unread[entry.modelData.key] ? Theme.accent : Theme.hair
+                                    anchors.fill: parent
+                                    color: olderHover.hovered ? Theme.cell : "transparent"
                                 }
-
-                                Column {
-                                    id: lines
-
-                                    anchors.left: parent.left
-                                    anchors.leftMargin: 10
-                                    anchors.right: parent.right
-                                    anchors.rightMargin: 8
+                                Text {
+                                    x: 22
                                     anchors.verticalCenter: parent.verticalCenter
-                                    spacing: 3
-
-                                    Item {
-                                        width: parent.width
-                                        height: titleText.implicitHeight
-
-                                        Text {
-                                            id: titleText
-
-                                            anchors.left: parent.left
-                                            anchors.right: age.left
-                                            anchors.rightMargin: 8
-                                            text: entry.modelData.summary
-                                            textFormat: Text.PlainText
-                                            elide: Text.ElideRight
-                                            color: Theme.text
-                                            font.family: Appearance.font.data
-                                            font.pixelSize: 11
-                                            font.weight: Appearance.font.weightSemi
-                                            renderType: Text.NativeRendering
-                                        }
-                                        Text {
-                                            id: age
-
-                                            anchors.right: parent.right
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            text: Fmt.age(entry.modelData.time, root.now)
-                                            color: Theme.dim
-                                            font.family: Appearance.font.data
-                                            font.pixelSize: 9
-                                            renderType: Text.NativeRendering
-                                        }
-                                    }
-                                    Text {
-                                        width: parent.width
-                                        visible: text !== ""
-                                        text: entry.modelData.body.replace(/\s+/g, " ")
-                                        textFormat: Text.PlainText
-                                        elide: Text.ElideRight
-                                        color: Theme.dim
-                                        font.family: Appearance.font.data
-                                        font.pixelSize: 10
-                                        renderType: Text.NativeRendering
+                                    width: parent.width - 22 - 44
+                                    elide: Text.ElideRight
+                                    text: older.modelData.body ? `${older.modelData.summary} · ${older.modelData.body.replace(/\s+/g, " ")}` : older.modelData.summary
+                                    textFormat: Text.PlainText
+                                    color: older.modelData.seen ? Theme.dim : Theme.text
+                                    font.family: Appearance.font.data
+                                    font.pixelSize: 10
+                                    renderType: Text.NativeRendering
+                                }
+                                Small {
+                                    anchors.right: parent.right
+                                    anchors.rightMargin: 28
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: Fmt.age(older.modelData.time, root.now)
+                                }
+                                HoverHandler {
+                                    id: olderHover
+                                    cursorShape: Qt.PointingHandCursor
+                                }
+                                TapHandler {
+                                    onTapped: {
+                                        ShellState.closeDropdown("a notification opened");
+                                        Notifications.open(older.modelData);
                                     }
                                 }
                             }
-                        }
-
-                        NrLabel {
-                            visible: group.modelData.entries.length > 5
-                            color: Theme.dim
-                            text: `+${group.modelData.entries.length - 5} EARLIER`
                         }
                     }
                 }
@@ -283,23 +288,23 @@ DropdownFrame {
             }
         }
 
-        // CLEAR ALL on the left, what is kept on the right: both 9 px dim.
+        Rectangle {
+            width: parent.width
+            height: Appearance.metrics.hairline
+            color: Theme.hair
+        }
+
+        // Quiet controls: CLEAR ALL, and OPEN COMMS WORKSPACE with a chevron.
         Item {
             width: parent.width
-            height: 14
+            height: 22
 
-            Text {
+            Small {
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
                 text: "CLEAR ALL"
-                font.underline: true
                 opacity: Notifications.history.length > 0 ? 1 : 0.5
                 color: clearHover.hovered && Notifications.history.length > 0 ? Theme.text : Theme.dim
-                font.family: Appearance.font.data
-                font.pixelSize: 9
-                font.letterSpacing: 9 * 0.12
-                renderType: Text.NativeRendering
-
                 HoverHandler {
                     id: clearHover
                     cursorShape: Notifications.history.length > 0 ? Qt.PointingHandCursor : Qt.ArrowCursor
@@ -309,29 +314,31 @@ DropdownFrame {
                     onTapped: Notifications.clearHistory()
                 }
             }
-            Text {
+            Row {
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
-                text: "KEPT UNTIL LOGOUT, NEVER SAVED"
-                color: Theme.dim
-                font.family: Appearance.font.data
-                font.pixelSize: 9
-                font.letterSpacing: 9 * 0.12
-                renderType: Text.NativeRendering
-            }
-        }
-
-        // On the panel's bottom edge: the bottom-left cut. The accent frame,
-        // an accent-tinted fill and accent text.
-        ActionButton {
-            width: parent.width
-            height: 30
-            text: "OPEN COMMS WORKSPACE"
-            accented: true
-            cutBottomLeft: root.buttonCut
-            onClicked: {
-                ShellState.closeDropdown("OPEN COMMS WORKSPACE");
-                Hyprland.dispatch(`hl.dsp.workspace.toggle_special("communication")`);
+                spacing: 0
+                Small {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "OPEN COMMS WORKSPACE"
+                    color: wsHover.hovered ? Theme.text : Theme.dim
+                }
+                Icon {
+                    anchors.verticalCenter: parent.verticalCenter
+                    name: "chevron_right"
+                    size: 16
+                    color: wsHover.hovered ? Theme.text : Theme.dim
+                }
+                HoverHandler {
+                    id: wsHover
+                    cursorShape: Qt.PointingHandCursor
+                }
+                TapHandler {
+                    onTapped: {
+                        ShellState.closeDropdown("OPEN COMMS WORKSPACE");
+                        Hyprland.dispatch(`hl.dsp.workspace.toggle_special("communication")`);
+                    }
+                }
             }
         }
     }

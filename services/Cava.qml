@@ -73,6 +73,18 @@ Singleton {
         value: Media.cavaSource
         restoreMode: Binding.RestoreNone
     }
+    // A single stream that gives nothing for 3 s while its player is playing
+    // and the deck is up: marked silent, and the spectrum takes the whole
+    // output instead of showing a flat line.
+    Timer {
+        interval: 3000
+        running: root.wanted && root.source !== "auto" && !root.live && (Media.player?.isPlaying ?? false)
+        onTriggered: {
+            const next = Object.assign({}, Media.silentStreams);
+            next[root.source] = true;
+            Media.silentStreams = next;
+        }
+    }
     property bool switching: false
     // A new source: cava is restarted on it (a cold start is ~400 ms, and
     // only happens when the source actually changes).

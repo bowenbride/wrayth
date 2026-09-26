@@ -53,10 +53,6 @@ DropdownFrame {
     readonly property int buttonCut: 8
     readonly property real surfaceHeight: implicitHeight - views.height + Math.max(listColumn.implicitHeight, menuColumn.implicitHeight, 120)
 
-    headerRight: NrLabel {
-        color: Theme.dim
-        text: Tray.items.length === 1 ? "1 APP" : `${Tray.items.length} APPS`
-    }
 
     // An app's icon as a silhouette in the dim colour: a dim square masked by
     // the icon's own alpha, so none of its colours ever show.
@@ -116,11 +112,12 @@ DropdownFrame {
         property bool check: false
         property bool checked: false
         property bool accented: false
-        property alias icon: iconSlot.source
+        property string badge: ""
         property bool showIcon: false
         property string status: ""
         property int pixelSize: 11
         signal activated
+        signal menuRequested
 
         width: parent.width
         height: 32
@@ -140,13 +137,12 @@ DropdownFrame {
             anchors.fill: parent
         }
 
-        TintedIcon {
-            id: iconSlot
-
+        AppBadge {
             anchors.left: parent.left
             anchors.leftMargin: 6
             anchors.verticalCenter: parent.verticalCenter
             visible: entry.showIcon
+            name: entry.badge
         }
 
         Tickbox {
@@ -161,7 +157,7 @@ DropdownFrame {
 
         Text {
             anchors.left: parent.left
-            anchors.leftMargin: entry.showIcon || entry.check ? 30 : 8
+            anchors.leftMargin: entry.showIcon ? 42 : (entry.check ? 30 : 8)
             anchors.right: arrow.left
             anchors.rightMargin: 8
             anchors.verticalCenter: parent.verticalCenter
@@ -175,24 +171,49 @@ DropdownFrame {
             renderType: Text.NativeRendering
         }
 
-        // The app's short status, 9 px dim, when it gives one; else the
-        // chevron of an entry that opens further.
-        Text {
+        // The app's short status, 9 px dim, when it gives one; and a quiet
+        // chevron for anything that opens further (its menu, a submenu).
+        Row {
             id: arrow
 
             anchors.right: parent.right
-            anchors.rightMargin: 8
+            anchors.rightMargin: 4
             anchors.verticalCenter: parent.verticalCenter
-            width: Math.min(implicitWidth, 120)
-            elide: Text.ElideRight
-            text: entry.status !== "" ? entry.status : ">"
-            textFormat: Text.PlainText
-            opacity: entry.status !== "" || entry.chevron ? 1 : 0
-            color: Theme.dim
-            font.family: Appearance.font.data
-            font.pixelSize: entry.status !== "" ? 9 : 11
-            font.letterSpacing: 9 * 0.1
-            renderType: Text.NativeRendering
+            spacing: 4
+
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                visible: entry.status !== ""
+                width: Math.min(implicitWidth, 110)
+                elide: Text.ElideRight
+                text: entry.status
+                textFormat: Text.PlainText
+                color: Theme.dim
+                font.family: Appearance.font.data
+                font.pixelSize: 9
+                font.letterSpacing: 9 * 0.1
+                renderType: Text.NativeRendering
+            }
+            Item {
+                anchors.verticalCenter: parent.verticalCenter
+                width: 20
+                height: 20
+                opacity: entry.chevron ? 1 : 0
+                Icon {
+                    anchors.centerIn: parent
+                    name: "chevron_right"
+                    size: 16
+                    color: chevronHover.hovered ? Theme.text : Theme.dim
+                }
+                HoverHandler {
+                    id: chevronHover
+                    cursorShape: Qt.PointingHandCursor
+                }
+                TapHandler {
+                    enabled: entry.chevron
+                    onTapped: entry.menuRequested()
+                }
+            }
         }
 
         HoverHandler {
@@ -203,6 +224,12 @@ DropdownFrame {
             enabled: entry.usable
             onPressedChanged: if (pressed) feedback.flash()
             onTapped: defer.restart()
+        }
+        // Right-click: the entry's menu, where it has one.
+        TapHandler {
+            acceptedButtons: Qt.RightButton
+            enabled: entry.chevron
+            onTapped: entry.menuRequested()
         }
         // The acknowledgement paints first; the action runs a frame later.
         Timer {
@@ -271,9 +298,11 @@ DropdownFrame {
                     height: 36
                     pixelSize: 12
                     showIcon: true
-                    icon: modelData.icon ?? ""
+                    badge: Tray.nameOf(modelData)
                     text: Tray.nameOf(modelData)
                     status: Tray.statusOf(modelData)
+                    chevron: modelData.hasMenu
+                    onMenuRequested: root.openApp(modelData)
 
                     Rectangle {
                         visible: parent.index > 0
@@ -281,19 +310,29 @@ DropdownFrame {
                         height: Appearance.metrics.hairline
                         color: Theme.hair
                     }
+                    // Left-click: the app's primary action, usually its window.
+                    // Apps that only have a menu open that instead.
                     onActivated: {
-                        if (modelData.hasMenu)
+                        if (modelData.onlyMenu && modelData.hasMenu) {
                             root.openApp(modelData);
-                        else {
-                            modelData.activate();
-                            ShellState.closeDropdown("a tray app activated");
+                            return;
                         }
+                        modelData.activate();
+                        ShellState.closeDropdown("a tray app activated");
                     }
                 }
             }
-            Item {
-                width: parent.width
-                height: 4
+            // How it works, 9 px dim.
+            Text {
+                visible: Tray.items.length > 0
+                height: 26
+                verticalAlignment: Text.AlignVCenter
+                text: "CLICK OPENS · RIGHT-CLICK FOR ITS MENU"
+                color: Theme.dim
+                font.family: Appearance.font.data
+                font.pixelSize: 9
+                font.letterSpacing: 9 * 0.12
+                renderType: Text.NativeRendering
             }
         }
 
@@ -323,7 +362,8 @@ DropdownFrame {
                 }
             }
 
-            BackButton {
+            QuietBack {
+                label: root.path.length > 1 ? root.path[root.path.length - 2].title : "TRAY"
                 onActivated: root.goBack()
             }
 
@@ -342,18 +382,6 @@ DropdownFrame {
                     font.pixelSize: 15
                     font.weight: Appearance.font.weightBold
                     renderType: Text.NativeRendering
-                }
-            }
-
-            // The primary action first, at the top level only: what clicking
-            // the app's icon in any other tray would do.
-            EntryRow {
-                visible: root.path.length === 1 && root.app && !root.app.onlyMenu
-                text: "OPEN"
-                accented: true
-                onActivated: {
-                    root.app.activate();
-                    ShellState.closeDropdown("a tray app activated");
                 }
             }
 

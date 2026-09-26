@@ -26,7 +26,14 @@ Singleton {
     property string file: ""
     property bool available: false
 
+    // Asked again whenever RECORD opens, so installing wf-recorder needs no
+    // reload.
+    function recheck(): void {
+        if (!probe.running)
+            probe.running = true;
+    }
     Process {
+        id: probe
         running: true
         command: ["sh", "-c", "command -v wf-recorder"]
         onExited: code => root.available = code === 0

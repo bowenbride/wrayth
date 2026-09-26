@@ -2,6 +2,7 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
+import Quickshell.Io
 import Quickshell.Services.Pipewire
 import qs.services
 
@@ -20,6 +21,46 @@ Singleton {
     readonly property bool micMuted: source?.audio?.muted ?? false
 
     readonly property string deviceName: shortName(sink)
+
+    // --- The bar's short device code ------------------------------------------
+    // SPKR (built-in speakers), HEAD (the headphone jack), HDMI, DP, USB, or a
+    // Bluetooth device's model code (XM4 from WH-1000XM4). Never more than
+    // five characters, so the readout's slot is fixed.
+    readonly property string code: codeOf(sink, activePort)
+    function codeOf(node: var, port: string): string {
+        if (!node)
+            return "NONE";
+        const p = node.properties ?? {};
+        const all = `${node.name ?? ""} ${p["device.bus"] ?? ""} ${p["device.api"] ?? ""}`.toLowerCase();
+        if (all.includes("bluez") || all.includes("bluetooth")) {
+            const tokens = String(node.description || node.name || "").toUpperCase().split(/[\s_-]+/).filter(t => t !== "");
+            for (let i = tokens.length - 1; i >= 0; i--) {
+                const m = tokens[i].match(/[A-Z]+\d+[A-Z]*$/);
+                if (m)
+                    return m[0].slice(-5);
+            }
+            return (tokens[0] ?? "BT").replace(/[^A-Z0-9]/g, "").slice(0, 5) || "BT";
+        }
+        if (all.includes("hdmi"))
+            return "HDMI";
+        if (all.includes("displayport") || /\bdp\b/.test(all))
+            return "DP";
+        if (all.includes("usb"))
+            return "USB";
+        return /headphone|headset/.test(port) ? "HEAD" : "SPKR";
+    }
+    // The built-in card's active port (speaker or headphones), which PipeWire
+    // keeps on the device rather than the node: asked once per output change.
+    property string activePort: ""
+    onSinkChanged: portRead.running = true
+    Component.onCompleted: portRead.running = true
+    Process {
+        id: portRead
+        command: ["sh", "-c", 'd=$(pactl get-default-sink 2>/dev/null); pactl list sinks 2>/dev/null | awk -v d="$d" \'/^\tName:/ {n=$2} /Active Port:/ && n==d {print $3; exit}\'']
+        stdout: StdioCollector {
+            onStreamFinished: root.activePort = text.trim().toLowerCase()
+        }
+    }
 
     // The short form a readout can hold: a headset's own name as it gives
     // it, and "SPEAKERS" / "MICROPHONE" for the machine's built-in card,

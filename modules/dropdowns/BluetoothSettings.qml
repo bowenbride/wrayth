@@ -41,7 +41,9 @@ Item {
         spacing: 14
 
         // --- Back -----------------------------------------------------------
-        BackButton {
+        // Quiet, as every BACK inside a dropdown is.
+        QuietBack {
+            label: "BLUETOOTH"
             onActivated: root.back()
         }
 

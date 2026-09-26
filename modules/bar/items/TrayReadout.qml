@@ -5,42 +5,39 @@ import qs.components
 import qs.config
 import qs.services
 
-// The system tray: a tray mark and how many apps are in it, in a fixed slot
-// that stays reserved when the tray is empty (dimmed then). The apps' own
-// icons are never drawn on the bar -- they arrive in every colour there is --
-// only in the TRAY dropdown, tinted.
+// The system tray: its icon only, with a dot while an app asks for attention.
+// The apps' own icons are never drawn -- they arrive in every colour there is
+// and render badly small -- the TRAY dropdown gives each a two-letter badge.
 Row {
     id: root
 
     readonly property int count: Tray.items.length
 
-    spacing: 5
-    // The whole readout dimmed when the tray is empty.
-    opacity: count > 0 ? 1 : 0.45
+    // The tray icon only (Material Symbols Sharp `inbox`), dim, and a 5 x 5
+    // accent dot on its top right while an app asks for attention.
+    readonly property bool attention: Tray.items.some(i => Tray.wantsAttention(i))
 
-    // The tray mark: four squares in a 2 x 2 grid, 13 px, drawn.
-    Grid {
+    Item {
         anchors.verticalCenter: parent.verticalCenter
-        columns: 2
-        spacing: 1
+        implicitWidth: 16
+        implicitHeight: 16
 
-        Repeater {
-            model: 4
-            Rectangle {
-                width: 6
-                height: 6
-                color: Theme.dim
-            }
+        Icon {
+            anchors.fill: parent
+            name: "inbox"
+            size: 16
+            color: Theme.dim
         }
-    }
-
-    Slot {
-        anchors.verticalCenter: parent.verticalCenter
-        implicitWidth: Appearance.slot.trayCount
-        horizontalAlignment: Text.AlignLeft
-        text: String(root.count)
-        color: Theme.text
-        font.pixelSize: 10
+        Rectangle {
+            visible: root.attention
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.rightMargin: -2
+            anchors.topMargin: -2
+            width: 5
+            height: 5
+            color: Theme.accent
+        }
     }
 
     HoverHandler {

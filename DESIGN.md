@@ -96,6 +96,40 @@ nothing covers them, nothing is fullscreen and the machine is on AC; every
 other surface shows the video's first frame (made once with ffmpeg into
 `~/.cache/wrayth/stills`).
 
+**Icons.** New small icons come from **Material Symbols, Sharp style**
+(square corners, no rounded ends or indents), never hand-drawn. They are
+bundled as SVGs in `assets/icons/material-symbols-sharp/` with the set's
+Apache 2.0 `LICENSE`, their path data listed in `config/Icons.qml`, and drawn
+by `components/Icon.qml` in a profile token -- never the file's own colour.
+In use: the tray (`inbox`), media controls (`skip_previous`, `play_arrow`,
+`pause`, `skip_next`), the COMMS bell (`notifications`, `notifications_off`),
+mute toggles (`volume_up`, `volume_off`, `mic`, `mic_off`) and chevrons
+(`chevron_left`, `chevron_right`, `expand_more`). The bespoke bar marks stay
+as they are: the Wi-Fi bars, the Bluetooth rune and the message bubble.
+
+**Button hierarchy.**
+
+- **Primary**: the one main action of a view -- accent frame, 12% accent
+  tint, accent text. Rare: one per view at most (START RECORDING,
+  AUTHENTICATE).
+- **Secondary**: a hairline frame, text in the text colour (MIXER, CANCEL).
+- **Quiet**: no frame, dim text, brightening on hover; for navigation and
+  minor actions (CLEAR ALL, OPEN COMMS WORKSPACE ›, the COMMS bell).
+- **BACK inside a dropdown is always quiet** (`components/QuietBack.qml`): a
+  chevron and the name of where it returns to -- `‹ AUDIO`, `‹ TRAY`,
+  `‹ UPLINK`, `‹ BLUETOOTH` -- with no frame and no chamfer. Full-screen
+  views keep the framed BACK with its ESC keycap.
+
+**The corner rule.** A chamfer appears only on an element sitting in a
+chamfered corner of its container, echoing that corner: MIXER along the
+audio dropdown's bottom edge, the leftmost Alt+Tab tile. Everything else is
+square -- badges, chips, tiles, rows.
+
+**App badges** (`components/AppBadge.qml`): two letters in Chakra Petch Bold
+in a square with a hairline border, wherever an app needs a mark (tray,
+window switcher, overview). The apps' own icons are not drawn: they bring
+their own colours and render badly small.
+
 **Key hints** are keycaps (`components/Keycap.qml`), named (`ENTER`, `ESC`),
 in the surrounding text's colour.
 

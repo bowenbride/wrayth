@@ -38,6 +38,15 @@ Singleton {
     // It also changes what the panel may claim: an audit that never ran is
     // not the same news as an audit that found nothing.
     property bool available: true
+    // Not installed: asked again whenever the deck opens, so installing it
+    // needs no reload.
+    Connections {
+        target: ShellState
+        function onDeckVisibleChanged(): void {
+            if (ShellState.deckVisible && !root.available)
+                root.refresh();
+        }
+    }
 
     // Re-run the audit. Called after an upgrade, so the panel reflects what the
     // upgrade actually fixed rather than what was true before it.

@@ -21,6 +21,10 @@ Singleton {
         return item?.status === Status.NeedsAttention ? "NEEDS ATTENTION" : "";
     }
 
+    function wantsAttention(item: var): bool {
+        return item?.status === Status.NeedsAttention;
+    }
+
     // The app's own name, as plainly as it gives one.
     function nameOf(item: var): string {
         const name = (item?.title || item?.tooltipTitle || item?.id || "").trim();

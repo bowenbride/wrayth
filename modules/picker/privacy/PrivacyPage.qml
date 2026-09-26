@@ -145,7 +145,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             width: 700
             wrapMode: Text.Wrap
-            text: "Anything a password manager marks as sensitive is never recorded, in any mode."
+            text: "Anything a password manager marks as sensitive is never recorded, in any mode. Notifications in COMMS are kept until logout and never saved."
             color: Theme.bright
             font.family: Appearance.font.data
             font.pixelSize: 12

@@ -4,8 +4,8 @@ import qs.components
 import qs.config
 import qs.services
 
-// AUDIO: a speaker and the current output's short name -- `SPEAKERS`, or a
-// headset's own name -- and a MIC tag while the microphone is muted. Styled
+// AUDIO: a speaker and the output's short code (SPKR, HEAD, HDMI, DP, USB,
+// or a Bluetooth model code), and a MIC tag while the microphone is muted. Styled
 // like the Bluetooth readout. **Fixed width**: the name sits in a fixed slot
 // and the MIC tag's room is always reserved, fading in and out in it, so
 // neither a new device nor muting the microphone moves anything on the bar.
@@ -15,20 +15,21 @@ Row {
 
     spacing: 7
 
-    // volume-high, or volume-off while the output is muted: the glyph stands
-    // for the word, in the label grey, as the Bluetooth rune does.
-    // A drawn 14 x 13 speaker with one wave, dim.
-    SpeakerGlyph {
+    // The speaker (Material Symbols Sharp), dim; crossed out while muted.
+    Icon {
         anchors.verticalCenter: parent.verticalCenter
+        name: Audio.muted ? "volume_off" : "volume_up"
+        size: 15
         color: Theme.dim
     }
 
-    // The output's short name: 10 px in the data colour, in a fixed slot.
+    // A short fixed code for the output (Audio.code), 10 px in the data
+    // colour, in a slot as wide as the longest code (five characters), so
+    // switching device never moves the bar.
     Text {
         anchors.verticalCenter: parent.verticalCenter
-        width: Appearance.slot.audioName
-        elide: Text.ElideRight
-        text: Audio.sink ? Demo.device(Audio.deviceName, 1) : "NONE"
+        width: codeWidth.width
+        text: Audio.code
         textFormat: Text.PlainText
         color: Audio.sink && !Audio.muted ? Theme.signal : Theme.dim
         font.family: Appearance.font.data
@@ -37,6 +38,11 @@ Row {
         font.letterSpacing: 10 * 0.1
         renderType: Text.NativeRendering
 
+        TextMetrics {
+            id: codeWidth
+            font: parent.font
+            text: "WWWWW"
+        }
         Behavior on color {
             ColorAnimation {
                 duration: Appearance.duration.state
@@ -45,9 +51,11 @@ Row {
         }
     }
 
-    // A 1 px accent frame around `MIC`: small, and unmistakable. Opacity, not
-    // visibility, so its width stays reserved.
+    // A 1 px accent frame around `MIC`: small, and unmistakable. Only while
+    // the microphone is muted: the readout's own width is the icon and the
+    // longest code, nothing reserved beside them.
     Rectangle {
+        visible: Audio.micMuted
         anchors.verticalCenter: parent.verticalCenter
         width: micLabel.implicitWidth + 8
         height: micLabel.implicitHeight + 4

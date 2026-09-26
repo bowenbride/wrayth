@@ -25,6 +25,7 @@ Variants {
         WlrLayershell.namespace: "wrayth-overlay"
         WlrLayershell.keyboardFocus: shown ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
         exclusionMode: ExclusionMode.Ignore
+        onShownChanged: if (shown) Recorder.recheck()
 
         anchors {
             top: true

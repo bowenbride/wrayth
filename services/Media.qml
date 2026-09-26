@@ -123,19 +123,31 @@ Singleton {
             return source.node;
         const want = [source.player.identity, source.player.desktopEntry, (source.player.dbusName ?? "").replace(/^org\.mpris\.MediaPlayer2\./, "").split(".")[0]]
             .filter(w => w).map(w => w.toLowerCase());
-        return Audio.streams.find(n => {
+        const matches = Audio.streams.filter(n => {
             const p = n.properties ?? {};
             const have = [p["application.name"], p["application.process.binary"], p["application.id"], p["node.name"]]
                 .filter(h => h).map(h => String(h).toLowerCase());
             return have.some(h => want.some(w => h === w || h.startsWith(w) || w.startsWith(h)));
-        }) ?? null;
+        });
+        // **Only an unambiguous match.** A browser has a stream per tab (and
+        // keeps idle ones about), all under the one app name, and MPRIS does
+        // not say which tab is playing -- taking the first match is what left
+        // a Coursera video's spectrum flat while YouTube in the same browser
+        // worked. Several candidates: the whole output instead.
+        return matches.length === 1 ? matches[0] : null;
     }
 
     readonly property var stream: streamFor(current)
+    // A source whose stream stayed silent while its player said it was
+    // playing: some streams cannot be captured on their own. Those fall back
+    // to the whole output for as long as the stream lasts (Cava.qml decides).
+    property var silentStreams: ({})
     // cava's `source`: the stream's PipeWire object serial, or "auto".
     readonly property string cavaSource: {
         const serial = stream?.properties?.["object.serial"];
-        return serial !== undefined && /^\d+$/.test(String(serial)) ? String(serial) : "auto";
+        if (serial === undefined || !/^\d+$/.test(String(serial)) || silentStreams[String(serial)])
+            return "auto";
+        return String(serial);
     }
 
     // --- Calls: how long each has been going --------------------------------
