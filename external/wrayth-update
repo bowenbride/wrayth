@@ -6,7 +6,7 @@
 #   ~/.local/bin/wrayth-update --yes    # the same, without asking
 #
 # It fetches the latest version into the checkout Wrayth already runs from
-# (~/.config/quickshell/wrayth), from the repository it was installed from; it
+# (~/.config/quickshell/wrayth), from the official repository; it
 # never downloads and runs a new installer. Before changing anything it shows
 # the installed version, the new one and what changed, and asks.
 #
@@ -102,8 +102,9 @@ if [ -n "$changes" ]; then
         "then run wrayth-update again. (git -C $CHECKOUT stash pop puts them back.)"
 fi
 
-origin="$(G remote get-url origin 2> /dev/null)" ||
-    stop "Wrayth's folder has no repository to update from (no 'origin'). Nothing was changed."
+# The official repository. WRAYTH_UPDATE_SOURCE (any git URL or path) is for
+# testing only: it fetches from, say, a local copy of a release instead.
+origin="${WRAYTH_UPDATE_SOURCE:-https://github.com/bowenbride/wrayth.git}"
 branch="$(G rev-parse --abbrev-ref HEAD 2> /dev/null)"
 [ -n "$branch" ] && [ "$branch" != HEAD ] ||
     stop "Wrayth's folder is not on a branch (it is at a single commit), so it cannot" \
@@ -116,7 +117,7 @@ version_at() {
 }
 
 say "Checking $origin for a new version..."
-G fetch --quiet origin "$branch" ||
+G fetch --quiet "$origin" "$branch" ||
     stop "Could not reach $origin. Nothing was changed; check the network and try again."
 old="$(G rev-parse HEAD)"
 new="$(G rev-parse FETCH_HEAD)"

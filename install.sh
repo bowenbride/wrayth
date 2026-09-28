@@ -777,6 +777,27 @@ if [ "${#EDITED[@]}" -gt 0 ]; then
         say "      new: $e.wrayth-new     (diff \"$e\" \"$e.wrayth-new\")"
     done
 fi
+# Keys Wrayth binds by default now that it did not before: a bind of your own
+# on one of them is replaced by Wrayth's, so each is named (optional binds,
+# off until turned on, are left out).
+if [ "$UPDATING" = 1 ]; then
+    keys_in() { # keys_in <lua text on stdin>: every bound key, normalised
+        sed -E 's/mod \.\. "/"SUPER/g' | grep -v 'optional = "' |
+            grep -oE '(keys = |hl\.bind\( *)"[^"]+"' | sed -E 's/^[^"]*"//; s/"$//; s/ //g' |
+            tr '[:lower:]' '[:upper:]' | grep -vx ESCAPE | sort -u
+    }
+    old_keys="$(for f in external/hypr-wrayth.lua external/hyprland.lua; do git -C "$SRC" show "$UPDATE_FROM:$f" 2>/dev/null; done | keys_in)"
+    new_keys="$(cat "$SRC/external/hypr-wrayth.lua" "$SRC/external/hyprland.lua" 2>/dev/null | keys_in)"
+    added="$(comm -13 <(printf '%s\n' "$old_keys") <(printf '%s\n' "$new_keys") | sed 's/+/ + /g' | tr '\n' ',' | sed 's/,$//; s/,/, /g')"
+    if [ -n "$added" ]; then
+        say ""
+        say "  New default keybinds. If your own Hyprland config binds any of these keys,"
+        say "  Wrayth's bind now replaces yours; move either in KEYBINDS (Super + /):"
+        say "    $added"
+        [ "${#EDITED[@]}" -gt 0 ] && printf '%s\n' "${EDITED[@]}" | grep -q 'hypr-wrayth.lua$' &&
+            say "  (They take effect once your edited hypr-wrayth.lua takes Wrayth's new version.)"
+    fi
+fi
 if [ "${#BACKUPS[@]}" -gt 0 ]; then
     say ""
     say "  Your previous files are kept here:"
