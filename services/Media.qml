@@ -161,17 +161,6 @@ Singleton {
     }
 
     readonly property var stream: streamFor(current)
-    // A source whose stream stayed silent while its player said it was
-    // playing: some streams cannot be captured on their own. Those fall back
-    // to the whole output for as long as the stream lasts (Cava.qml decides).
-    property var silentStreams: ({})
-    // cava's `source`: the stream's PipeWire object serial, or "auto".
-    readonly property string cavaSource: {
-        const serial = stream?.properties?.["object.serial"];
-        if (serial === undefined || !/^\d+$/.test(String(serial)) || silentStreams[String(serial)])
-            return "auto";
-        return String(serial);
-    }
 
     // --- Calls: how long each has been going --------------------------------
     property var callStarts: ({})

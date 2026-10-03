@@ -25,75 +25,38 @@ Singleton {
     readonly property bool active: true
     readonly property int bars: 48
 
-    // **Paused, not stopped, while the deck is down.** cava is SIGSTOPped once
-    // the deck has finished closing and SIGCONTed the moment it starts to
-    // open: the process, its PipeWire stream and its buffers stay exactly as
-    // they were, so the first frame after a resume arrives at once (no 405 ms
-    // cold start), and a stopped process costs nothing. It used to run, and be
-    // read, the whole session for a panel almost always hidden -- about 2% of
-    // a core, the largest single part of the shell's idle cost.
-    // Paused while game mode is on (SYSTEM page).
-    readonly property bool wanted: ShellState.deckVisible && !SystemSettings.gaming
-    property bool _paused: false
-    function _pause(on: bool): void {
-        if (!cava.running || on === root._paused)
+    // **Never paused, and only ever the default sink's monitor.** cava used
+    // to be SIGSTOPped while the deck was hidden, and pointed at the selected
+    // app's own stream (a PipeWire serial as its `source`). Together they
+    // could hang an app's audio: a stopped process linked into a stream
+    // cannot complete that stream's format negotiation, so the link sat at
+    // init/negotiating, the app's stream never started (pipewire-pulse: "timeout
+    // on stream"), and playback hung until PipeWire was restarted.
+    //
+    // Now cava runs for the whole session with node.autoconnect=false, and
+    // assets/cava-link.py links it to the monitor ports of the default sink
+    // -- never to an app's output ports -- removing every other link into it.
+    // `target` follows the default sink, so a new one (headphones connecting)
+    // relinks cava to its monitor; it is also linked on every cava start. The
+    // SIGNAL chips choose the title and controls only.
+    readonly property string target: `${Audio.sink?.name ?? ""}#${Audio.sink?.id ?? ""}`
+    onTargetChanged: relink()
+    function relink(): void {
+        if (!cava.running || !cava.processId)
             return;
-        cava.signal(on ? 19 : 18); // SIGSTOP : SIGCONT
-        root._paused = on;
+        link.command = ["python3", Quickshell.shellPath("assets/cava-link.py"), String(cava.processId)];
+        link.running = false;
+        link.running = true;
     }
-    // A reload tears this down: never leave a stopped cava behind.
-    Component.onDestruction: _pause(false)
-    onWantedChanged: {
-        if (wanted) {
-            pauseLater.stop();
-            _pause(false);
-        } else {
-            pauseLater.restart();
-        }
+    Process {
+        id: link
     }
-    // Long enough for the deck's close to finish with the spectrum still live.
+    // cava's node appears a moment after the process starts.
     Timer {
-        id: pauseLater
+        id: linkSoon
 
-        interval: 1000
-        onTriggered: if (!root.wanted) root._pause(true)
-    }
-
-    readonly property string runtimeDir: `${Quickshell.env("XDG_RUNTIME_DIR") || "/tmp"}/wrayth`
-    // **It follows the selected source only while the deck is up.** A browser
-    // creates and drops audio streams as its pages play and pause, and each
-    // change re-pointed cava -- a restart, with the deck closed and nothing to
-    // show. While the deck is down the source is held; opening it catches up.
-    property string source: "auto"
-    Component.onCompleted: source = Media.cavaSource
-    Binding {
-        target: root
-        property: "source"
-        when: root.wanted
-        value: Media.cavaSource
-        restoreMode: Binding.RestoreNone
-    }
-    // A single stream that gives nothing for 3 s while its player is playing
-    // and the deck is up: marked silent, and the spectrum takes the whole
-    // output instead of showing a flat line.
-    Timer {
-        interval: 3000
-        running: root.wanted && root.source !== "auto" && !root.live && (Media.player?.isPlaying ?? false)
-        onTriggered: {
-            const next = Object.assign({}, Media.silentStreams);
-            next[root.source] = true;
-            Media.silentStreams = next;
-        }
-    }
-    property bool switching: false
-    // A new source: cava is restarted on it (a cold start is ~400 ms, and
-    // only happens when the source actually changes).
-    onSourceChanged: {
-        if (!cava.running)
-            return;
-        switching = true;
-        _pause(false); // a stopped process would not act on the SIGTERM
-        cava.running = false;
+        interval: 400
+        onTriggered: root.relink()
     }
 
     // **cava keeps running; the shell stops reading every frame of it.**
@@ -129,24 +92,15 @@ Singleton {
         id: cava
 
         running: root.active
-        // **It follows the selected source** (Media.cavaSource: a PipeWire
-        // stream's serial, or "auto" for every sound). The config is the
-        // shipped one with its `source` line replaced, written to the runtime
-        // dir; the serial arrives as an argument, never spliced into the
-        // script, and is digits or "auto" by construction.
-        command: ["sh", "-c", 'mkdir -p "$1" && sed "s/^source = .*/source = $2/" "$3" > "$1/cava.conf" && exec cava -p "$1/cava.conf"',
-            "sh", root.runtimeDir, root.source, Quickshell.shellPath("assets/cava.conf")]
+        // Unlinked until cava-link.py links it to the sink monitor (above).
+        command: ["cava", "-p", Quickshell.shellPath("assets/cava.conf")]
+        environment: ({
+            PIPEWIRE_PROPS: "{ node.autoconnect = false }"
+        })
 
         onRunningChanged: {
-            root._paused = false;
             if (running) {
-                if (!root.wanted)
-                    pauseLater.restart();
-                return;
-            }
-            if (root.switching) {
-                root.switching = false;
-                running = true;
+                linkSoon.restart();
                 return;
             }
             root.levels = [];
@@ -182,6 +136,7 @@ Singleton {
                 if (values.length === 0)
                     return;
                 root.levels = values;
+                revive.interval = 3000;
                 if (peak > 0.02) {
                     root.live = true;
                     quiet.restart();
@@ -190,11 +145,18 @@ Singleton {
         }
     }
 
+    // Backs off from 3 s to a minute while cava will not run (not installed,
+    // say), so a missing binary is not a spawn and a log line every 3 s; the
+    // first frame resets it.
     Timer {
         id: revive
 
         interval: 3000
-        onTriggered: if (root.active) cava.running = true
+        onTriggered: {
+            interval = Math.min(60000, interval * 2);
+            if (root.active)
+                cava.running = true;
+        }
     }
 
     // Silence has to last a moment before the panel calls it silence.

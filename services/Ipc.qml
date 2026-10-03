@@ -509,7 +509,7 @@ Scope {
             return Media.sources.map(src => `${src.kind}:${src.app}`).join(",") || "none";
         }
         function current(): string {
-            return Media.current ? `${Media.current.kind}:${Media.current.app} cava=${Media.cavaSource}` : "none";
+            return Media.current ? `${Media.current.kind}:${Media.current.app}` : "none";
         }
         function select(app: string): string {
             const src = Media.sources.find(x => x.app.toLowerCase() === app.toLowerCase());
