@@ -60,9 +60,10 @@ someone else. See [Issues](#issues).
 - The planner: a daily list of tagged tasks, edited in place.
 - VULN WATCH: `arch-audit` results by severity, linked to the Arch security
   tracker.
-- SIGNAL: a live audio spectrum from `cava`, and the media playing: title,
-  artist, progress and play controls, or a voice call with its duration. With
-  more than one source, pick which one the spectrum follows.
+- SIGNAL: a live audio spectrum from `cava` of everything on your current
+  output, and the media playing: title, artist, progress and play controls,
+  or a voice call with its duration. With more than one source, pick which
+  one is shown.
 
 **Profiles**
 
@@ -295,8 +296,8 @@ first, so the ticker keeps a readable width.
     It's only offered when nothing depends on the package.
   - `SWEEP` re-runs the audit.
 - **SIGNAL:** click the device name for the audio dropdown. With more than
-  one player or call, chips at the top choose which one is shown and which
-  one the spectrum follows. A call shows `OPEN CALL`, which brings its window
+  one player or call, chips at the top choose which one is shown (the
+  spectrum always shows your current output). A call shows `OPEN CALL`, which brings its window
   forward; mute and leave stay in the app, so you're never muted without the
   app knowing.
 
