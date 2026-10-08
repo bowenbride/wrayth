@@ -36,6 +36,9 @@ Item {
         height: Math.ceil(implicitHeight)
         color: Tokens.color.dim
         text: root.text
+        // Untrusted (a player's track title, among others): plain text only,
+        // so markup in a title is shown as typed, never rendered.
+        textFormat: Text.PlainText
         font.family: Tokens.font.data
         font.pixelSize: Appearance.size.ticker
         font.letterSpacing: Appearance.size.ticker * Appearance.tickerTracking
