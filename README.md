@@ -345,7 +345,8 @@ the SIGNAL spectrum.*
   complete Lua config instead, after backing it up.
 - **Quickshell 0.3.1 or newer** (`quickshell` in `extra`). The installer
   installs it for you, with `grim` and `wl-clipboard` for screenshots and the
-  clipboard, `polkit`, and the Hyprland and GTK desktop portals for screen
+  clipboard, `polkit`, `libnotify` for the shell's own notices (screenshot and
+  recording saved), and the Hyprland and GTK desktop portals for screen
   sharing and file dialogs.
 - **A screen of at least 1920×1080 logical pixels.** The deck is laid out for
   1080p. On shorter screens it is clipped, not reflowed, and Wrayth shows a

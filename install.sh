@@ -105,7 +105,7 @@ OVERRIDE_FILES=("$CONFIG/wrayth/fastfetch.jsonc|external/fastfetch.jsonc|fastfet
 REQUIRED=(quickshell hyprland kitty networkmanager pipewire wireplumber python
           python-pillow python-gobject fontconfig ttf-jetbrains-mono
           ttf-jetbrains-mono-nerd noto-fonts-cjk
-          grim wl-clipboard polkit
+          grim wl-clipboard polkit libnotify
           xdg-desktop-portal-hyprland xdg-desktop-portal-gtk)
 RECOMMENDED=(cava fastfetch pacman-contrib arch-audit brightnessctl bluez
              bluez-utils hypridle hyprsunset wf-recorder inotify-tools xdg-utils)
