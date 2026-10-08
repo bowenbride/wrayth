@@ -118,12 +118,16 @@ Item {
 
     // The video itself, over its still once the crossfade is done. Muted,
     // looping, paused (on its current frame) whenever it should not play.
+    // Loaded by URL only when a video plays: VideoWall needs QtMultimedia, and
+    // naming its type here made this file -- and with it the background and
+    // the lockscreen -- fail to load on a machine without it.
     Loader {
         anchors.fill: parent
         active: root.allowVideo && Wallpapers.isVideo(root.frontSource) && root.mix >= 1
-        sourceComponent: VideoWall {
-            source: root.frontSource
-            playing: root.videoPlaying
+        source: active ? Qt.resolvedUrl("VideoWall.qml") : ""
+        onLoaded: {
+            item.source = Qt.binding(() => root.frontSource);
+            item.playing = Qt.binding(() => root.videoPlaying);
         }
     }
 
