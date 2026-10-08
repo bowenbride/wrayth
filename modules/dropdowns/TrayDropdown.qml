@@ -395,6 +395,7 @@ DropdownFrame {
                     anchors.verticalCenter: parent.verticalCenter
                     elide: Text.ElideRight
                     text: root.path.length > 0 ? root.path.map(p => p.title).join(" · ") : ""
+                    textFormat: Text.PlainText // menu titles come from the app
                     color: Tokens.color.bright
                     font.family: Tokens.font.display
                     font.pixelSize: 15
