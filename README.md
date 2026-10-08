@@ -455,7 +455,8 @@ versions. The first release had no version number.
 Each of these features degrades gracefully without its package:
 
     sudo pacman -S --needed cava fastfetch pacman-contrib arch-audit \
-        brightnessctl power-profiles-daemon bluez bluez-utils hypridle ufw xdg-utils
+        brightnessctl power-profiles-daemon bluez bluez-utils hypridle ufw xdg-utils \
+        qt6-multimedia-ffmpeg
 
 | Package | Powers | Without it |
 | --- | --- | --- |
@@ -472,6 +473,7 @@ Each of these features degrades gracefully without its package:
 | `inotify-tools` | the CAM chip for apps that open the camera directly | CAM shows only PipeWire camera streams |
 | a firewall (`ufw`, `nftables`, `firewalld`) | the SHIELD readout | `NOT CONFIGURED` |
 | `xdg-utils` | opening the wallpaper folder and screenshots | the buttons do nothing |
+| `qt6-multimedia-ffmpeg` | video wallpapers (playback, and the still shown on the lockscreen and in the picker) | a video wallpaper shows nothing |
 
 ## Profiles
 

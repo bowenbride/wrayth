@@ -108,7 +108,8 @@ REQUIRED=(quickshell hyprland kitty networkmanager pipewire wireplumber python
           grim wl-clipboard polkit libnotify
           xdg-desktop-portal-hyprland xdg-desktop-portal-gtk)
 RECOMMENDED=(cava fastfetch pacman-contrib arch-audit brightnessctl bluez
-             bluez-utils hypridle hyprsunset wf-recorder inotify-tools xdg-utils)
+             bluez-utils hypridle hyprsunset wf-recorder inotify-tools xdg-utils
+             qt6-multimedia-ffmpeg)
 
 say()  { printf '%s\n' "$*"; }
 step() { printf '\n== %s ==\n' "$*"; }
