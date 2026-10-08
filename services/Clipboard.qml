@@ -94,7 +94,10 @@ Singleton {
                 if (["keep", "clear"].indexOf(s.onLock) >= 0)
                     root.onLock = s.onLock;
             } catch (e) {
-                console.warn(`wrayth: privacy.json is not readable JSON (${e}); using the defaults`);
+                // Never saved over (as effects.json and wallpapers.json): a hand
+                // edit with a typo is not replaced by defaults on the next change.
+                root.settingsDamaged = true;
+                console.warn(`wrayth: privacy.json is not readable JSON (${e}); using the defaults, and not saving over it`);
             }
             root.settingsRead = true;
             if (root.history === "off")
@@ -108,8 +111,11 @@ Singleton {
         }
     }
     property bool settingsRead: false
+    property bool settingsDamaged: false
 
     function saveSettings(): void {
+        if (settingsDamaged)
+            return;
         settings.setText(`${JSON.stringify({ history: root.history, onLock: root.onLock }, null, 2)}\n`);
     }
 
