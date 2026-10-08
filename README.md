@@ -321,8 +321,8 @@ password to polkit; `Escape` or `CANCEL` refuses.
 ## Credits
 
 Small icons are [Material Symbols](https://fonts.google.com/icons) (Sharp),
-by Google, under the Apache License 2.0; the SVGs and the licence are in
-`assets/icons/material-symbols-sharp/`.
+by Google, under the Apache License 2.0; the font and its licence are in
+`assets/fonts/material-symbols-sharp/`.
 
 ## More screenshots
 
