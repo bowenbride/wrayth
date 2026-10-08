@@ -235,8 +235,8 @@ ones that are easy to miss.
 **Inside the picker:**
 
 - Click a card, or use the arrow keys, to preview a profile live.
-- Click the same card again, press `Enter` or press `APPLY` to keep it.
-- `Escape` or `REVERT AND CLOSE` closes the picker and undoes the preview.
+- Click the same card again, or press `Enter`, to keep it.
+- `Escape` closes the picker and undoes the preview.
 - `+ NEW CUSTOM` (the last card) makes a custom profile.
 - **PRIVACY** (clipboard history) is a button beside EFFECTS; see
   [Security](#security).
@@ -471,7 +471,7 @@ Each of these features degrades gracefully without its package:
 | `hyprsunset` | NIGHT LIGHT | the switch does nothing |
 | `wf-recorder` | screen recording | RECORD says it is not installed |
 | `inotify-tools` | the CAM chip for apps that open the camera directly | CAM shows only PipeWire camera streams |
-| a firewall (`ufw`, `nftables`, `firewalld`) | the SHIELD readout | `NOT CONFIGURED` |
+| a firewall (`ufw`, `nftables`, `firewalld`) | the SHIELD readout | `SHIELD DOWN` |
 | `xdg-utils` | opening the wallpaper folder and screenshots | the buttons do nothing |
 | `qt6-multimedia-ffmpeg` | video wallpapers (playback, and the still shown on the lockscreen and in the picker) | a video wallpaper shows nothing |
 
@@ -491,8 +491,8 @@ deck's logo and the wallpaper follow it.
 
 To open the **profile picker**, press `Super + E` for the deck, then click
 `PROFILE <NAME>` in the SYS.DIAG panel. Profiles are also listed in the
-launcher. Click a card to preview it live, and click again or press `APPLY`
-to keep it. `REVERT AND CLOSE` undoes a preview.
+launcher. Click a card to preview it live, and click again or press `Enter`
+to keep it. `Escape` undoes a preview.
 
 **Custom profiles.** In the picker, choose `+ NEW CUSTOM`. You set nine
 colours: ground, panel, hair, text, bright, dim, signal, accent and alert.
@@ -620,7 +620,7 @@ afterwards. Critical ones still appear.
 - `HISTORY`: `MEMORY ONLY` (the default: gone at logout, never on disk),
   `SAVE TO DISK` (kept in `~/.local/state/wrayth/clipboard.json`, readable
   only by you) or `OFF`. Leaving `SAVE TO DISK` deletes the file.
-- `ON LOCK`: `KEEP` or `CLEAR` the history when the screen locks.
+- `ON LOCK`: `KEEP HISTORY` or `CLEAR HISTORY` when the screen locks.
 - Copies a password manager marks as sensitive are never recorded. The
   content isn't even read.
 - Limits: 100 entries, 20 of them pinned; text up to 1 MiB each; images up
