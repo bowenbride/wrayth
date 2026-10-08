@@ -951,6 +951,13 @@ Item {
                         Wallpapers.deleteFile(file);
                         for (const name of Profiles.names)
                             root.removeFrom(name, file);
+                        // The file is gone at once, so it leaves the saved
+                        // pools at once too -- not only the draft, which
+                        // CANCEL drops, leaving pools pointing at nothing.
+                        const saved = JSON.parse(JSON.stringify(Wallpapers.pools));
+                        for (const name of Object.keys(saved))
+                            saved[name].items = (saved[name].items ?? []).filter(item => item.file !== file);
+                        Wallpapers.setPools(saved);
                         root.confirmingDelete = "";
                     }
                 }
