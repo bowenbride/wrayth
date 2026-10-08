@@ -92,7 +92,31 @@ Singleton {
         // config has it.
         // hl.monitor is a config call, not a dispatcher, so it goes through
         // `hyprctl eval` (as the keybinds' re-apply does).
+        applyScale(output, value);
+    }
+    function applyScale(output: string, value: real): void {
         Quickshell.execDetached(["hyprctl", "eval", `hl.monitor({ output = "${output}", mode = "preferred", position = "auto", scale = ${value} })`]);
+    }
+    // **A saved scale is applied again** whenever it would be lost: Hyprland's
+    // config sets scale 1, so it was gone at the next login and after every
+    // config reload (which turning OVERVIEW or SWITCHER off does), while the
+    // page still showed it.
+    // Only where the live scale differs (or is not known yet): the command
+    // also resets the monitor's mode and position, so it is never sent when
+    // nothing was lost.
+    function applyScales(): void {
+        for (const output of Object.keys(scale)) {
+            const live = (Hyprland.monitors?.values ?? []).find(m => m.name === output)?.lastIpcObject?.scale;
+            if (live === undefined || Math.abs(live - scale[output]) > 0.001)
+                applyScale(output, scale[output]);
+        }
+    }
+    Connections {
+        target: Hyprland
+        function onRawEvent(event: HyprlandEvent): void {
+            if (event.name === "configreloaded")
+                root.applyScales();
+        }
     }
     function setMotion(v: string): void {
         motion = v === "reduced" ? "reduced" : "full";
@@ -201,6 +225,7 @@ general {
                 root.overview = s.overview === true;
                 root.corrected = "";
                 root.loaded = true;
+                root.applyScales();
             } catch (e) {
                 // Never saved over: a file that does not parse stays as it is
                 // (as effects.json and wallpapers.json do), so a hand edit
