@@ -455,8 +455,8 @@ versions. The first release had no version number.
 Each of these features degrades gracefully without its package:
 
     sudo pacman -S --needed cava fastfetch pacman-contrib arch-audit \
-        brightnessctl power-profiles-daemon bluez bluez-utils hypridle ufw xdg-utils \
-        qt6-multimedia-ffmpeg
+        brightnessctl power-profiles-daemon bluez bluez-utils hypridle hyprsunset \
+        wf-recorder inotify-tools ufw xdg-utils qt6-multimedia-ffmpeg
 
 | Package | Powers | Without it |
 | --- | --- | --- |
