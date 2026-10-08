@@ -119,8 +119,8 @@ ChamferPanel {
                 border.color: Tokens.color.hair
             }
 
-            // The marker is two rings, light over dark, so it stays visible on
-            // both ends of the square.
+            // The marker is two square rings, light over dark, so it stays
+            // visible on both ends of the square (no rounded corners anywhere).
             Item {
                 x: root.saturation * square.width - 5
                 y: (1 - root.brightness) * square.height - 5
@@ -130,7 +130,6 @@ ChamferPanel {
                 Rectangle {
                     anchors.fill: parent
                     color: "transparent"
-                    radius: 5
                     border.width: 2
                     border.color: "#ffffff"
                 }
@@ -139,7 +138,6 @@ ChamferPanel {
                     anchors.fill: parent
                     anchors.margins: -1
                     color: "transparent"
-                    radius: 6
                     border.width: 1
                     border.color: "#000000"
                 }
