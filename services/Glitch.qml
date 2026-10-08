@@ -281,7 +281,10 @@ Singleton {
     // caller saying exactly what it wants -- which is the whole point of the
     // `glitch fire` handler during a recording.
     function fire(key: string, options: var): void {
-        if (Effects.glitch === "OFF")
+        // Off with REDUCED MOTION and paused in game mode, events included
+        // (DESIGN/style: glitches are off with reduced motion); only the
+        // recording veto (`suppressed`) is left to the caller.
+        if (Effects.glitch === "OFF" || SystemSettings.reducedMotion || SystemSettings.gaming)
             return;
         const fx = root.targets.find(target => target.key === key && target.eligible);
         if (!fx)
