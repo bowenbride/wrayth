@@ -227,7 +227,7 @@ ones that are easy to miss.
 
 **The profile picker** has no keybind. There are two ways in:
 
-- Press `Super + E` to open the deck, then click `PROFILE // <NAME>` in the
+- Press `Super + E` to open the deck, then click `PROFILE <NAME>` in the
   SYS.DIAG panel (top right). This opens the picker.
 - Or tap `Super` for the launcher and type a profile's name. This applies the
   profile directly, without the picker.
@@ -490,7 +490,7 @@ deck's logo and the wallpaper follow it.
 | **Cobalt** | cold blue on midnight steel |
 
 To open the **profile picker**, press `Super + E` for the deck, then click
-`PROFILE // <NAME>` in the SYS.DIAG panel. Profiles are also listed in the
+`PROFILE <NAME>` in the SYS.DIAG panel. Profiles are also listed in the
 launcher. Click a card to preview it live, and click again or press `APPLY`
 to keep it. `REVERT AND CLOSE` undoes a preview.
 
@@ -599,7 +599,7 @@ never unlocks one. Any program running as you could turn it on anyway.
 row, `pam_faillock` locks your account for ten minutes (by default,
 `deny=3` and `unlock_time=600`). The lockout is per account, not per program.
 While it lasts, `sudo` and console logins refuse your *correct* password too.
-The lockscreen shows `ACCOUNT LOCKED // RETRY IN m:ss` and does not send
+The lockscreen shows `ACCOUNT LOCKED · RETRY IN m:ss` and does not send
 passwords to PAM during the countdown. Wait it out **without typing passwords
 anywhere**, because every wrong attempt can restart the ten minutes.
 
@@ -659,7 +659,7 @@ your password on a Wrayth lockscreen, or with the session ending.
   that second you may see Hyprland's own "lock screen app died" screen. This is
   expected: the session stays locked the whole time.
 - If the lockscreen cannot get the keyboard back after three tries, it shows
-  **KEYBOARD LOST // RECOVER FROM A CONSOLE**.
+  **KEYBOARD LOST · RECOVER FROM A CONSOLE**.
 
 **If it is still stuck:**
 
