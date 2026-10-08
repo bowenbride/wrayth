@@ -46,6 +46,7 @@ Singleton {
         readonly property string display: "Chakra Petch"
         readonly property string data: "JetBrains Mono"
         readonly property string japanese: "Noto Sans CJK JP"
+        // Loaded from the bundled file by IconFont.qml; Icon uses IconFont.family.
         readonly property string icons: "Material Symbols Sharp"
         readonly property int displayWeight: 700
         readonly property int dataWeight: 400
