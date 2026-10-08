@@ -61,6 +61,7 @@ Item {
                 width: parent.width
                 renderType: Text.NativeRendering
                 text: Wifi.connected ? Demo.ssid(Wifi.activeSsid) : "NOT CONNECTED"
+                textFormat: Text.PlainText // a network's name is untrusted
                 color: Wifi.connected ? Tokens.color.bright : Tokens.color.dim
                 font.family: Tokens.font.display
                 font.pixelSize: 16
