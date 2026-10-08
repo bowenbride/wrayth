@@ -51,8 +51,11 @@ WRAYTH_REPO="https://github.com/bowenbride/wrayth.git"
 
 CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}"
 BIN="$HOME/.local/bin"
-FONTDIR="$HOME/.local/share/fonts/chakra-petch"
-ICONFONTDIR="$HOME/.local/share/fonts/material-symbols-sharp"
+# Where fontconfig looks for a user's fonts: $XDG_DATA_HOME/fonts. A fixed
+# ~/.local/share/fonts was never found when XDG_DATA_HOME points elsewhere.
+FONTROOT="${XDG_DATA_HOME:-$HOME/.local/share}/fonts"
+FONTDIR="$FONTROOT/chakra-petch"
+ICONFONTDIR="$FONTROOT/material-symbols-sharp"
 ICONFONT="MaterialSymbolsSharp[FILL,GRAD,opsz,wght].ttf"
 QS_TARGET="$CONFIG/quickshell/wrayth"
 HYPR_DIR="$CONFIG/hypr"
@@ -384,13 +387,13 @@ uninstall() {
     if [ -d "$FONTDIR" ]; then
         rm -f "$FONTDIR"/ChakraPetch-*.ttf "$FONTDIR/OFL.txt"
         rmdir "$FONTDIR" 2>/dev/null || true
-        command -v fc-cache >/dev/null 2>&1 && fc-cache -f "$HOME/.local/share/fonts" >/dev/null 2>&1
+        command -v fc-cache >/dev/null 2>&1 && fc-cache -f "$FONTROOT" >/dev/null 2>&1
         did rm "Chakra Petch font"
     fi
     if [ -d "$ICONFONTDIR" ]; then
         rm -f "$ICONFONTDIR/$ICONFONT" "$ICONFONTDIR/LICENSE"
         rmdir "$ICONFONTDIR" 2>/dev/null || true
-        command -v fc-cache >/dev/null 2>&1 && fc-cache -f "$HOME/.local/share/fonts" >/dev/null 2>&1
+        command -v fc-cache >/dev/null 2>&1 && fc-cache -f "$FONTROOT" >/dev/null 2>&1
         did rm "Material Symbols Sharp icon font"
     fi
 
@@ -661,7 +664,7 @@ if cmp -s "$SRC/assets/fonts/chakra-petch/ChakraPetch-Bold.ttf" "$FONTDIR/Chakra
     ok "Chakra Petch font"
 else
     cp -f "$SRC/assets/fonts/chakra-petch/"ChakraPetch-*.ttf "$SRC/assets/fonts/chakra-petch/OFL.txt" "$FONTDIR/"
-    fc-cache -f "$HOME/.local/share/fonts" >/dev/null 2>&1
+    fc-cache -f "$FONTROOT" >/dev/null 2>&1
     did copy "Chakra Petch font"
 fi
 # The icon font (Material Symbols Sharp, Apache 2.0, with its licence): every
@@ -671,7 +674,7 @@ if cmp -s "$SRC/assets/fonts/material-symbols-sharp/$ICONFONT" "$ICONFONTDIR/$IC
     ok "Material Symbols Sharp icon font"
 else
     cp -f "$SRC/assets/fonts/material-symbols-sharp/$ICONFONT" "$SRC/assets/fonts/material-symbols-sharp/LICENSE" "$ICONFONTDIR/"
-    fc-cache -f "$HOME/.local/share/fonts" >/dev/null 2>&1
+    fc-cache -f "$FONTROOT" >/dev/null 2>&1
     did copy "Material Symbols Sharp icon font"
 fi
 # The preset wallpapers, into the library folder the shell adopts on its first
