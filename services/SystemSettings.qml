@@ -200,8 +200,13 @@ general {
                 root.switcher = s.switcher === true;
                 root.overview = s.overview === true;
                 root.corrected = "";
-            } catch (e) {}
-            root.loaded = true;
+                root.loaded = true;
+            } catch (e) {
+                // Never saved over: a file that does not parse stays as it is
+                // (as effects.json and wallpapers.json do), so a hand edit
+                // with a typo is not replaced by defaults on the next change.
+                console.warn(`wrayth: system.json is not readable JSON (${e}); it is left as it is and not saved over`);
+            }
         }
         onLoadFailed: root.loaded = true
     }
