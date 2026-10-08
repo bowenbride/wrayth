@@ -26,15 +26,19 @@ Row {
     }
 
     Value {
+        id: value
+
         anchors.verticalCenter: parent.verticalCenter
         bar: true
         width: widest.width
         horizontalAlignment: Text.AlignRight
         text: `${Fmt.gib(SysInfo.memUsedGib, 1)}/${Fmt.gib(SysInfo.memTotalGib, 1)}G`
 
+        // TextMetrics is not an Item and has no parent: the value's own font
+        // is named, or "100%" was measured in the default font.
         TextMetrics {
             id: widest
-            font: parent.font
+            font: value.font
             text: `${Fmt.gib(SysInfo.memTotalGib, 1)}/${Fmt.gib(SysInfo.memTotalGib, 1)}G`
         }
     }
