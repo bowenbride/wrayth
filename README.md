@@ -468,7 +468,7 @@ Each of these features degrades gracefully without its package:
 | `power-profiles-daemon` | the power-profile readout and switch | blank |
 | `bluez`, `bluez-utils` | the Bluetooth dropdown | no Bluetooth |
 | `hypridle` | lock on idle and before sleep | no automatic lock |
-| `hyprsunset` | NIGHT LIGHT | the switch does nothing |
+| `hyprsunset` | NIGHT LIGHT | the power dropdown says `HYPRSUNSET NOT INSTALLED` |
 | `wf-recorder` | screen recording | RECORD says it is not installed |
 | `inotify-tools` | the CAM chip for apps that open the camera directly | CAM shows only PipeWire camera streams |
 | a firewall (`ufw`, `nftables`, `firewalld`) | the SHIELD readout | `SHIELD DOWN` |
