@@ -69,7 +69,7 @@ Singleton {
     LazyLoader {
         id: agentLoader
 
-        active: root.enabled
+        active: root.enabled && !root.retrying
         component: PolkitAgent {
             // A request takes the keyboard outright; anything else holding it
             // -- an overlay, a dropdown -- is closed first, so there is never
@@ -83,13 +83,37 @@ Singleton {
     }
 
     // Registration is settled within moments of start; if it did not happen,
-    // another agent has the session.
+    // it is tried again (the agent re-created) a few times before concluding
+    // that another agent has the session. **After a crash the shell restarts
+    // at once, while polkit still holds the dead process's registration**:
+    // the one try failed ("an authentication agent already exists"), and the
+    // session was left with no agent at all, admin prompts going nowhere.
+    property int attempts: 0
+    property bool retrying: false
     Timer {
+        id: settle
+
         interval: 4000
         running: true
         onTriggered: {
-            if (root.enabled && !root.registered)
+            if (!root.enabled || root.registered)
+                return;
+            if (root.attempts < 3) {
+                root.attempts++;
+                root.retrying = true;
+                again.restart();
+            } else {
                 once.running = true;
+            }
+        }
+    }
+    Timer {
+        id: again
+
+        interval: 1000
+        onTriggered: {
+            root.retrying = false;
+            settle.restart();
         }
     }
     // Once per login, not on every shell restart: marked in the runtime dir,
